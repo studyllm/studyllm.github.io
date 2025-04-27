@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  AI Concepts 
+  #
+
+This section describes core concepts that Spring AI uses. We recommend reading it closely to understand the ideas behind how Spring AI is implemented.
+
+  Models 
+  #
+
+AI models are algorithms designed to process and generate information, often mimicking human cognitive functions.
+By learning patterns and insights from large datasets, these models can make predictions, text, images, or other outputs, enhancing various applications across industries.
+
+  ">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/concepts/">
+  <meta property="og:site_name" content="My New Hugo Site">
+  <meta property="og:title" content="My New Hugo Site">
+  <meta property="og:description" content="AI Concepts # This section describes core concepts that Spring AI uses. We recommend reading it closely to understand the ideas behind how Spring AI is implemented.
+Models # AI models are algorithms designed to process and generate information, often mimicking human cognitive functions. By learning patterns and insights from large datasets, these models can make predictions, text, images, or other outputs, enhancing various applications across industries.">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>Concepts | My New Hugo Site</title>
+<link rel="icon" href="../../favicon.png" >
+<link rel="manifest" href="../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/concepts/">
+<link rel="stylesheet" href="../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../fuse.min.js"></script>
+  <script defer src="../../en.search.min.8f423f5e6b99fae9cb712e1945f5a45f62e34036ea1db6ba62887d7b1215cf47.js" integrity="sha256-j0I/XmuZ&#43;unLcS4ZRfWkX2LjQDbqHba6Yoh9exIVz0c=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../"><span>My New Hugo Site</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/chat_client_api/" class="">Chat Client API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/concepts/" class="active">Concepts</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/getting_started/" class="">Getting Started</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Concepts</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#ai-concepts">AI Concepts <a id="ai-concepts"></a></a>
+      <ul>
+        <li><a href="#models">Models <a id="models"></a></a></li>
+        <li><a href="#prompts">Prompts <a id="prompts"></a></a>
+          <ul>
+            <li><a href="#prompt-templates">Prompt Templates <a id="prompt-templates"></a></a></li>
+          </ul>
+        </li>
+        <li><a href="#embeddings">Embeddings <a id="embeddings"></a></a></li>
+        <li><a href="#tokens">Tokens <a id="tokens"></a></a></li>
+        <li><a href="#structured-output">Structured Output <a id="structured-output"></a></a></li>
+        <li><a href="#bringing-your-data--apis-to-the-ai-model">Bringing Your Data &amp; APIs to the AI Model <a id="bringing-your-data--apis-to-the-ai-model"></a></a>
+          <ul>
+            <li><a href="#retrieval-augmented-generation">Retrieval Augmented Generation <a id="retrieval-augmented-generation"></a></a></li>
+            <li><a href="#tool-calling">Tool Calling <a id="tool-calling"></a></a></li>
+          </ul>
+        </li>
+        <li><a href="#evaluating-ai-responses">Evaluating AI responses <a id="evaluating-ai-responses"></a></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="ai-concepts">
+  AI Concepts <a id="ai-concepts"></a>
+  <a class="anchor" href="#ai-concepts">#</a>
+</h1>
+<p>This section describes core concepts that Spring AI uses. We recommend reading it closely to understand the ideas behind how Spring AI is implemented.</p>
+<h2 id="models">
+  Models <a id="models"></a>
+  <a class="anchor" href="#models">#</a>
+</h2>
+<p>AI models are algorithms designed to process and generate information, often mimicking human cognitive functions.
+By learning patterns and insights from large datasets, these models can make predictions, text, images, or other outputs, enhancing various applications across industries.</p>
+<p>
+  <img src="_images/spring-ai-concepts-model-types.jpg" alt="Model types" title="Model types"/></p>
+<h2 id="prompts">
+  Prompts <a id="prompts"></a>
+  <a class="anchor" href="#prompts">#</a>
+</h2>
+<p>Prompts serve as the foundation for the language-based inputs that guide an AI model to produce specific outputs.
+For those familiar with ChatGPT, a prompt might seem like merely the text entered into a dialog box that is sent to the API.
+However, it encompasses much more than that.
+In many AI Models, the text for the prompt is not just a simple string.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Tell me a {adjective} joke about {content}.
+</span></span></code></pre></div><ul>
+<li>
+  <a href="https://arxiv.org/abs/2205.11916">recent research paper</a></li>
+<li>
+  <a href="https://www.stringtemplate.org/">StringTemplate</a></li>
+</ul>
+<h3 id="prompt-templates">
+  Prompt Templates <a id="prompt-templates"></a>
+  <a class="anchor" href="#prompt-templates">#</a>
+</h3>
+<p>Creating effective prompts involves establishing the context of the request and substituting parts of the request with values specific to the user’s input.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Tell me a {adjective} joke about {content}.
+</span></span></code></pre></div><ul>
+<li>
+  <a href="https://www.stringtemplate.org/">StringTemplate</a></li>
+</ul>
+<h2 id="embeddings">
+  Embeddings <a id="embeddings"></a>
+  <a class="anchor" href="#embeddings">#</a>
+</h2>
+<p>Embeddings are numerical representations of text, images, or videos that capture relationships between inputs.</p>
+<p>
+  <img src="_images/spring-ai-embeddings.jpg" alt="Embeddings" title="Embeddings"/></p>
+<h2 id="tokens">
+  Tokens <a id="tokens"></a>
+  <a class="anchor" href="#tokens">#</a>
+</h2>
+<p>Tokens serve as the building blocks of how an AI model works.
+On input, models convert words to tokens. On output, they convert tokens back to words.</p>
+<p>
+  <img src="_images/spring-ai-concepts-tokens.png" alt="Tokens" title="Tokens"/></p>
+<h2 id="structured-output">
+  Structured Output <a id="structured-output"></a>
+  <a class="anchor" href="#structured-output">#</a>
+</h2>
+<p>The output of AI models traditionally arrives as a java.lang.String, even if you ask for the reply to be in JSON.
+It may be a correct JSON, but it is not a JSON data structure. It is just a string.
+Also, asking “for JSON” as part of the prompt is not 100% accurate.</p>
+<p>
+  <img src="_images/structured-output-architecture.jpg" alt="Structured Output Converter Architecture" title="Structured Output Converter Architecture"/></p>
+<ul>
+<li>
+  <a href="api/structured-output-converter.html#_structuredoutputconverter">Structured output conversion</a></li>
+</ul>
+<h2 id="bringing-your-data--apis-to-the-ai-model">
+  Bringing Your Data &amp; APIs to the AI Model <a id="bringing-your-data--apis-to-the-ai-model"></a>
+  <a class="anchor" href="#bringing-your-data--apis-to-the-ai-model">#</a>
+</h2>
+<p>How can you equip the AI model with information on which it has not been trained?</p>
+<p>
+  <img src="_images/spring-ai-prompt-stuffing.jpg" alt="Prompt stuffing" title="Prompt stuffing"/></p>
+<ul>
+<li>
+  <a href="../../#concept-rag">Retrieval Augmented Generation (RAG)</a></li>
+<li>
+  <a href="../../#concept-fc">Tool Calling</a></li>
+<li>
+  <a href="api/tools.html">tool calling</a></li>
+<li>
+  <a href="api/etl-pipeline.html">ETL Pipeline</a></li>
+<li>
+  <a href="api/chatclient.html#_retrieval_augmented_generation">ChatClient - RAG</a></li>
+<li>
+  <a href="api/tools.html">Tool Calling</a></li>
+</ul>
+<h3 id="retrieval-augmented-generation">
+  Retrieval Augmented Generation <a id="retrieval-augmented-generation"></a>
+  <a class="anchor" href="#retrieval-augmented-generation">#</a>
+</h3>
+<p>A technique termed Retrieval Augmented Generation (RAG) has emerged to address the challenge of incorporating relevant data into prompts for accurate AI model responses.</p>
+<p>
+  <img src="_images/spring-ai-rag.jpg" alt="Spring AI RAG" title="Spring AI RAG"/></p>
+<ul>
+<li>
+  <a href="api/etl-pipeline.html">ETL Pipeline</a></li>
+<li>
+  <a href="api/chatclient.html#_retrieval_augmented_generation">ChatClient - RAG</a></li>
+</ul>
+<h3 id="tool-calling">
+  Tool Calling <a id="tool-calling"></a>
+  <a class="anchor" href="#tool-calling">#</a>
+</h3>
+<p>Large Language Models (LLMs) are frozen after training, leading to stale knowledge, and they are unable to access or modify external data.</p>
+<p>
+  <img src="_images/tools/tool-calling-01.jpg" alt="The main sequence of actions for tool calling" title="The main sequence of actions for tool calling"/></p>
+<ul>
+<li>
+  <a href="api/tools.html">Tool Calling</a></li>
+</ul>
+<h2 id="evaluating-ai-responses">
+  Evaluating AI responses <a id="evaluating-ai-responses"></a>
+  <a class="anchor" href="#evaluating-ai-responses">#</a>
+</h2>
+<p>Effectively evaluating the output of an AI system in response to user requests is very important to ensuring the accuracy and usefulness of the final application.
+Several emerging techniques enable the use of the pre-trained model itself for this purpose.</p>
+<ul>
+<li>
+  <a href="api/testing.html">Evaluation Testing</a></li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#ai-concepts">AI Concepts <a id="ai-concepts"></a></a>
+      <ul>
+        <li><a href="#models">Models <a id="models"></a></a></li>
+        <li><a href="#prompts">Prompts <a id="prompts"></a></a>
+          <ul>
+            <li><a href="#prompt-templates">Prompt Templates <a id="prompt-templates"></a></a></li>
+          </ul>
+        </li>
+        <li><a href="#embeddings">Embeddings <a id="embeddings"></a></a></li>
+        <li><a href="#tokens">Tokens <a id="tokens"></a></a></li>
+        <li><a href="#structured-output">Structured Output <a id="structured-output"></a></a></li>
+        <li><a href="#bringing-your-data--apis-to-the-ai-model">Bringing Your Data &amp; APIs to the AI Model <a id="bringing-your-data--apis-to-the-ai-model"></a></a>
+          <ul>
+            <li><a href="#retrieval-augmented-generation">Retrieval Augmented Generation <a id="retrieval-augmented-generation"></a></a></li>
+            <li><a href="#tool-calling">Tool Calling <a id="tool-calling"></a></a></li>
+          </ul>
+        </li>
+        <li><a href="#evaluating-ai-responses">Evaluating AI responses <a id="evaluating-ai-responses"></a></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
