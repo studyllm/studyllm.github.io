@@ -9,16 +9,16 @@
     <atom:link href="https://studyllm.github.io/docs/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title></title>
-      <link>https://studyllm.github.io/docs/chat_client_api/chat_client_api/</link>
+      <link>https://studyllm.github.io/docs/chat_client_api/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://studyllm.github.io/docs/chat_client_api/chat_client_api/</guid>
+      <guid>https://studyllm.github.io/docs/chat_client_api/</guid>
       <description>&lt;h1 id=&#34;chat-client-api-documentation&#34;&gt;&#xA;  Chat Client API Documentation &lt;a id=&#34;chat-client-api-documentation&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#chat-client-api-documentation&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;The ChatClient offers a fluent API for communicating with an AI Model. It supports both a synchronous and streaming programming model. For more details, see &#xA;  &lt;a href=&#34;https://studyllm.github.io/#Creating-a-ChatClient&#34;&gt;Creating a ChatClient&lt;/a&gt; section.&lt;/p&gt;&#xA;&lt;h2 id=&#34;creating-a-chatclient&#34;&gt;&#xA;  Creating a ChatClient &lt;a id=&#34;creating-a-chatclient&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#creating-a-chatclient&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;The ChatClient is created using a &lt;code&gt;ChatClient.Builder&lt;/code&gt; object. You can obtain an autoconfigured &lt;code&gt;ChatClient.Builder&lt;/code&gt; instance for any &#xA;  &lt;a href=&#34;https://docs.spring.io/spring-ai/api/org/springframework/ai/chat/model/ChatModel.html&#34;&gt;ChatModel&lt;/a&gt; Spring Boot autoconfiguration or create one programmatically. For more information about the fluent API, see [ChatClient Fluent API](#ChatClient Fluent API) section.&lt;/p&gt;</description>
     </item>
     <item>
       <title></title>
-      <link>https://studyllm.github.io/docs/getting-started/getting_started/</link>
+      <link>https://studyllm.github.io/docs/getting_started/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://studyllm.github.io/docs/getting-started/getting_started/</guid>
+      <guid>https://studyllm.github.io/docs/getting_started/</guid>
       <description>&lt;h1 id=&#34;getting-started-with-spring-ai&#34;&gt;&#xA;  Getting Started with Spring AI&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#getting-started-with-spring-ai&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;This section offers jumping off points for how to get started using Spring AI. You should follow the steps in each of the following sections according to your needs.&lt;/p&gt;&#xA;&lt;h2 id=&#34;prerequisites&#34;&gt;&#xA;  Prerequisites&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#prerequisites&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;Spring AI supports Spring Boot 3.4.x. When Spring Boot 3.5.x is released, we will support that as well.&lt;/p&gt;&#xA;&lt;h2 id=&#34;spring-initializr&#34;&gt;&#xA;  Spring Initializr&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#spring-initializr&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;Head on over to start.spring.io and select the AI Models and Vector Stores that you want to use in your new applications.&lt;/p&gt;</description>
     </item>
   </channel>
