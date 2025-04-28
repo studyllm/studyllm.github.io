@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>My New Hugo Site</title>
+    <link>https://studyllm.github.io/</link>
+    <description>Recent content on My New Hugo Site</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <atom:link href="https://studyllm.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title></title>
+      <link>https://studyllm.github.io/docs/chat_client_api/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://studyllm.github.io/docs/chat_client_api/</guid>
+      <description>&lt;h1 id=&#34;chat-client-api-documentation&#34;&gt;&#xA;  Chat Client API Documentation &lt;a id=&#34;chat-client-api-documentation&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#chat-client-api-documentation&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;The ChatClient offers a fluent API for communicating with an AI Model. It supports both a synchronous and streaming programming model. For more details, see &#xA;  &lt;a href=&#34;./#Creating-a-ChatClient&#34;&gt;Creating a ChatClient&lt;/a&gt; section.&lt;/p&gt;&#xA;&lt;h2 id=&#34;creating-a-chatclient&#34;&gt;&#xA;  Creating a ChatClient &lt;a id=&#34;creating-a-chatclient&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#creating-a-chatclient&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;The ChatClient is created using a &lt;code&gt;ChatClient.Builder&lt;/code&gt; object. You can obtain an autoconfigured &lt;code&gt;ChatClient.Builder&lt;/code&gt; instance for any &#xA;  &lt;a href=&#34;https://docs.spring.io/spring-ai/api/org/springframework/ai/chat/model/ChatModel.html&#34;&gt;ChatModel&lt;/a&gt; Spring Boot autoconfiguration or create one programmatically. For more information about the fluent API, see [ChatClient Fluent API](#ChatClient Fluent API) section.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title></title>
+      <link>https://studyllm.github.io/docs/concepts/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://studyllm.github.io/docs/concepts/</guid>
+      <description>&lt;h1 id=&#34;ai-concepts&#34;&gt;&#xA;  AI Concepts &lt;a id=&#34;ai-concepts&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#ai-concepts&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;This section describes core concepts that Spring AI uses. We recommend reading it closely to understand the ideas behind how Spring AI is implemented.&lt;/p&gt;&#xA;&lt;h2 id=&#34;models&#34;&gt;&#xA;  Models &lt;a id=&#34;models&#34;&gt;&lt;/a&gt;&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#models&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;AI models are algorithms designed to process and generate information, often mimicking human cognitive functions.&#xA;By learning patterns and insights from large datasets, these models can make predictions, text, images, or other outputs, enhancing various applications across industries.&lt;/p&gt;&#xA;&lt;p&gt;&#xA;  &lt;img src=&#34;./images/spring-ai-concepts-model-types.jpg&#34; alt=&#34;Model types&#34; title=&#34;Model types&#34;/&gt;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title></title>
+      <link>https://studyllm.github.io/docs/getting_started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://studyllm.github.io/docs/getting_started/</guid>
+      <description>&lt;h1 id=&#34;getting-started-with-spring-ai&#34;&gt;&#xA;  Getting Started with Spring AI&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#getting-started-with-spring-ai&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;This section offers jumping off points for how to get started using Spring AI. You should follow the steps in each of the following sections according to your needs.&lt;/p&gt;&#xA;&lt;h2 id=&#34;prerequisites&#34;&gt;&#xA;  Prerequisites&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#prerequisites&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;Spring AI supports Spring Boot 3.4.x. When Spring Boot 3.5.x is released, we will support that as well.&lt;/p&gt;&#xA;&lt;h2 id=&#34;spring-initializr&#34;&gt;&#xA;  Spring Initializr&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#spring-initializr&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;Head on over to start.spring.io and select the AI Models and Vector Stores that you want to use in your new applications.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
