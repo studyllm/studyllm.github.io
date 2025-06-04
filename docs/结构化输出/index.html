@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  结构化输出转换器
+  #
+
+LLM生成结构化输出的能力对于依赖于可靠解析输出值的下游应用程序非常重要。
+Spring AI结构化输出转换器有助于将LLM输出转换为结构化格式。
+使用通用完成API从大型语言模型（LLM）生成结构化输出需要仔细处理输入和输出。结构化输出转换器在LLM调用之前和之后发挥关键作用，确保实现所需的输出结构。
+在LLM调用之前，转换器将格式指令附加到提示符，为模型提供生成所需输出结构的明确指导。这些指令充当蓝图，塑造模型的响应以符合指定的格式。
+在LLM调用之后，转换器获取模型的输出文本，并将其转换为结构化类型的实例。该转换过程涉及解析原始文本输出，并将其映射到相应的结构化数据表示，如JSON、XML或特定于域的数据结构。
+
+  结构化输出API
+  #
+
+StructuredOutputConverter接口允许您获得结构化输出，例如将输出映射到Java类或基于文本的AI模型输出的值数组。
+public interface StructuredOutputConverter&lt;T&gt; extends Converter&lt;String, T&gt;, FormatProvider {
+
+}
+它结合了Spring Converter&lt;String，T&gt;接口和FormatProvider接口
+public interface FormatProvider {
+	String getFormat();
+}
+下图显示了使用结构化输出API时的数据流。
+
+  
+FormatProvider为AI模型提供特定的格式指南，使其能够生成文本输出，这些文本输出可以使用转换器转换为指定的目标类型T。下面是这种格式说明的示例：
+格式指令通常使用PromptTemplate追加到用户输入的末尾，如下所示：
+StructuredOutputConverter outputConverter = ...
+    String userInputTemplate = &#34;&#34;&#34;
+        ... user text input ....
+        {format}
+        &#34;&#34;&#34;; // user input with a &#34;format&#34; placeholder.
+    Prompt prompt = new Prompt(
+       new PromptTemplate(
+			   this.userInputTemplate,
+          Map.of(..., &#34;format&#34;, outputConverter.getFormat()) // replace the &#34;format&#34; placeholder with the converter&#39;s format.
+       ).createMessage());
+Converter&lt;String，T&gt;负责将模型的输出文本转换为指定类型T的实例。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="结构化输出转换器">
+  <meta property="og:description" content="结构化输出转换器 # LLM生成结构化输出的能力对于依赖于可靠解析输出值的下游应用程序非常重要。 Spring AI结构化输出转换器有助于将LLM输出转换为结构化格式。 使用通用完成API从大型语言模型（LLM）生成结构化输出需要仔细处理输入和输出。结构化输出转换器在LLM调用之前和之后发挥关键作用，确保实现所需的输出结构。 在LLM调用之前，转换器将格式指令附加到提示符，为模型提供生成所需输出结构的明确指导。这些指令充当蓝图，塑造模型的响应以符合指定的格式。 在LLM调用之后，转换器获取模型的输出文本，并将其转换为结构化类型的实例。该转换过程涉及解析原始文本输出，并将其映射到相应的结构化数据表示，如JSON、XML或特定于域的数据结构。
+结构化输出API # StructuredOutputConverter接口允许您获得结构化输出，例如将输出映射到Java类或基于文本的AI模型输出的值数组。
+public interface StructuredOutputConverter&lt;T&gt; extends Converter&lt;String, T&gt;, FormatProvider { } 它结合了Spring Converter&lt;String，T&gt;接口和FormatProvider接口
+public interface FormatProvider { String getFormat(); } 下图显示了使用结构化输出API时的数据流。 FormatProvider为AI模型提供特定的格式指南，使其能够生成文本输出，这些文本输出可以使用转换器转换为指定的目标类型T。下面是这种格式说明的示例： 格式指令通常使用PromptTemplate追加到用户输入的末尾，如下所示：
+StructuredOutputConverter outputConverter = ... String userInputTemplate = &#34;&#34;&#34; ... user text input .... {format} &#34;&#34;&#34;; // user input with a &#34;format&#34; placeholder. Prompt prompt = new Prompt( new PromptTemplate( this.userInputTemplate, Map.of(..., &#34;format&#34;, outputConverter.getFormat()) // replace the &#34;format&#34; placeholder with the converter&#39;s format. ).createMessage()); Converter&lt;String，T&gt;负责将模型的输出文本转换为指定类型T的实例。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>结构化输出转换器 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../favicon.png" >
+<link rel="manifest" href="../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA/">
+<link rel="stylesheet" href="../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../fuse.min.js"></script>
+  <script defer src="../../en.search.min.c2099fe8e92fda5a8bb2e37b214b3da69973489bb96981756a60dc5e82ee687b.js" integrity="sha256-wgmf6Okv2lqLsuN7IUs9pplzSJu5aYF1amDcXoLuaHs=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7b6a07f859f4dbd09b8c8b0aa4aaec3d" class="toggle"  />
+    <label for="section-7b6a07f859f4dbd09b8c8b0aa4aaec3d" class="flex justify-between">
+      <a href="../../docs/%E6%A6%82%E8%BF%B0/" class="">引言</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A6%82%E8%BF%B0/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-98a69a52873ff4521c7cbc37085c53f4" class="toggle"  />
+    <label for="section-98a69a52873ff4521c7cbc37085c53f4" class="flex justify-between">
+      <a href="../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/" class="">聊天客户端API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/%E9%A1%BE%E9%97%AE/" class="">顾问API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-19144567cc77a340e1f7113bf4cb4d96" class="toggle"  />
+    <label for="section-19144567cc77a340e1f7113bf4cb4d96" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/" class="">弹簧AI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-84cc529361af621bb91f1f556e56b344" class="toggle"  />
+    <label for="section-84cc529361af621bb91f1f556e56b344" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/" class="">聊天模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9%E5%8C%A1%E5%A8%81/" class="">基岩匡威API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-483267c6684da0c66b47ed3892aae3ae" class="toggle"  />
+    <label for="section-483267c6684da0c66b47ed3892aae3ae" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%BA%E7%B1%BB3/" class="">人类3聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%BA%E7%B1%BB3/%E4%BA%BA%E5%B7%A5%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E5%B7%B2%E5%BC%83%E7%94%A8/" class="">人工函数调用（已弃用）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ddce6d1cf71999572cf58e906e650be8" class="toggle"  />
+    <label for="section-ddce6d1cf71999572cf58e906e650be8" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/azure-openai%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8/" class="">Azure OpenAI函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/deepseek%E6%B7%B1%E5%BA%A6%E6%90%9C%E7%B4%A2/" class="">DeepSeek聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/docker%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E5%99%A8/" class="">Docker Model Runner聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e63102d10905af911b0f2f96b381f454" class="toggle"  />
+    <label for="section-e63102d10905af911b0f2f96b381f454" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%B0%B7%E6%AD%8Cvertexai/" class="">谷歌VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%B0%B7%E6%AD%8Cvertexai/vertexai%E5%8F%8C%E5%AD%90%E5%BA%A7/" class="">VertexAI双子座聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%A0%BC%E7%BD%97%E5%85%8B/" class="">Groq聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%8B%A5%E6%8A%B1%E7%9A%84%E8%84%B8/" class="">拥抱式面部聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-efff3eaee6a054e21a884caaa9c9d1d0" class="toggle"  />
+    <label for="section-efff3eaee6a054e21a884caaa9c9d1d0" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Mistral AI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/mistral%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">Mistral AI函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d719d8b286788a6b3bb151561cedf25e" class="toggle"  />
+    <label for="section-d719d8b286788a6b3bb151561cedf25e" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/" class="">MiniMax聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/minmaxfunction%E8%B0%83%E7%94%A8/" class="">函数调用</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/moonshot%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Moonshot AI聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%8B%B1%E4%BC%9F%E8%BE%BEnvidia/" class="">NVIDIA聊天室</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b5a2272d9e0cd5e97218ab60fdc2811d" class="toggle"  />
+    <label for="section-b5a2272d9e0cd5e97218ab60fdc2811d" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/" class="">Ollama聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/ollama%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">Ollama函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%9B%B0%E6%83%91%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7b5525ed1291badc6d8e708aba4b059d" class="toggle"  />
+    <label for="section-7b5525ed1291badc6d8e708aba4b059d" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/openai%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">函数调用</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%99%BA%E6%B5%A6ai/" class="">智浦AI聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-08f2008ddfd43562b35e6c7d7e0ade90" class="toggle"  />
+    <label for="section-08f2008ddfd43562b35e6c7d7e0ade90" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E8%BD%AC%E5%BD%95api/" class="">转录API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E8%BD%AC%E5%BD%95api/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6%E5%8C%96%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">适度性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3bce704ad81d7d95bfdcb61623d32c9" class="toggle"  />
+    <label for="section-f3bce704ad81d7d95bfdcb61623d32c9" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/" class="">嵌入模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-de35e9a68012e455890ae329d58ec54e" class="toggle"  />
+    <label for="section-de35e9a68012e455890ae329d58ec54e" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2cohere/" class="">内聚层嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6/" class="">Titan嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Mistral AI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/" class="">MiniMax聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/oci-genai%E5%85%AC%E5%8F%B8/" class="">Oracle云基础架构（OCI）GenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/" class="">Ollama嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/onnx%E5%8F%98%E5%8E%8B%E5%99%A8/" class="">变压器（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E9%82%AE%E6%94%BFml/" class="">PostgresML嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千凡嵌件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E6%99%BA%E6%B5%A6ai/" class="">ZhiPuAI嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3247fe8da2bdf11331fdf12b135a2bd5" class="toggle"  />
+    <label for="section-3247fe8da2bdf11331fdf12b135a2bd5" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E6%96%87%E6%9C%AC%E5%88%B0%E8%AF%AD%E9%9F%B3ttsapi/" class="">文本到语音（TTS）API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E6%96%87%E6%9C%AC%E5%88%B0%E8%AF%AD%E9%9F%B3ttsapi/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI文本到语音（TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b7bd5e743ef0ff8d5bae9e8b59690e88" class="toggle"  />
+    <label for="section-b7bd5e743ef0ff8d5bae9e8b59690e88" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/" class="">映像模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E7%A8%B3%E5%AE%9A%E6%80%A7/" class="">稳定性AI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%BF%97%E6%99%AE%E8%89%BE/" class="">ZhiPuAI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千帆形象</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6d7ee8a8c290e614a8d4b11b94d5da92" class="toggle"  />
+    <label for="section-6d7ee8a8c290e614a8d4b11b94d5da92" class="flex justify-between">
+      <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">向量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai%E6%9C%8D%E5%8A%A1/" class="">Azure AI服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">Azure Cosmos数据库</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6chroma/" class="">色度（Chroma）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%B2%99%E5%8F%91%E5%BA%95%E5%BA%A7/" class="">沙发底座</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%B9%E6%80%A7%E6%90%9C%E7%B4%A2/" class="">弹性搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire%E5%85%AC%E5%8F%B8/" class="">GemFire矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%B8%A2%E5%B1%9E/" class="">鸢属</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb%E5%9C%B0%E5%9B%BE%E9%9B%86/" class="">MongoDB地图集</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j%E5%85%AC%E5%8F%B8/" class="">Neo4j公司</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%89%93%E5%BC%80%E6%90%9C%E7%B4%A2/" class="">打开搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%94%B2%E9%AA%A8%E6%96%87%E5%85%AC%E5%8F%B8/" class="">Oracle Database 23ai-AI矢量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg%E8%BD%BD%E4%BD%93/" class="">PG载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C%E4%BD%93/" class="">松果体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/qdrant%E8%B4%A8%E9%87%8F/" class="">Qdrant（质量）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redisredis/" class="">Redis（Redis）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap%E9%9F%A9%E4%BA%9A/" class="">SAP HANA云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B1%BB%E5%9E%8B%E6%84%9Ftypesense/" class="">类型感（Typesense）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%B1%E5%8C%96weaviate/" class="">弱化（Weaviate）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-0a037040fc55c435e3b657a1139d5658" class="toggle"  />
+    <label for="section-0a037040fc55c435e3b657a1139d5658" class="flex justify-between">
+      <a href="../../docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/" class="">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/etl%E7%AE%A1%E9%81%93/" class="">ETL管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA/" class="active">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A4%E5%AD%98%E5%82%A8%E5%99%A8/" class="">聊天室存储器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e44d7b55bf077e5f0c1b5b8f7d9dad2a" class="toggle"  />
+    <label for="section-e44d7b55bf077e5f0c1b5b8f7d9dad2a" class="flex justify-between">
+      <a href="../../docs/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/%E8%BF%81%E7%A7%BB%E5%88%B0toolcallback-api/" class="">从FunctionCallback迁移到ToolCallbackAPI</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f126def055d862aaf56bdc7e619542c7" class="toggle"  />
+    <label for="section-f126def055d862aaf56bdc7e619542c7" class="flex justify-between">
+      <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%90%AF%E5%8A%A8%E7%A8%8B%E5%BA%8F/" class="">MCP客户端引导启动程序</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%90%AF%E5%8A%A8%E7%A8%8B%E5%BA%8F/" class="">MCP服务器引导启动程序</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%A4%9A%E6%A8%A1%E6%80%81/" class="">多模态API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0/" class="">评估和测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%87%BA%E8%B5%84%E6%8C%87%E5%8D%97/" class="">出资指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%8F%90%E7%A4%BA/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8D%B3%E6%97%B6%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">即时工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/docker%E4%BD%9C%E6%9B%B2/" class="">Docker作曲</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%91%E7%BB%91%E5%AE%9Acloud-bindings/" class="">云绑定（Cloud Bindings）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E7%9B%B8%E5%B9%B2cohere/" class="">OCI GenAI Cohere聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">谷歌VertexAI文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">谷歌VertexAI多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>结构化输出转换器</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#结构化输出转换器">结构化输出转换器</a>
+      <ul>
+        <li><a href="#结构化输出api">结构化输出API</a></li>
+        <li><a href="#可用的转换器">可用的转换器</a></li>
+        <li><a href="#使用转换器">使用转换器</a></li>
+        <li><a href="#bean输出转换器">Bean输出转换器</a></li>
+        <li><a href="#生成的架构中的属性排序">生成的架构中的属性排序</a></li>
+        <li><a href="#通用bean类型">通用Bean类型</a></li>
+        <li><a href="#地图输出转换器">地图输出转换器</a></li>
+        <li><a href="#列出输出转换器">列出输出转换器</a></li>
+        <li><a href="#支持的人工智能模型">支持的人工智能模型</a></li>
+        <li><a href="#内置json模式">内置JSON模式</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="结构化输出转换器">
+  结构化输出转换器
+  <a class="anchor" href="#%e7%bb%93%e6%9e%84%e5%8c%96%e8%be%93%e5%87%ba%e8%bd%ac%e6%8d%a2%e5%99%a8">#</a>
+</h1>
+<p>LLM生成结构化输出的能力对于依赖于可靠解析输出值的下游应用程序非常重要。
+Spring AI结构化输出转换器有助于将LLM输出转换为结构化格式。
+使用通用完成API从大型语言模型（LLM）生成结构化输出需要仔细处理输入和输出。结构化输出转换器在LLM调用之前和之后发挥关键作用，确保实现所需的输出结构。
+在LLM调用之前，转换器将格式指令附加到提示符，为模型提供生成所需输出结构的明确指导。这些指令充当蓝图，塑造模型的响应以符合指定的格式。
+在LLM调用之后，转换器获取模型的输出文本，并将其转换为结构化类型的实例。该转换过程涉及解析原始文本输出，并将其映射到相应的结构化数据表示，如JSON、XML或特定于域的数据结构。</p>
+<h2 id="结构化输出api">
+  结构化输出API
+  <a class="anchor" href="#%e7%bb%93%e6%9e%84%e5%8c%96%e8%be%93%e5%87%baapi">#</a>
+</h2>
+<p><code>StructuredOutputConverter</code>接口允许您获得结构化输出，例如将输出映射到Java类或基于文本的AI模型输出的值数组。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">StructuredOutputConverter</span><span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">extends</span> Converter<span style="color:#f92672">&lt;</span>String, T<span style="color:#f92672">&gt;</span>, FormatProvider {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>它结合了Spring Converter&lt;String，T&gt;接口和<code>FormatProvider</code>接口</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">FormatProvider</span> {
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">getFormat</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>下图显示了使用结构化输出API时的数据流。
+
+  <img src="../../images/structured-output-api.jpg" alt="结构化输出API" />
+<code>FormatProvider</code>为AI模型提供特定的格式指南，使其能够生成文本输出，这些文本输出可以使用转换器转换为指定的目标类型<code>T</code>。下面是这种格式说明的示例：
+格式指令通常使用PromptTemplate追加到用户输入的末尾，如下所示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>StructuredOutputConverter outputConverter <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>    String userInputTemplate <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        ... user text input ....
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        {format}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>; <span style="color:#75715e">// user input with a &#34;format&#34; placeholder.</span>
+</span></span><span style="display:flex;"><span>    Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(
+</span></span><span style="display:flex;"><span>       <span style="color:#66d9ef">new</span> PromptTemplate(
+</span></span><span style="display:flex;"><span>			   <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">userInputTemplate</span>,
+</span></span><span style="display:flex;"><span>          Map.<span style="color:#a6e22e">of</span>(..., <span style="color:#e6db74">&#34;format&#34;</span>, outputConverter.<span style="color:#a6e22e">getFormat</span>()) <span style="color:#75715e">// replace the &#34;format&#34; placeholder with the converter&#39;s format.</span>
+</span></span><span style="display:flex;"><span>       ).<span style="color:#a6e22e">createMessage</span>());
+</span></span></code></pre></div><p>Converter&lt;String，<code>T</code>&gt;负责将模型的输出文本转换为指定类型<code>T</code>的实例。</p>
+<h2 id="可用的转换器">
+  可用的转换器
+  <a class="anchor" href="#%e5%8f%af%e7%94%a8%e7%9a%84%e8%bd%ac%e6%8d%a2%e5%99%a8">#</a>
+</h2>
+<p>目前，Spring AI提供<code>AbstractConversionServiceOutputConverter</code>、<code>AbstractMessageOutputConverter</code>、BeanOutputInverter、MapOutputTransverter和ListOutput转换器实现：
+
+  <img src="../../images/structured-output-hierarchy4.jpg" alt="结构化输出类层次结构" /></p>
+<ul>
+<li>AbstractConversionServiceOutputConverter<T>-提供预配置的GenericConversionService，用于将LLM输出转换为所需的格式。未提供默认的FormatProvider实现。</li>
+<li>AbstractMessageOutputConverter<T>-提供预配置的MessageConverter，用于将LLM输出转换为所需格式。未提供默认的FormatProvider实现。</li>
+<li>BeanOutputConverter<T>-使用指定的Java类（例如，Bean）或ParameterizedTypeReference配置，该转换器采用FormatProvider实现，该实现指示AI模型生成符合从指定Java类派生的DRAFT_2020 _12 JSON架构的JSON响应。随后，它利用ObjectMapper将JSON输出反序列化为目标类的Java对象实例。</li>
+<li>MapOutputConverter-使用FormatProvider实现扩展AbstractMessageOutputConverter的功能，该实现指导AI模型生成符合RFC8259的JSON响应。此外，它还集成了一个转换器实现，该实现利用提供的MessageConverter将JSON有效负载转换为java.util。映射&lt;String，Object&gt;instance。</li>
+<li>ListOutputConverter-扩展AbstractConversionServiceOutputConverter，并包括为逗号分隔的列表输出定制的FormatProvider实现。转换器实现使用提供的ConversionService将模型文本输出转换为java.util。列表。</li>
+</ul>
+<h2 id="使用转换器">
+  使用转换器
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e8%bd%ac%e6%8d%a2%e5%99%a8">#</a>
+</h2>
+<p>以下部分提供了如何使用可用转换器生成结构化输出的指南。</p>
+<h2 id="bean输出转换器">
+  Bean输出转换器
+  <a class="anchor" href="#bean%e8%be%93%e5%87%ba%e8%bd%ac%e6%8d%a2%e5%99%a8">#</a>
+</h2>
+<p>下面的示例演示如何使用<code>BeanOutputConverter</code>为演员生成胶片摄影。
+代表演员电影制作的目标记录：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">record</span> <span style="color:#a6e22e">ActorsFilms</span>(String actor, List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> movies) {
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>下面是如何使用高级、流畅的<code>ChatClient</code> API应用BeanOutputConverter：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ActorsFilms actorsFilms <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel).<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;Generate the filmography of 5 movies for {actor}.&#34;</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;actor&#34;</span>, <span style="color:#e6db74">&#34;Tom Hanks&#34;</span>))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">entity</span>(ActorsFilms.<span style="color:#a6e22e">class</span>);
+</span></span></code></pre></div><p>或直接使用低级<code>ChatModel</code> API：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>BeanOutputConverter<span style="color:#f92672">&lt;</span>ActorsFilms<span style="color:#f92672">&gt;</span> beanOutputConverter <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> BeanOutputConverter<span style="color:#f92672">&lt;&gt;</span>(ActorsFilms.<span style="color:#a6e22e">class</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String format <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">beanOutputConverter</span>.<span style="color:#a6e22e">getFormat</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String actor <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Tom Hanks&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String template <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Generate the filmography of 5 movies for {actor}.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        {format}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Generation generation <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> PromptTemplate(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">template</span>, Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;actor&#34;</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">actor</span>, <span style="color:#e6db74">&#34;format&#34;</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">format</span>)).<span style="color:#a6e22e">create</span>()).<span style="color:#a6e22e">getResult</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ActorsFilms actorsFilms <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">beanOutputConverter</span>.<span style="color:#a6e22e">convert</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">generation</span>.<span style="color:#a6e22e">getOutput</span>().<span style="color:#a6e22e">getText</span>());
+</span></span></code></pre></div><h2 id="生成的架构中的属性排序">
+  生成的架构中的属性排序
+  <a class="anchor" href="#%e7%94%9f%e6%88%90%e7%9a%84%e6%9e%b6%e6%9e%84%e4%b8%ad%e7%9a%84%e5%b1%9e%e6%80%a7%e6%8e%92%e5%ba%8f">#</a>
+</h2>
+<p><code>BeanOutputConverter</code>通过<code>@JsonPropertyOrder</code>注释支持生成的JSON模式中的自定义属性排序。
+例如，为了确保<code>ActorsFilms</code>记录中属性的特定顺序：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@JsonPropertyOrder</span>({<span style="color:#e6db74">&#34;actor&#34;</span>, <span style="color:#e6db74">&#34;movies&#34;</span>})
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">record</span> <span style="color:#a6e22e">ActorsFilms</span>(String actor, List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> movies) {}
+</span></span></code></pre></div><p>该注释同时适用于记录和常规Java类。</p>
+<h2 id="通用bean类型">
+  通用Bean类型
+  <a class="anchor" href="#%e9%80%9a%e7%94%a8bean%e7%b1%bb%e5%9e%8b">#</a>
+</h2>
+<p>使用<code>ParameterizedTypeReference</code>构造函数指定更复杂的目标类结构。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>ActorsFilms<span style="color:#f92672">&gt;</span> actorsFilms <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel).<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;Generate the filmography of 5 movies for Tom Hanks and Bill Murray.&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">entity</span>(<span style="color:#66d9ef">new</span> ParameterizedTypeReference<span style="color:#f92672">&lt;</span>List<span style="color:#f92672">&lt;</span>ActorsFilms<span style="color:#f92672">&gt;&gt;</span>() {});
+</span></span></code></pre></div><p>或直接使用低级<code>ChatModel</code> API：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>BeanOutputConverter<span style="color:#f92672">&lt;</span>List<span style="color:#f92672">&lt;</span>ActorsFilms<span style="color:#f92672">&gt;&gt;</span> outputConverter <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> BeanOutputConverter<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> ParameterizedTypeReference<span style="color:#f92672">&lt;</span>List<span style="color:#f92672">&lt;</span>ActorsFilms<span style="color:#f92672">&gt;&gt;</span>() { });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String format <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">outputConverter</span>.<span style="color:#a6e22e">getFormat</span>();
+</span></span><span style="display:flex;"><span>String template <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Generate the filmography of 5 movies for Tom Hanks and Bill Murray.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        {format}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> PromptTemplate(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">template</span>, Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;format&#34;</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">format</span>)).<span style="color:#a6e22e">create</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Generation generation <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">prompt</span>).<span style="color:#a6e22e">getResult</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>ActorsFilms<span style="color:#f92672">&gt;</span> actorsFilms <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">outputConverter</span>.<span style="color:#a6e22e">convert</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">generation</span>.<span style="color:#a6e22e">getOutput</span>().<span style="color:#a6e22e">getText</span>());
+</span></span></code></pre></div><h2 id="地图输出转换器">
+  地图输出转换器
+  <a class="anchor" href="#%e5%9c%b0%e5%9b%be%e8%be%93%e5%87%ba%e8%bd%ac%e6%8d%a2%e5%99%a8">#</a>
+</h2>
+<p>下面的片段演示如何使用<code>MapOutputConverter</code>将模型输出转换为地图中的数字列表。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> result <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel).<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;Provide me a List of {subject}&#34;</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;subject&#34;</span>, <span style="color:#e6db74">&#34;an array of numbers from 1 to 9 under they key name &#39;numbers&#39;&#34;</span>))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">entity</span>(<span style="color:#66d9ef">new</span> ParameterizedTypeReference<span style="color:#f92672">&lt;</span>Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;&gt;</span>() {});
+</span></span></code></pre></div><p>或直接使用低级<code>ChatModel</code> API：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>MapOutputConverter mapOutputConverter <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MapOutputConverter();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String format <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">mapOutputConverter</span>.<span style="color:#a6e22e">getFormat</span>();
+</span></span><span style="display:flex;"><span>String template <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        Provide me a List of {subject}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        {format}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> PromptTemplate(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">template</span>,
+</span></span><span style="display:flex;"><span>        Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;subject&#34;</span>, <span style="color:#e6db74">&#34;an array of numbers from 1 to 9 under they key name &#39;numbers&#39;&#34;</span>, <span style="color:#e6db74">&#34;format&#34;</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">format</span>)).<span style="color:#a6e22e">create</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Generation generation <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">prompt</span>).<span style="color:#a6e22e">getResult</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> result <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">mapOutputConverter</span>.<span style="color:#a6e22e">convert</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">generation</span>.<span style="color:#a6e22e">getOutput</span>().<span style="color:#a6e22e">getText</span>());
+</span></span></code></pre></div><h2 id="列出输出转换器">
+  列出输出转换器
+  <a class="anchor" href="#%e5%88%97%e5%87%ba%e8%be%93%e5%87%ba%e8%bd%ac%e6%8d%a2%e5%99%a8">#</a>
+</h2>
+<p>下面的片段展示了如何使用<code>ListOutputConverter</code>将模型输出转换为冰淇淋口味列表。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> flavors <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel).<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;List five {subject}&#34;</span>)
+</span></span><span style="display:flex;"><span>                            .<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;subject&#34;</span>, <span style="color:#e6db74">&#34;ice cream flavors&#34;</span>))
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">entity</span>(<span style="color:#66d9ef">new</span> ListOutputConverter(<span style="color:#66d9ef">new</span> DefaultConversionService()));
+</span></span></code></pre></div><p>或直接使用低级<code>ChatModel API</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ListOutputConverter listOutputConverter <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ListOutputConverter(<span style="color:#66d9ef">new</span> DefaultConversionService());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String format <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">listOutputConverter</span>.<span style="color:#a6e22e">getFormat</span>();
+</span></span><span style="display:flex;"><span>String template <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        List five {subject}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        {format}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> PromptTemplate(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">template</span>,
+</span></span><span style="display:flex;"><span>        Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;subject&#34;</span>, <span style="color:#e6db74">&#34;ice cream flavors&#34;</span>, <span style="color:#e6db74">&#34;format&#34;</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">format</span>)).<span style="color:#a6e22e">create</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Generation generation <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatModel</span>.<span style="color:#a6e22e">call</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">prompt</span>).<span style="color:#a6e22e">getResult</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> list <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">listOutputConverter</span>.<span style="color:#a6e22e">convert</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">generation</span>.<span style="color:#a6e22e">getOutput</span>().<span style="color:#a6e22e">getText</span>());
+</span></span></code></pre></div><h2 id="支持的人工智能模型">
+  支持的人工智能模型
+  <a class="anchor" href="#%e6%94%af%e6%8c%81%e7%9a%84%e4%ba%ba%e5%b7%a5%e6%99%ba%e8%83%bd%e6%a8%a1%e5%9e%8b">#</a>
+</h2>
+<p>以下人工智能模型已经过测试，以支持列表、映射和Bean结构化输出。</p>
+<h2 id="内置json模式">
+  内置JSON模式
+  <a class="anchor" href="#%e5%86%85%e7%bd%aejson%e6%a8%a1%e5%bc%8f">#</a>
+</h2>
+<p>一些AI模型提供专用的配置选项来生成结构化（通常是JSON）输出。</p>
+<ul>
+<li>OpenAI结构化输出可以确保您的模型生成严格符合您提供的JSON模式的响应。您可以在JSON_OBJECT（确保模型生成的消息是有效的JSON）或JSON_SCHEMA（提供的模式确保模型将生成与您提供的模式匹配的响应）之间进行选择（spring.ai.openai.chat.options.responseFormat选项）。</li>
+<li>Azure OpenAI-提供spring.ai.Azure.OpenAI.chat.options.responseFormat选项，指定模型必须输出的格式。设置为{“type”：“json_object”}将启用json模式，这确保模型生成的消息是有效的json。</li>
+<li>Ollama-提供spring.ai.Ollama.chat.options.format选项来指定返回响应的格式。目前，唯一接受的值是json。</li>
+<li>Mistral AI-提供spring.AI.mistralai.chat.options.responseFormat选项来指定返回响应的格式。将其设置为{“类型”：“json_object”}将启用json模式，这确保模型生成的消息是有效的json。</li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#结构化输出转换器">结构化输出转换器</a>
+      <ul>
+        <li><a href="#结构化输出api">结构化输出API</a></li>
+        <li><a href="#可用的转换器">可用的转换器</a></li>
+        <li><a href="#使用转换器">使用转换器</a></li>
+        <li><a href="#bean输出转换器">Bean输出转换器</a></li>
+        <li><a href="#生成的架构中的属性排序">生成的架构中的属性排序</a></li>
+        <li><a href="#通用bean类型">通用Bean类型</a></li>
+        <li><a href="#地图输出转换器">地图输出转换器</a></li>
+        <li><a href="#列出输出转换器">列出输出转换器</a></li>
+        <li><a href="#支持的人工智能模型">支持的人工智能模型</a></li>
+        <li><a href="#内置json模式">内置JSON模式</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

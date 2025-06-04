@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  检索增强生成
+  #
+
+检索增强生成（RAG）是一种有助于克服大型语言模型局限性的技术
+Spring AI通过提供模块化架构来支持RAG，该架构允许您自己构建定制RAG流
+
+  顾问
+  #
+
+Spring AI使用Advisor API为常见RAG流提供开箱即用的支持。
+要使用QuestionAnswerAdvisor或RetrievalAugmentationAdvisor，您需要将spring-ai-advisors向量存储依赖项添加到项目中：
+&lt;dependency&gt;
+   &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt;
+   &lt;artifactId&gt;spring-ai-advisors-vector-store&lt;/artifactId&gt;
+&lt;/dependency&gt;
+
+  问题解答顾问
+  #
+
+向量数据库存储人工智能模型不知道的数据。当用户问题发送到AI模型时，QuestionAnswerAdvisor查询向量数据库中与用户问题相关的文档。
+来自向量数据库的响应被附加到用户文本中，以为AI模型生成响应提供上下文。
+假设您已经将数据加载到VectorStore中，则可以通过向ChatClient提供QuestionAnswerAdvisor的实例来执行检索增强生成（RAG）。
+ChatResponse response = ChatClient.builder(chatModel)
+        .build().prompt()
+        .advisors(new QuestionAnswerAdvisor(vectorStore))
+        .user(userText)
+        .call()
+        .chatResponse();
+在本例中，QuestionAnswerAdvisor将对Vector Database中的所有文档执行相似性搜索。为了限制搜索的文档类型，SearchRequest采用类似SQL的筛选器表达式，该表达式可移植到所有VectorStore。
+此筛选器表达式可以在创建QuestionAnswerAdvisor时配置，因此将始终应用于所有ChatClient请求，或者可以在每个请求的运行时提供。
+下面是如何创建阈值为0.8的QuestionAnswerAdvisor实例，并返回前6个结果。
+var qaAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
+        .searchRequest(SearchRequest.builder().similarityThreshold(0.8d).topK(6).build())
+        .build();
+
+  动态过滤器表达式
+  #
+
+使用filter_expression advisor上下文参数在运行时更新SearchRequest筛选器表达式：
+ChatClient chatClient = ChatClient.builder(chatModel)
+    .defaultAdvisors(QuestionAnswerAdvisor.builder(vectorStore)
+        .searchRequest(SearchRequest.builder().build())
+        .build())
+    .build();
+
+// Update filter expression at runtime
+String content = this.chatClient.prompt()
+    .user(&#34;Please answer my question XYZ&#34;)
+    .advisors(a -&gt; a.param(QuestionAnswerAdvisor.FILTER_EXPRESSION, &#34;type == &#39;Spring&#39;&#34;))
+    .call()
+    .content();
+FILTER_EXPRESSION参数允许您基于提供的表达式动态筛选搜索结果。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="检索增强生成">
+  <meta property="og:description" content="检索增强生成 # 检索增强生成（RAG）是一种有助于克服大型语言模型局限性的技术 Spring AI通过提供模块化架构来支持RAG，该架构允许您自己构建定制RAG流
+顾问 # Spring AI使用Advisor API为常见RAG流提供开箱即用的支持。 要使用QuestionAnswerAdvisor或RetrievalAugmentationAdvisor，您需要将spring-ai-advisors向量存储依赖项添加到项目中：
+&lt;dependency&gt; &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt; &lt;artifactId&gt;spring-ai-advisors-vector-store&lt;/artifactId&gt; &lt;/dependency&gt; 问题解答顾问 # 向量数据库存储人工智能模型不知道的数据。当用户问题发送到AI模型时，QuestionAnswerAdvisor查询向量数据库中与用户问题相关的文档。 来自向量数据库的响应被附加到用户文本中，以为AI模型生成响应提供上下文。 假设您已经将数据加载到VectorStore中，则可以通过向ChatClient提供QuestionAnswerAdvisor的实例来执行检索增强生成（RAG）。
+ChatResponse response = ChatClient.builder(chatModel) .build().prompt() .advisors(new QuestionAnswerAdvisor(vectorStore)) .user(userText) .call() .chatResponse(); 在本例中，QuestionAnswerAdvisor将对Vector Database中的所有文档执行相似性搜索。为了限制搜索的文档类型，SearchRequest采用类似SQL的筛选器表达式，该表达式可移植到所有VectorStore。 此筛选器表达式可以在创建QuestionAnswerAdvisor时配置，因此将始终应用于所有ChatClient请求，或者可以在每个请求的运行时提供。 下面是如何创建阈值为0.8的QuestionAnswerAdvisor实例，并返回前6个结果。
+var qaAdvisor = QuestionAnswerAdvisor.builder(vectorStore) .searchRequest(SearchRequest.builder().similarityThreshold(0.8d).topK(6).build()) .build(); 动态过滤器表达式 # 使用filter_expression advisor上下文参数在运行时更新SearchRequest筛选器表达式：
+ChatClient chatClient = ChatClient.builder(chatModel) .defaultAdvisors(QuestionAnswerAdvisor.builder(vectorStore) .searchRequest(SearchRequest.builder().build()) .build()) .build(); // Update filter expression at runtime String content = this.chatClient.prompt() .user(&#34;Please answer my question XYZ&#34;) .advisors(a -&gt; a.param(QuestionAnswerAdvisor.FILTER_EXPRESSION, &#34;type == &#39;Spring&#39;&#34;)) .call() .content(); FILTER_EXPRESSION参数允许您基于提供的表达式动态筛选搜索结果。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="website">
+<title>检索增强生成 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../favicon.png" >
+<link rel="manifest" href="../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/">
+<link rel="stylesheet" href="../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../fuse.min.js"></script>
+  <script defer src="../../en.search.min.c2099fe8e92fda5a8bb2e37b214b3da69973489bb96981756a60dc5e82ee687b.js" integrity="sha256-wgmf6Okv2lqLsuN7IUs9pplzSJu5aYF1amDcXoLuaHs=" crossorigin="anonymous"></script>
+<link rel="alternate" type="application/rss+xml" href="https://studyllm.github.io/docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/index.xml" title="Spring AI 1.0.0" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7b6a07f859f4dbd09b8c8b0aa4aaec3d" class="toggle"  />
+    <label for="section-7b6a07f859f4dbd09b8c8b0aa4aaec3d" class="flex justify-between">
+      <a href="../../docs/%E6%A6%82%E8%BF%B0/" class="">引言</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A6%82%E8%BF%B0/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-98a69a52873ff4521c7cbc37085c53f4" class="toggle"  />
+    <label for="section-98a69a52873ff4521c7cbc37085c53f4" class="flex justify-between">
+      <a href="../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/" class="">聊天客户端API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/%E9%A1%BE%E9%97%AE/" class="">顾问API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-19144567cc77a340e1f7113bf4cb4d96" class="toggle"  />
+    <label for="section-19144567cc77a340e1f7113bf4cb4d96" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/" class="">弹簧AI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-84cc529361af621bb91f1f556e56b344" class="toggle"  />
+    <label for="section-84cc529361af621bb91f1f556e56b344" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/" class="">聊天模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9%E5%8C%A1%E5%A8%81/" class="">基岩匡威API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-483267c6684da0c66b47ed3892aae3ae" class="toggle"  />
+    <label for="section-483267c6684da0c66b47ed3892aae3ae" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%BA%E7%B1%BB3/" class="">人类3聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%BA%E7%B1%BB3/%E4%BA%BA%E5%B7%A5%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E5%B7%B2%E5%BC%83%E7%94%A8/" class="">人工函数调用（已弃用）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ddce6d1cf71999572cf58e906e650be8" class="toggle"  />
+    <label for="section-ddce6d1cf71999572cf58e906e650be8" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/azure-openai%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8/" class="">Azure OpenAI函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/deepseek%E6%B7%B1%E5%BA%A6%E6%90%9C%E7%B4%A2/" class="">DeepSeek聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/docker%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E5%99%A8/" class="">Docker Model Runner聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e63102d10905af911b0f2f96b381f454" class="toggle"  />
+    <label for="section-e63102d10905af911b0f2f96b381f454" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%B0%B7%E6%AD%8Cvertexai/" class="">谷歌VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%B0%B7%E6%AD%8Cvertexai/vertexai%E5%8F%8C%E5%AD%90%E5%BA%A7/" class="">VertexAI双子座聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%A0%BC%E7%BD%97%E5%85%8B/" class="">Groq聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%8B%A5%E6%8A%B1%E7%9A%84%E8%84%B8/" class="">拥抱式面部聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-efff3eaee6a054e21a884caaa9c9d1d0" class="toggle"  />
+    <label for="section-efff3eaee6a054e21a884caaa9c9d1d0" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Mistral AI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/mistral%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">Mistral AI函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d719d8b286788a6b3bb151561cedf25e" class="toggle"  />
+    <label for="section-d719d8b286788a6b3bb151561cedf25e" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/" class="">MiniMax聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/minmaxfunction%E8%B0%83%E7%94%A8/" class="">函数调用</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/moonshot%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Moonshot AI聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%8B%B1%E4%BC%9F%E8%BE%BEnvidia/" class="">NVIDIA聊天室</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b5a2272d9e0cd5e97218ab60fdc2811d" class="toggle"  />
+    <label for="section-b5a2272d9e0cd5e97218ab60fdc2811d" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/" class="">Ollama聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/ollama%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">Ollama函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%9B%B0%E6%83%91%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7b5525ed1291badc6d8e708aba4b059d" class="toggle"  />
+    <label for="section-7b5525ed1291badc6d8e708aba4b059d" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/openai%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">函数调用</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%99%BA%E6%B5%A6ai/" class="">智浦AI聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-08f2008ddfd43562b35e6c7d7e0ade90" class="toggle"  />
+    <label for="section-08f2008ddfd43562b35e6c7d7e0ade90" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E8%BD%AC%E5%BD%95api/" class="">转录API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E8%BD%AC%E5%BD%95api/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6%E5%8C%96%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">适度性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3bce704ad81d7d95bfdcb61623d32c9" class="toggle"  />
+    <label for="section-f3bce704ad81d7d95bfdcb61623d32c9" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/" class="">嵌入模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-de35e9a68012e455890ae329d58ec54e" class="toggle"  />
+    <label for="section-de35e9a68012e455890ae329d58ec54e" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2cohere/" class="">内聚层嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6/" class="">Titan嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Mistral AI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/" class="">MiniMax聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/oci-genai%E5%85%AC%E5%8F%B8/" class="">Oracle云基础架构（OCI）GenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/" class="">Ollama嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/onnx%E5%8F%98%E5%8E%8B%E5%99%A8/" class="">变压器（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E9%82%AE%E6%94%BFml/" class="">PostgresML嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千凡嵌件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E6%99%BA%E6%B5%A6ai/" class="">ZhiPuAI嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3247fe8da2bdf11331fdf12b135a2bd5" class="toggle"  />
+    <label for="section-3247fe8da2bdf11331fdf12b135a2bd5" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E6%96%87%E6%9C%AC%E5%88%B0%E8%AF%AD%E9%9F%B3ttsapi/" class="">文本到语音（TTS）API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E6%96%87%E6%9C%AC%E5%88%B0%E8%AF%AD%E9%9F%B3ttsapi/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI文本到语音（TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b7bd5e743ef0ff8d5bae9e8b59690e88" class="toggle"  />
+    <label for="section-b7bd5e743ef0ff8d5bae9e8b59690e88" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/" class="">映像模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E7%A8%B3%E5%AE%9A%E6%80%A7/" class="">稳定性AI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%BF%97%E6%99%AE%E8%89%BE/" class="">ZhiPuAI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千帆形象</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6d7ee8a8c290e614a8d4b11b94d5da92" class="toggle"  />
+    <label for="section-6d7ee8a8c290e614a8d4b11b94d5da92" class="flex justify-between">
+      <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">向量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai%E6%9C%8D%E5%8A%A1/" class="">Azure AI服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">Azure Cosmos数据库</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6chroma/" class="">色度（Chroma）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%B2%99%E5%8F%91%E5%BA%95%E5%BA%A7/" class="">沙发底座</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%B9%E6%80%A7%E6%90%9C%E7%B4%A2/" class="">弹性搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire%E5%85%AC%E5%8F%B8/" class="">GemFire矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%B8%A2%E5%B1%9E/" class="">鸢属</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb%E5%9C%B0%E5%9B%BE%E9%9B%86/" class="">MongoDB地图集</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j%E5%85%AC%E5%8F%B8/" class="">Neo4j公司</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%89%93%E5%BC%80%E6%90%9C%E7%B4%A2/" class="">打开搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%94%B2%E9%AA%A8%E6%96%87%E5%85%AC%E5%8F%B8/" class="">Oracle Database 23ai-AI矢量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg%E8%BD%BD%E4%BD%93/" class="">PG载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C%E4%BD%93/" class="">松果体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/qdrant%E8%B4%A8%E9%87%8F/" class="">Qdrant（质量）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redisredis/" class="">Redis（Redis）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap%E9%9F%A9%E4%BA%9A/" class="">SAP HANA云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B1%BB%E5%9E%8B%E6%84%9Ftypesense/" class="">类型感（Typesense）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%B1%E5%8C%96weaviate/" class="">弱化（Weaviate）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-0a037040fc55c435e3b657a1139d5658" class="toggle" checked />
+    <label for="section-0a037040fc55c435e3b657a1139d5658" class="flex justify-between">
+      <a href="../../docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/" class="active">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/etl%E7%AE%A1%E9%81%93/" class="">ETL管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A4%E5%AD%98%E5%82%A8%E5%99%A8/" class="">聊天室存储器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e44d7b55bf077e5f0c1b5b8f7d9dad2a" class="toggle"  />
+    <label for="section-e44d7b55bf077e5f0c1b5b8f7d9dad2a" class="flex justify-between">
+      <a href="../../docs/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/%E8%BF%81%E7%A7%BB%E5%88%B0toolcallback-api/" class="">从FunctionCallback迁移到ToolCallbackAPI</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f126def055d862aaf56bdc7e619542c7" class="toggle"  />
+    <label for="section-f126def055d862aaf56bdc7e619542c7" class="flex justify-between">
+      <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%90%AF%E5%8A%A8%E7%A8%8B%E5%BA%8F/" class="">MCP客户端引导启动程序</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%90%AF%E5%8A%A8%E7%A8%8B%E5%BA%8F/" class="">MCP服务器引导启动程序</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%A4%9A%E6%A8%A1%E6%80%81/" class="">多模态API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0/" class="">评估和测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%87%BA%E8%B5%84%E6%8C%87%E5%8D%97/" class="">出资指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%8F%90%E7%A4%BA/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8D%B3%E6%97%B6%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">即时工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/docker%E4%BD%9C%E6%9B%B2/" class="">Docker作曲</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%91%E7%BB%91%E5%AE%9Acloud-bindings/" class="">云绑定（Cloud Bindings）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E7%9B%B8%E5%B9%B2cohere/" class="">OCI GenAI Cohere聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">谷歌VertexAI文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">谷歌VertexAI多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>检索增强生成</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#检索增强生成">检索增强生成</a>
+      <ul>
+        <li><a href="#顾问">顾问</a></li>
+        <li><a href="#问题解答顾问">问题解答顾问</a></li>
+        <li><a href="#动态过滤器表达式">动态过滤器表达式</a></li>
+        <li><a href="#自定义模板">自定义模板</a></li>
+        <li><a href="#检索增强顾问">检索增强顾问</a></li>
+        <li><a href="#顺序rag流">顺序RAG流</a></li>
+        <li><a href="#天真的rag">天真的RAG</a></li>
+        <li><a href="#高级rag">高级RAG</a></li>
+        <li><a href="#模块">模块</a></li>
+        <li><a href="#预检索">预检索</a></li>
+        <li><a href="#查询转换">查询转换</a></li>
+        <li><a href="#压缩查询变压器">压缩查询变压器</a></li>
+        <li><a href="#重写querytransformer">重写QueryTransformer</a></li>
+        <li><a href="#转换查询变压器">转换查询变压器</a></li>
+        <li><a href="#查询扩展">查询扩展</a></li>
+        <li><a href="#multiqueryexpandermultiquery扩展程序">MultiQueryExpander（MultiQuery扩展程序）</a></li>
+        <li><a href="#检索">检索</a></li>
+        <li><a href="#文档搜索">文档搜索</a></li>
+        <li><a href="#vectorstoredocumentretriever">VectorStoreDocumentRetriever</a></li>
+        <li><a href="#文档连接">文档连接</a></li>
+        <li><a href="#级联documentjoiner">级联DocumentJoiner</a></li>
+        <li><a href="#后期检索">后期检索</a></li>
+        <li><a href="#单据过账处理">单据过账处理</a></li>
+        <li><a href="#生成">生成</a></li>
+        <li><a href="#查询增强功能">查询增强功能</a></li>
+        <li><a href="#上下文queryaugmenter">上下文QueryAugmenter</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="检索增强生成">
+  检索增强生成
+  <a class="anchor" href="#%e6%a3%80%e7%b4%a2%e5%a2%9e%e5%bc%ba%e7%94%9f%e6%88%90">#</a>
+</h1>
+<p>检索增强生成（RAG）是一种有助于克服大型语言模型局限性的技术
+Spring AI通过提供模块化架构来支持RAG，该架构允许您自己构建定制RAG流</p>
+<h2 id="顾问">
+  顾问
+  <a class="anchor" href="#%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>Spring AI使用<code>Advisor</code> API为常见RAG流提供开箱即用的支持。
+要使用<code>QuestionAnswerAdvisor</code>或<code>RetrievalAugmentationAdvisor</code>，您需要将spring-ai-advisors向量存储依赖项添加到项目中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-advisors-vector-store<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><h2 id="问题解答顾问">
+  问题解答顾问
+  <a class="anchor" href="#%e9%97%ae%e9%a2%98%e8%a7%a3%e7%ad%94%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>向量数据库存储人工智能模型不知道的数据。当用户问题发送到AI模型时，<code>QuestionAnswerAdvisor</code>查询向量数据库中与用户问题相关的文档。
+来自向量数据库的响应被附加到用户文本中，以为AI模型生成响应提供上下文。
+假设您已经将数据加载到<code>VectorStore</code>中，则可以通过向<code>ChatClient</code>提供<code>QuestionAnswerAdvisor</code>的实例来执行检索增强生成（RAG）。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatResponse response <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(chatModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>().<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">advisors</span>(<span style="color:#66d9ef">new</span> QuestionAnswerAdvisor(vectorStore))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(userText)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">chatResponse</span>();
+</span></span></code></pre></div><p>在本例中，<code>QuestionAnswerAdvisor</code>将对Vector Database中的所有文档执行相似性搜索。为了限制搜索的文档类型，<code>SearchRequest</code>采用类似SQL的筛选器表达式，该表达式可移植到所有VectorStore。
+此筛选器表达式可以在创建<code>QuestionAnswerAdvisor</code>时配置，因此将始终应用于所有<code>ChatClient</code>请求，或者可以在每个请求的运行时提供。
+下面是如何创建阈值为<code>0.8</code>的<code>QuestionAnswerAdvisor</code>实例，并返回前<code>6</code>个结果。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> qaAdvisor <span style="color:#f92672">=</span> QuestionAnswerAdvisor.<span style="color:#a6e22e">builder</span>(vectorStore)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">searchRequest</span>(SearchRequest.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">similarityThreshold</span>(0.<span style="color:#a6e22e">8d</span>).<span style="color:#a6e22e">topK</span>(6).<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="动态过滤器表达式">
+  动态过滤器表达式
+  <a class="anchor" href="#%e5%8a%a8%e6%80%81%e8%bf%87%e6%bb%a4%e5%99%a8%e8%a1%a8%e8%be%be%e5%bc%8f">#</a>
+</h2>
+<p>使用filter_expression advisor上下文参数在运行时更新<code>SearchRequest</code>筛选器表达式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatClient chatClient <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultAdvisors</span>(QuestionAnswerAdvisor.<span style="color:#a6e22e">builder</span>(vectorStore)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">searchRequest</span>(SearchRequest.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Update filter expression at runtime</span>
+</span></span><span style="display:flex;"><span>String content <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span>.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;Please answer my question XYZ&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">advisors</span>(a <span style="color:#f92672">-&gt;</span> a.<span style="color:#a6e22e">param</span>(QuestionAnswerAdvisor.<span style="color:#a6e22e">FILTER_EXPRESSION</span>, <span style="color:#e6db74">&#34;type == &#39;Spring&#39;&#34;</span>))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p><code>FILTER_EXPRESSION</code>参数允许您基于提供的表达式动态筛选搜索结果。</p>
+<h2 id="自定义模板">
+  自定义模板
+  <a class="anchor" href="#%e8%87%aa%e5%ae%9a%e4%b9%89%e6%a8%a1%e6%9d%bf">#</a>
+</h2>
+<p><code>QuestionAnswerAdvisor</code>使用默认模板用检索到的文档来增加用户问题。您可以通过.<code>PromptTemplate</code>（）构建器方法提供自己的<code>PromptTemplate</code>对象来定制此行为。
+自定义<code>PromptTemplate</code>可以使用任何<code>TemplateRenderer</code>实现（默认情况下，它使用基于StringTemplate引擎的StPrompt模板）。重要的要求是模板必须包含以下两个占位符：</p>
+<ul>
+<li>用于接收用户问题的查询占位符。</li>
+<li>questionanswercontext占位符以接收检索的上下文。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>PromptTemplate customPromptTemplate <span style="color:#f92672">=</span> PromptTemplate.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">renderer</span>(StTemplateRenderer.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">startDelimiterToken</span>(<span style="color:#e6db74">&#39;&lt;&#39;</span>).<span style="color:#a6e22e">endDelimiterToken</span>(<span style="color:#e6db74">&#39;&gt;&#39;</span>).<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">template</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &lt;query&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Context information is below.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			---------------------
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			&lt;question_answer_context&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			---------------------
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			Given the context information and no prior knowledge, answer the query.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			Follow these rules:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			1. If the answer is not in the context, just say that you don&#39;t know.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			2. Avoid statements like &#34;Based on the context...&#34; or &#34;The provided information...&#34;.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    String question <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Where does the adventure of Anacletus and Birba take place?&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    QuestionAnswerAdvisor qaAdvisor <span style="color:#f92672">=</span> QuestionAnswerAdvisor.<span style="color:#a6e22e">builder</span>(vectorStore)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">promptTemplate</span>(customPromptTemplate)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    String response <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(chatModel).<span style="color:#a6e22e">build</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">prompt</span>(question)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">advisors</span>(qaAdvisor)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><h2 id="检索增强顾问">
+  检索增强顾问
+  <a class="anchor" href="#%e6%a3%80%e7%b4%a2%e5%a2%9e%e5%bc%ba%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>SpringAI包括一个
+  <a href="../../#modules">RAG模块库</a>，您可以使用它来构建自己的RAG流。</p>
+<h2 id="顺序rag流">
+  顺序RAG流
+  <a class="anchor" href="#%e9%a1%ba%e5%ba%8frag%e6%b5%81">#</a>
+</h2>
+<h2 id="天真的rag">
+  天真的RAG
+  <a class="anchor" href="#%e5%a4%a9%e7%9c%9f%e7%9a%84rag">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Advisor retrievalAugmentationAdvisor <span style="color:#f92672">=</span> RetrievalAugmentationAdvisor.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">documentRetriever</span>(VectorStoreDocumentRetriever.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">similarityThreshold</span>(0.<span style="color:#a6e22e">50</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">vectorStore</span>(vectorStore)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String answer <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">advisors</span>(retrievalAugmentationAdvisor)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(question)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p>默认情况下，<code>RetrievalAugmentationAdvisor</code>不允许检索的上下文为空。当这种情况发生时，</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Advisor retrievalAugmentationAdvisor <span style="color:#f92672">=</span> RetrievalAugmentationAdvisor.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">documentRetriever</span>(VectorStoreDocumentRetriever.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">similarityThreshold</span>(0.<span style="color:#a6e22e">50</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">vectorStore</span>(vectorStore)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">queryAugmenter</span>(ContextualQueryAugmenter.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">allowEmptyContext</span>(<span style="color:#66d9ef">true</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String answer <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">advisors</span>(retrievalAugmentationAdvisor)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(question)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p><code>VectorStoreDocumentRetriever</code>接受<code>FilterExpression</code>以基于元数据过滤搜索结果。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Advisor retrievalAugmentationAdvisor <span style="color:#f92672">=</span> RetrievalAugmentationAdvisor.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">documentRetriever</span>(VectorStoreDocumentRetriever.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">similarityThreshold</span>(0.<span style="color:#a6e22e">50</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">vectorStore</span>(vectorStore)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String answer <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">advisors</span>(retrievalAugmentationAdvisor)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">advisors</span>(a <span style="color:#f92672">-&gt;</span> a.<span style="color:#a6e22e">param</span>(VectorStoreDocumentRetriever.<span style="color:#a6e22e">FILTER_EXPRESSION</span>, <span style="color:#e6db74">&#34;type == &#39;Spring&#39;&#34;</span>))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(question)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p>有关详细信息，请参见
+  <a href="../../#_vectorstoredocumentretriever">VectorStoreDocumentRetriever</a>。</p>
+<h2 id="高级rag">
+  高级RAG
+  <a class="anchor" href="#%e9%ab%98%e7%ba%a7rag">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Advisor retrievalAugmentationAdvisor <span style="color:#f92672">=</span> RetrievalAugmentationAdvisor.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">queryTransformers</span>(RewriteQueryTransformer.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">chatClientBuilder</span>(chatClientBuilder.<span style="color:#a6e22e">build</span>().<span style="color:#a6e22e">mutate</span>())
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">documentRetriever</span>(VectorStoreDocumentRetriever.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">similarityThreshold</span>(0.<span style="color:#a6e22e">50</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">vectorStore</span>(vectorStore)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String answer <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">advisors</span>(retrievalAugmentationAdvisor)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(question)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p>您还可以使用<code>DocumentPostProcessor</code> API在将检索到的文档传递到模型之前对其进行后处理。例如，您可以使用这样的接口来根据检索到的文档与查询的相关性对其进行重新排序，删除不相关或冗余的文档，或者压缩每个文档的内容以减少噪声和冗余。</p>
+<h2 id="模块">
+  模块
+  <a class="anchor" href="#%e6%a8%a1%e5%9d%97">#</a>
+</h2>
+<p>Spring AI实现了一个模块化RAG架构，该架构受到了本文中详细描述的模块化概念的启发</p>
+<h2 id="预检索">
+  预检索
+  <a class="anchor" href="#%e9%a2%84%e6%a3%80%e7%b4%a2">#</a>
+</h2>
+<p>预检索模块负责处理用户查询，以实现尽可能最佳的检索结果。</p>
+<h2 id="查询转换">
+  查询转换
+  <a class="anchor" href="#%e6%9f%a5%e8%af%a2%e8%bd%ac%e6%8d%a2">#</a>
+</h2>
+<p>一个用于转换输入查询以使其更有效地执行检索任务的组件，解决了挑战</p>
+<h2 id="压缩查询变压器">
+  压缩查询变压器
+  <a class="anchor" href="#%e5%8e%8b%e7%bc%a9%e6%9f%a5%e8%af%a2%e5%8f%98%e5%8e%8b%e5%99%a8">#</a>
+</h2>
+<p><code>CompressionQueryTransformer</code>使用大型语言模型来压缩对话历史记录和后续查询
+当对话历史较长且后续查询相关时，此转换器非常有用</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Query query <span style="color:#f92672">=</span> Query.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;And what is its second largest city?&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">history</span>(<span style="color:#66d9ef">new</span> UserMessage(<span style="color:#e6db74">&#34;What is the capital of Denmark?&#34;</span>),
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">new</span> AssistantMessage(<span style="color:#e6db74">&#34;Copenhagen is the capital of Denmark.&#34;</span>))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>QueryTransformer queryTransformer <span style="color:#f92672">=</span> CompressionQueryTransformer.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">chatClientBuilder</span>(chatClientBuilder)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Query transformedQuery <span style="color:#f92672">=</span> queryTransformer.<span style="color:#a6e22e">transform</span>(query);
+</span></span></code></pre></div><p>该组件使用的提示可以通过生成器中可用的promptTemplate（）方法进行自定义。</p>
+<h2 id="重写querytransformer">
+  重写QueryTransformer
+  <a class="anchor" href="#%e9%87%8d%e5%86%99querytransformer">#</a>
+</h2>
+<p><code>RewriteQueryTransformer</code>使用大型语言模型重写用户查询，以便在以下情况下提供更好的结果：
+当用户查询冗长、不明确或包含不相关的信息时，此转换器非常有用</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Query query <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Query(<span style="color:#e6db74">&#34;I&#39;m studying machine learning. What is an LLM?&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>QueryTransformer queryTransformer <span style="color:#f92672">=</span> RewriteQueryTransformer.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">chatClientBuilder</span>(chatClientBuilder)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Query transformedQuery <span style="color:#f92672">=</span> queryTransformer.<span style="color:#a6e22e">transform</span>(query);
+</span></span></code></pre></div><p>该组件使用的提示可以通过生成器中可用的promptTemplate（）方法进行自定义。</p>
+<h2 id="转换查询变压器">
+  转换查询变压器
+  <a class="anchor" href="#%e8%bd%ac%e6%8d%a2%e6%9f%a5%e8%af%a2%e5%8f%98%e5%8e%8b%e5%99%a8">#</a>
+</h2>
+<p><code>TranslationQueryTransformer</code>使用大型语言模型将查询转换为支持的目标语言
+当嵌入模型在特定语言和用户查询上训练时，该转换器非常有用</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Query query <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Query(<span style="color:#e6db74">&#34;Hvad er Danmarks hovedstad?&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>QueryTransformer queryTransformer <span style="color:#f92672">=</span> TranslationQueryTransformer.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">chatClientBuilder</span>(chatClientBuilder)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">targetLanguage</span>(<span style="color:#e6db74">&#34;english&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Query transformedQuery <span style="color:#f92672">=</span> queryTransformer.<span style="color:#a6e22e">transform</span>(query);
+</span></span></code></pre></div><p>该组件使用的提示可以通过生成器中可用的promptTemplate（）方法进行自定义。</p>
+<h2 id="查询扩展">
+  查询扩展
+  <a class="anchor" href="#%e6%9f%a5%e8%af%a2%e6%89%a9%e5%b1%95">#</a>
+</h2>
+<p>一个用于将输入查询扩展为查询列表的组件，解决诸如格式不佳的查询之类的挑战</p>
+<h2 id="multiqueryexpandermultiquery扩展程序">
+  MultiQueryExpander（MultiQuery扩展程序）
+  <a class="anchor" href="#multiqueryexpandermultiquery%e6%89%a9%e5%b1%95%e7%a8%8b%e5%ba%8f">#</a>
+</h2>
+<p><code>MultiQueryExpander</code>使用大型语言模型将查询扩展为多个语义不同的变体</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>MultiQueryExpander queryExpander <span style="color:#f92672">=</span> MultiQueryExpander.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">chatClientBuilder</span>(chatClientBuilder)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">numberOfQueries</span>(3)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Query<span style="color:#f92672">&gt;</span> queries <span style="color:#f92672">=</span> queryExpander.<span style="color:#a6e22e">expand</span>(<span style="color:#66d9ef">new</span> Query(<span style="color:#e6db74">&#34;How to run a Spring Boot app?&#34;</span>));
+</span></span></code></pre></div><p>默认情况下，<code>MultiQueryExpander</code>在展开的查询列表中包含原始查询。您可以禁用此行为</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>MultiQueryExpander queryExpander <span style="color:#f92672">=</span> MultiQueryExpander.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">chatClientBuilder</span>(chatClientBuilder)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">includeOriginal</span>(<span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><p>该组件使用的提示可以通过生成器中可用的promptTemplate（）方法进行自定义。</p>
+<h2 id="检索">
+  检索
+  <a class="anchor" href="#%e6%a3%80%e7%b4%a2">#</a>
+</h2>
+<p>检索模块负责查询向量存储等数据系统，并检索最相关的文档。</p>
+<h2 id="文档搜索">
+  文档搜索
+  <a class="anchor" href="#%e6%96%87%e6%a1%a3%e6%90%9c%e7%b4%a2">#</a>
+</h2>
+<p>负责从底层数据源（如搜索引擎、向量存储、，</p>
+<h2 id="vectorstoredocumentretriever">
+  VectorStoreDocumentRetriever
+  <a class="anchor" href="#vectorstoredocumentretriever">#</a>
+</h2>
+<p><code>VectorStoreDocumentRetriever</code>从向量存储中检索语义类似于输入的文档</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>DocumentRetriever retriever <span style="color:#f92672">=</span> VectorStoreDocumentRetriever.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">vectorStore</span>(vectorStore)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">similarityThreshold</span>(0.<span style="color:#a6e22e">73</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">topK</span>(5)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">filterExpression</span>(<span style="color:#66d9ef">new</span> FilterExpressionBuilder()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">eq</span>(<span style="color:#e6db74">&#34;genre&#34;</span>, <span style="color:#e6db74">&#34;fairytale&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> documents <span style="color:#f92672">=</span> retriever.<span style="color:#a6e22e">retrieve</span>(<span style="color:#66d9ef">new</span> Query(<span style="color:#e6db74">&#34;What is the main character of the story?&#34;</span>));
+</span></span></code></pre></div><p>筛选器表达式可以是静态的，也可以是动态的。对于动态过滤器表达式，可以传递供应商。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>DocumentRetriever retriever <span style="color:#f92672">=</span> VectorStoreDocumentRetriever.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">vectorStore</span>(vectorStore)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">filterExpression</span>(() <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">new</span> FilterExpressionBuilder()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">eq</span>(<span style="color:#e6db74">&#34;tenant&#34;</span>, TenantContextHolder.<span style="color:#a6e22e">getTenantIdentifier</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> documents <span style="color:#f92672">=</span> retriever.<span style="color:#a6e22e">retrieve</span>(<span style="color:#66d9ef">new</span> Query(<span style="color:#e6db74">&#34;What are the KPIs for the next semester?&#34;</span>));
+</span></span></code></pre></div><p>您还可以使用filter_expression参数通过查询API提供特定于请求的筛选器表达式。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Query query <span style="color:#f92672">=</span> Query.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;Who is Anacletus?&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">context</span>(Map.<span style="color:#a6e22e">of</span>(VectorStoreDocumentRetriever.<span style="color:#a6e22e">FILTER_EXPRESSION</span>, <span style="color:#e6db74">&#34;location == &#39;Whispering Woods&#39;&#34;</span>))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> retrievedDocuments <span style="color:#f92672">=</span> documentRetriever.<span style="color:#a6e22e">retrieve</span>(query);
+</span></span></code></pre></div><h2 id="文档连接">
+  文档连接
+  <a class="anchor" href="#%e6%96%87%e6%a1%a3%e8%bf%9e%e6%8e%a5">#</a>
+</h2>
+<p>一个组件，用于将基于多个查询和从多个数据源检索的文档组合到</p>
+<h2 id="级联documentjoiner">
+  级联DocumentJoiner
+  <a class="anchor" href="#%e7%ba%a7%e8%81%94documentjoiner">#</a>
+</h2>
+<p><code>ConcatenationDocumentJoiner</code>组合基于多个查询和从多个数据源检索的文档</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Map<span style="color:#f92672">&lt;</span>Query, List<span style="color:#f92672">&lt;</span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;&gt;&gt;</span> documentsForQuery <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>DocumentJoiner documentJoiner <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ConcatenationDocumentJoiner();
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> documents <span style="color:#f92672">=</span> documentJoiner.<span style="color:#a6e22e">join</span>(documentsForQuery);
+</span></span></code></pre></div><h2 id="后期检索">
+  后期检索
+  <a class="anchor" href="#%e5%90%8e%e6%9c%9f%e6%a3%80%e7%b4%a2">#</a>
+</h2>
+<p>后期检索模块负责处理检索的文档，以实现尽可能最佳的生成结果。</p>
+<h2 id="单据过账处理">
+  单据过账处理
+  <a class="anchor" href="#%e5%8d%95%e6%8d%ae%e8%bf%87%e8%b4%a6%e5%a4%84%e7%90%86">#</a>
+</h2>
+<p>一种用于基于查询对检索到的文档进行后处理的组件，解决诸如中间丢失、模型的上下文长度限制以及减少检索到的信息中的噪声和冗余的需要等挑战。
+例如，它可以根据文档与查询的相关性对文档进行排序，删除不相关或冗余的文档，或者压缩每个文档的内容以减少噪声和冗余。</p>
+<h2 id="生成">
+  生成
+  <a class="anchor" href="#%e7%94%9f%e6%88%90">#</a>
+</h2>
+<p>生成模块负责根据用户查询和检索的文档生成最终响应。</p>
+<h2 id="查询增强功能">
+  查询增强功能
+  <a class="anchor" href="#%e6%9f%a5%e8%af%a2%e5%a2%9e%e5%bc%ba%e5%8a%9f%e8%83%bd">#</a>
+</h2>
+<p>用于用附加数据增强输入查询的组件，用于提供大型语言模型</p>
+<h2 id="上下文queryaugmenter">
+  上下文QueryAugmenter
+  <a class="anchor" href="#%e4%b8%8a%e4%b8%8b%e6%96%87queryaugmenter">#</a>
+</h2>
+<p><code>ContextualQueryAugmenter</code>使用来自所提供文档内容的上下文数据来增强用户查询。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>QueryAugmenter queryAugmenter <span style="color:#f92672">=</span> ContextualQueryAugmenter.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><p>默认情况下，<code>ContextualQueryAugmenter</code>不允许检索的上下文为空。当这种情况发生时，
+您可以启用<code>allowEmptyContext</code>选项，以允许模型生成响应，即使检索的上下文为空。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>QueryAugmenter queryAugmenter <span style="color:#f92672">=</span> ContextualQueryAugmenter.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">allowEmptyContext</span>(<span style="color:#66d9ef">true</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><p>该组件使用的提示可以通过promptTemplate（）和emptyContextPromptTempate（）方法进行定制</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#检索增强生成">检索增强生成</a>
+      <ul>
+        <li><a href="#顾问">顾问</a></li>
+        <li><a href="#问题解答顾问">问题解答顾问</a></li>
+        <li><a href="#动态过滤器表达式">动态过滤器表达式</a></li>
+        <li><a href="#自定义模板">自定义模板</a></li>
+        <li><a href="#检索增强顾问">检索增强顾问</a></li>
+        <li><a href="#顺序rag流">顺序RAG流</a></li>
+        <li><a href="#天真的rag">天真的RAG</a></li>
+        <li><a href="#高级rag">高级RAG</a></li>
+        <li><a href="#模块">模块</a></li>
+        <li><a href="#预检索">预检索</a></li>
+        <li><a href="#查询转换">查询转换</a></li>
+        <li><a href="#压缩查询变压器">压缩查询变压器</a></li>
+        <li><a href="#重写querytransformer">重写QueryTransformer</a></li>
+        <li><a href="#转换查询变压器">转换查询变压器</a></li>
+        <li><a href="#查询扩展">查询扩展</a></li>
+        <li><a href="#multiqueryexpandermultiquery扩展程序">MultiQueryExpander（MultiQuery扩展程序）</a></li>
+        <li><a href="#检索">检索</a></li>
+        <li><a href="#文档搜索">文档搜索</a></li>
+        <li><a href="#vectorstoredocumentretriever">VectorStoreDocumentRetriever</a></li>
+        <li><a href="#文档连接">文档连接</a></li>
+        <li><a href="#级联documentjoiner">级联DocumentJoiner</a></li>
+        <li><a href="#后期检索">后期检索</a></li>
+        <li><a href="#单据过账处理">单据过账处理</a></li>
+        <li><a href="#生成">生成</a></li>
+        <li><a href="#查询增强功能">查询增强功能</a></li>
+        <li><a href="#上下文queryaugmenter">上下文QueryAugmenter</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

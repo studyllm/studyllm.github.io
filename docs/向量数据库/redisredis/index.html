@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  Redis（Redis）
+  #
+
+本节将指导您设置RedisVectorStore以存储文档嵌入并执行相似性搜索。
+Redis是一个开源（BSD许可）的内存中数据结构存储，用作数据库、缓存、消息代理和流引擎。Redis提供数据结构，如字符串、哈希、列表、集、带范围查询的排序集、位图、超日志、地理空间索引和流。
+Redis Search and Query扩展了Redis OSS的核心功能，允许您将Redis用作向量数据库：
+
+  前提条件
+  #
+
+
+  自动配置
+  #
+
+Spring AI为Redis Vector Store提供Spring Boot自动配置。
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-starter-vector-store-redis&lt;/artifactId&gt;
+&lt;/dependency&gt;
+或到Gradle build.Gradle构建文件。
+dependencies {
+    implementation &#39;org.springframework.ai:spring-ai-starter-vector-store-redis&#39;
+}
+向量存储实现可以为您初始化必要的模式，但您必须通过在适当的构造函数中指定initializeSchema布尔值或通过设置…​在application.properties文件中初始化schema=true。
+请查看矢量存储的
+  配置参数列表，以了解默认值和配置选项。
+此外，您还需要一个已配置的EmbeddingModelbean。有关更多信息，请参阅EmbeddingModel部分。
+现在，您可以将RedisVectorStore自动连接为应用程序中的向量存储。
+@Autowired VectorStore vectorStore;
+
+// ...
+
+List &lt;Document&gt; documents = List.of(
+    new Document(&#34;Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!!&#34;, Map.of(&#34;meta1&#34;, &#34;meta1&#34;)),
+    new Document(&#34;The World is Big and Salvation Lurks Around the Corner&#34;),
+    new Document(&#34;You walk forward facing the past and you turn back toward the future.&#34;, Map.of(&#34;meta2&#34;, &#34;meta2&#34;)));
+
+// Add the documents to Redis
+vectorStore.add(documents);
+
+// Retrieve documents similar to a query
+List&lt;Document&gt; results = this.vectorStore.similaritySearch(SearchRequest.builder().query(&#34;Spring&#34;).topK(5).build());
+
+  配置属性
+  #
+
+要连接到Redis并使用RedisVectorStore，您需要提供实例的访问详细信息。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redisredis/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="Redis（Redis）">
+  <meta property="og:description" content="Redis（Redis） # 本节将指导您设置RedisVectorStore以存储文档嵌入并执行相似性搜索。 Redis是一个开源（BSD许可）的内存中数据结构存储，用作数据库、缓存、消息代理和流引擎。Redis提供数据结构，如字符串、哈希、列表、集、带范围查询的排序集、位图、超日志、地理空间索引和流。 Redis Search and Query扩展了Redis OSS的核心功能，允许您将Redis用作向量数据库：
+前提条件 # 自动配置 # Spring AI为Redis Vector Store提供Spring Boot自动配置。
+&lt;dependency&gt; &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt; &lt;artifactId&gt;spring-ai-starter-vector-store-redis&lt;/artifactId&gt; &lt;/dependency&gt; 或到Gradle build.Gradle构建文件。
+dependencies { implementation &#39;org.springframework.ai:spring-ai-starter-vector-store-redis&#39; } 向量存储实现可以为您初始化必要的模式，但您必须通过在适当的构造函数中指定initializeSchema布尔值或通过设置…​在application.properties文件中初始化schema=true。 请查看矢量存储的 配置参数列表，以了解默认值和配置选项。 此外，您还需要一个已配置的EmbeddingModelbean。有关更多信息，请参阅EmbeddingModel部分。 现在，您可以将RedisVectorStore自动连接为应用程序中的向量存储。
+@Autowired VectorStore vectorStore; // ... List &lt;Document&gt; documents = List.of( new Document(&#34;Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!!&#34;, Map.of(&#34;meta1&#34;, &#34;meta1&#34;)), new Document(&#34;The World is Big and Salvation Lurks Around the Corner&#34;), new Document(&#34;You walk forward facing the past and you turn back toward the future.&#34;, Map.of(&#34;meta2&#34;, &#34;meta2&#34;))); // Add the documents to Redis vectorStore.add(documents); // Retrieve documents similar to a query List&lt;Document&gt; results = this.vectorStore.similaritySearch(SearchRequest.builder().query(&#34;Spring&#34;).topK(5).build()); 配置属性 # 要连接到Redis并使用RedisVectorStore，您需要提供实例的访问详细信息。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>Redis（Redis） | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../favicon.png" >
+<link rel="manifest" href="../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redisredis/">
+<link rel="stylesheet" href="../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../fuse.min.js"></script>
+  <script defer src="../../../en.search.min.c2099fe8e92fda5a8bb2e37b214b3da69973489bb96981756a60dc5e82ee687b.js" integrity="sha256-wgmf6Okv2lqLsuN7IUs9pplzSJu5aYF1amDcXoLuaHs=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7b6a07f859f4dbd09b8c8b0aa4aaec3d" class="toggle"  />
+    <label for="section-7b6a07f859f4dbd09b8c8b0aa4aaec3d" class="flex justify-between">
+      <a href="../../../docs/%E6%A6%82%E8%BF%B0/" class="">引言</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%A6%82%E8%BF%B0/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-98a69a52873ff4521c7cbc37085c53f4" class="toggle"  />
+    <label for="section-98a69a52873ff4521c7cbc37085c53f4" class="flex justify-between">
+      <a href="../../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/" class="">聊天客户端API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/%E9%A1%BE%E9%97%AE/" class="">顾问API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-19144567cc77a340e1f7113bf4cb4d96" class="toggle"  />
+    <label for="section-19144567cc77a340e1f7113bf4cb4d96" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/" class="">弹簧AI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-84cc529361af621bb91f1f556e56b344" class="toggle"  />
+    <label for="section-84cc529361af621bb91f1f556e56b344" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/" class="">聊天模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9%E5%8C%A1%E5%A8%81/" class="">基岩匡威API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-483267c6684da0c66b47ed3892aae3ae" class="toggle"  />
+    <label for="section-483267c6684da0c66b47ed3892aae3ae" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%BA%E7%B1%BB3/" class="">人类3聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%BA%E7%B1%BB3/%E4%BA%BA%E5%B7%A5%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E5%B7%B2%E5%BC%83%E7%94%A8/" class="">人工函数调用（已弃用）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ddce6d1cf71999572cf58e906e650be8" class="toggle"  />
+    <label for="section-ddce6d1cf71999572cf58e906e650be8" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/azure-openai%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8/" class="">Azure OpenAI函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/deepseek%E6%B7%B1%E5%BA%A6%E6%90%9C%E7%B4%A2/" class="">DeepSeek聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/docker%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E5%99%A8/" class="">Docker Model Runner聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e63102d10905af911b0f2f96b381f454" class="toggle"  />
+    <label for="section-e63102d10905af911b0f2f96b381f454" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%B0%B7%E6%AD%8Cvertexai/" class="">谷歌VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%B0%B7%E6%AD%8Cvertexai/vertexai%E5%8F%8C%E5%AD%90%E5%BA%A7/" class="">VertexAI双子座聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%A0%BC%E7%BD%97%E5%85%8B/" class="">Groq聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%8B%A5%E6%8A%B1%E7%9A%84%E8%84%B8/" class="">拥抱式面部聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-efff3eaee6a054e21a884caaa9c9d1d0" class="toggle"  />
+    <label for="section-efff3eaee6a054e21a884caaa9c9d1d0" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Mistral AI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/mistral%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">Mistral AI函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d719d8b286788a6b3bb151561cedf25e" class="toggle"  />
+    <label for="section-d719d8b286788a6b3bb151561cedf25e" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/" class="">MiniMax聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/minmaxfunction%E8%B0%83%E7%94%A8/" class="">函数调用</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/moonshot%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Moonshot AI聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%8B%B1%E4%BC%9F%E8%BE%BEnvidia/" class="">NVIDIA聊天室</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b5a2272d9e0cd5e97218ab60fdc2811d" class="toggle"  />
+    <label for="section-b5a2272d9e0cd5e97218ab60fdc2811d" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/" class="">Ollama聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/ollama%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">Ollama函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%9B%B0%E6%83%91%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7b5525ed1291badc6d8e708aba4b059d" class="toggle"  />
+    <label for="section-7b5525ed1291badc6d8e708aba4b059d" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/openai%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">函数调用</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%99%BA%E6%B5%A6ai/" class="">智浦AI聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-08f2008ddfd43562b35e6c7d7e0ade90" class="toggle"  />
+    <label for="section-08f2008ddfd43562b35e6c7d7e0ade90" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E8%BD%AC%E5%BD%95api/" class="">转录API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E8%BD%AC%E5%BD%95api/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6%E5%8C%96%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">适度性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3bce704ad81d7d95bfdcb61623d32c9" class="toggle"  />
+    <label for="section-f3bce704ad81d7d95bfdcb61623d32c9" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/" class="">嵌入模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-de35e9a68012e455890ae329d58ec54e" class="toggle"  />
+    <label for="section-de35e9a68012e455890ae329d58ec54e" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2cohere/" class="">内聚层嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6/" class="">Titan嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Mistral AI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/" class="">MiniMax聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/oci-genai%E5%85%AC%E5%8F%B8/" class="">Oracle云基础架构（OCI）GenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/" class="">Ollama嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/onnx%E5%8F%98%E5%8E%8B%E5%99%A8/" class="">变压器（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E9%82%AE%E6%94%BFml/" class="">PostgresML嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千凡嵌件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E6%99%BA%E6%B5%A6ai/" class="">ZhiPuAI嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3247fe8da2bdf11331fdf12b135a2bd5" class="toggle"  />
+    <label for="section-3247fe8da2bdf11331fdf12b135a2bd5" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E6%96%87%E6%9C%AC%E5%88%B0%E8%AF%AD%E9%9F%B3ttsapi/" class="">文本到语音（TTS）API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E6%96%87%E6%9C%AC%E5%88%B0%E8%AF%AD%E9%9F%B3ttsapi/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI文本到语音（TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b7bd5e743ef0ff8d5bae9e8b59690e88" class="toggle"  />
+    <label for="section-b7bd5e743ef0ff8d5bae9e8b59690e88" class="flex justify-between">
+      <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/" class="">映像模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E7%A8%B3%E5%AE%9A%E6%80%A7/" class="">稳定性AI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%BF%97%E6%99%AE%E8%89%BE/" class="">ZhiPuAI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千帆形象</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6d7ee8a8c290e614a8d4b11b94d5da92" class="toggle" checked />
+    <label for="section-6d7ee8a8c290e614a8d4b11b94d5da92" class="flex justify-between">
+      <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">向量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai%E6%9C%8D%E5%8A%A1/" class="">Azure AI服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">Azure Cosmos数据库</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6chroma/" class="">色度（Chroma）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%B2%99%E5%8F%91%E5%BA%95%E5%BA%A7/" class="">沙发底座</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%B9%E6%80%A7%E6%90%9C%E7%B4%A2/" class="">弹性搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire%E5%85%AC%E5%8F%B8/" class="">GemFire矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%B8%A2%E5%B1%9E/" class="">鸢属</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb%E5%9C%B0%E5%9B%BE%E9%9B%86/" class="">MongoDB地图集</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j%E5%85%AC%E5%8F%B8/" class="">Neo4j公司</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%89%93%E5%BC%80%E6%90%9C%E7%B4%A2/" class="">打开搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%94%B2%E9%AA%A8%E6%96%87%E5%85%AC%E5%8F%B8/" class="">Oracle Database 23ai-AI矢量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg%E8%BD%BD%E4%BD%93/" class="">PG载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C%E4%BD%93/" class="">松果体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/qdrant%E8%B4%A8%E9%87%8F/" class="">Qdrant（质量）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redisredis/" class="active">Redis（Redis）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap%E9%9F%A9%E4%BA%9A/" class="">SAP HANA云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B1%BB%E5%9E%8B%E6%84%9Ftypesense/" class="">类型感（Typesense）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%B1%E5%8C%96weaviate/" class="">弱化（Weaviate）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-0a037040fc55c435e3b657a1139d5658" class="toggle"  />
+    <label for="section-0a037040fc55c435e3b657a1139d5658" class="flex justify-between">
+      <a href="../../../docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/" class="">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/etl%E7%AE%A1%E9%81%93/" class="">ETL管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A4%E5%AD%98%E5%82%A8%E5%99%A8/" class="">聊天室存储器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e44d7b55bf077e5f0c1b5b8f7d9dad2a" class="toggle"  />
+    <label for="section-e44d7b55bf077e5f0c1b5b8f7d9dad2a" class="flex justify-between">
+      <a href="../../../docs/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/%E8%BF%81%E7%A7%BB%E5%88%B0toolcallback-api/" class="">从FunctionCallback迁移到ToolCallbackAPI</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f126def055d862aaf56bdc7e619542c7" class="toggle"  />
+    <label for="section-f126def055d862aaf56bdc7e619542c7" class="flex justify-between">
+      <a href="../../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%90%AF%E5%8A%A8%E7%A8%8B%E5%BA%8F/" class="">MCP客户端引导启动程序</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%90%AF%E5%8A%A8%E7%A8%8B%E5%BA%8F/" class="">MCP服务器引导启动程序</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%A4%9A%E6%A8%A1%E6%80%81/" class="">多模态API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0/" class="">评估和测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%87%BA%E8%B5%84%E6%8C%87%E5%8D%97/" class="">出资指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%8F%90%E7%A4%BA/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8D%B3%E6%97%B6%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">即时工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/docker%E4%BD%9C%E6%9B%B2/" class="">Docker作曲</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BA%91%E7%BB%91%E5%AE%9Acloud-bindings/" class="">云绑定（Cloud Bindings）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E7%9B%B8%E5%B9%B2cohere/" class="">OCI GenAI Cohere聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">谷歌VertexAI文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">谷歌VertexAI多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Redis（Redis）</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#redisredis">Redis（Redis）</a>
+      <ul>
+        <li><a href="#前提条件">前提条件</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#元数据筛选">元数据筛选</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#访问本机客户端">访问本机客户端</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="redisredis">
+  Redis（Redis）
+  <a class="anchor" href="#redisredis">#</a>
+</h1>
+<p>本节将指导您设置<code>RedisVectorStore</code>以存储文档嵌入并执行相似性搜索。
+Redis是一个开源（BSD许可）的内存中数据结构存储，用作数据库、缓存、消息代理和流引擎。Redis提供数据结构，如字符串、哈希、列表、集、带范围查询的排序集、位图、超日志、地理空间索引和流。
+Redis Search and Query扩展了Redis OSS的核心功能，允许您将Redis用作向量数据库：</p>
+<h2 id="前提条件">
+  前提条件
+  <a class="anchor" href="#%e5%89%8d%e6%8f%90%e6%9d%a1%e4%bb%b6">#</a>
+</h2>
+<h2 id="自动配置">
+  自动配置
+  <a class="anchor" href="#%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>Spring AI为Redis Vector Store提供Spring Boot自动配置。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-starter-vector-store-redis<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或到Gradle build.Gradle构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-starter-vector-store-redis&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>向量存储实现可以为您初始化必要的模式，但您必须通过在适当的构造函数中指定<code>initializeSchema</code>布尔值或通过设置…​在<code>application.properties</code>文件中初始化schema=true。
+请查看矢量存储的
+  <a href="../../../#redisvector-properties">配置参数</a>列表，以了解默认值和配置选项。
+此外，您还需要一个已配置的<code>EmbeddingModel</code>bean。有关更多信息，请参阅<code>EmbeddingModel</code>部分。
+现在，您可以将<code>RedisVectorStore</code>自动连接为应用程序中的向量存储。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Autowired</span> VectorStore vectorStore;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>List <span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> documents <span style="color:#f92672">=</span> List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!!&#34;</span>, Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;meta1&#34;</span>, <span style="color:#e6db74">&#34;meta1&#34;</span>)),
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;The World is Big and Salvation Lurks Around the Corner&#34;</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;You walk forward facing the past and you turn back toward the future.&#34;</span>, Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;meta2&#34;</span>, <span style="color:#e6db74">&#34;meta2&#34;</span>)));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Add the documents to Redis</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">add</span>(documents);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Retrieve documents similar to a query</span>
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> results <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">vectorStore</span>.<span style="color:#a6e22e">similaritySearch</span>(SearchRequest.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;Spring&#34;</span>).<span style="color:#a6e22e">topK</span>(5).<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><h2 id="配置属性">
+  配置属性
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>要连接到Redis并使用<code>RedisVectorStore</code>，您需要提供实例的访问详细信息。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">data</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">redis</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">url</span>: <span style="color:#ae81ff">&lt;redis instance url&gt;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">vectorstore</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">redis</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">initialize-schema</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">index-name</span>: <span style="color:#ae81ff">custom-index</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">prefix</span>: <span style="color:#ae81ff">custom-prefix</span>
+</span></span></code></pre></div><p>对于redis连接配置，或者，可以通过Spring Boot的application.properties提供简单的配置。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.data.redis.host</span><span style="color:#f92672">=</span><span style="color:#e6db74">localhost</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.data.redis.port</span><span style="color:#f92672">=</span><span style="color:#e6db74">6379</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.data.redis.username</span><span style="color:#f92672">=</span><span style="color:#e6db74">default</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.data.redis.password</span><span style="color:#f92672">=</span>
+</span></span></code></pre></div><p>以<code>spring.ai.vectorstore.redis.*</code>开头的属性用于配置<code>RedisVectorStore</code>:</p>
+<h2 id="元数据筛选">
+  元数据筛选
+  <a class="anchor" href="#%e5%85%83%e6%95%b0%e6%8d%ae%e7%ad%9b%e9%80%89">#</a>
+</h2>
+<p>您也可以在Redis中利用通用的、可移植的元数据过滤器。
+例如，可以使用文本表达式语言：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">similaritySearch</span>(SearchRequest.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;The World&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">topK</span>(TOP_K)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">similarityThreshold</span>(SIMILARITY_THRESHOLD)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">filterExpression</span>(<span style="color:#e6db74">&#34;country in [&#39;UK&#39;, &#39;NL&#39;] &amp;&amp; year &gt;= 2020&#34;</span>).<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><p>或以编程方式使用筛选器。表达式DSL:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>FilterExpressionBuilder b <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FilterExpressionBuilder();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">similaritySearch</span>(SearchRequest.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;The World&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">topK</span>(TOP_K)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">similarityThreshold</span>(SIMILARITY_THRESHOLD)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">filterExpression</span>(b.<span style="color:#a6e22e">and</span>(
+</span></span><span style="display:flex;"><span>                b.<span style="color:#a6e22e">in</span>(<span style="color:#e6db74">&#34;country&#34;</span>, <span style="color:#e6db74">&#34;UK&#34;</span>, <span style="color:#e6db74">&#34;NL&#34;</span>),
+</span></span><span style="display:flex;"><span>                b.<span style="color:#a6e22e">gte</span>(<span style="color:#e6db74">&#34;year&#34;</span>, 2020)).<span style="color:#a6e22e">build</span>()).<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><p>例如，此可移植筛选器表达式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span>country <span style="color:#66d9ef">in</span> [<span style="color:#e6db74">&#39;UK&#39;</span>, <span style="color:#e6db74">&#39;NL&#39;</span>] <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">year</span> <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">2020</span>
+</span></span></code></pre></div><p>转换为专有的Redis筛选器格式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>@country:{UK | NL} @year:[2020 inf]
+</span></span></code></pre></div><h2 id="手动配置">
+  手动配置
+  <a class="anchor" href="#%e6%89%8b%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>您可以手动配置Redis向量存储，而不是使用Spring Boot自动配置。为此，您需要将spring ai redis商店添加到项目中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-redis-store<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或到Gradle build.Gradle构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-redis-store&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>创建<code>JedisPooled</code> bean：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> JedisPooled <span style="color:#a6e22e">jedisPooled</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> JedisPooled(<span style="color:#e6db74">&#34;&lt;host&gt;&#34;</span>, 6379);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>然后使用构建器模式创建<code>RedisVectorStore</code> bean：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> VectorStore <span style="color:#a6e22e">vectorStore</span>(JedisPooled jedisPooled, EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> RedisVectorStore.<span style="color:#a6e22e">builder</span>(jedisPooled, embeddingModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">indexName</span>(<span style="color:#e6db74">&#34;custom-index&#34;</span>)                <span style="color:#75715e">// Optional: defaults to &#34;spring-ai-index&#34;</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">prefix</span>(<span style="color:#e6db74">&#34;custom-prefix&#34;</span>)                  <span style="color:#75715e">// Optional: defaults to &#34;embedding:&#34;</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">metadataFields</span>(                         <span style="color:#75715e">// Optional: define metadata fields for filtering</span>
+</span></span><span style="display:flex;"><span>            MetadataField.<span style="color:#a6e22e">tag</span>(<span style="color:#e6db74">&#34;country&#34;</span>),
+</span></span><span style="display:flex;"><span>            MetadataField.<span style="color:#a6e22e">numeric</span>(<span style="color:#e6db74">&#34;year&#34;</span>))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">initializeSchema</span>(<span style="color:#66d9ef">true</span>)                   <span style="color:#75715e">// Optional: defaults to false</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">batchingStrategy</span>(<span style="color:#66d9ef">new</span> TokenCountBatchingStrategy()) <span style="color:#75715e">// Optional: defaults to TokenCountBatchingStrategy</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// This can be any EmbeddingModel implementation</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> EmbeddingModel <span style="color:#a6e22e">embeddingModel</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> OpenAiEmbeddingModel(<span style="color:#66d9ef">new</span> OpenAiApi(System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>)));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="访问本机客户端">
+  访问本机客户端
+  <a class="anchor" href="#%e8%ae%bf%e9%97%ae%e6%9c%ac%e6%9c%ba%e5%ae%a2%e6%88%b7%e7%ab%af">#</a>
+</h2>
+<p>Redis Vector Store实现通过getNativeClient（）方法提供对底层本机Redis客户端（<code>JedisPooled</code>）的访问：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>RedisVectorStore vectorStore <span style="color:#f92672">=</span> context.<span style="color:#a6e22e">getBean</span>(RedisVectorStore.<span style="color:#a6e22e">class</span>);
+</span></span><span style="display:flex;"><span>Optional<span style="color:#f92672">&lt;</span>JedisPooled<span style="color:#f92672">&gt;</span> nativeClient <span style="color:#f92672">=</span> vectorStore.<span style="color:#a6e22e">getNativeClient</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (nativeClient.<span style="color:#a6e22e">isPresent</span>()) {
+</span></span><span style="display:flex;"><span>    JedisPooled jedis <span style="color:#f92672">=</span> nativeClient.<span style="color:#a6e22e">get</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Use the native client for Redis-specific operations</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>本机客户端允许您访问Redis特定的功能和操作，这些功能和操作可能不会通过<code>VectorStore</code>界面公开。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#redisredis">Redis（Redis）</a>
+      <ul>
+        <li><a href="#前提条件">前提条件</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#元数据筛选">元数据筛选</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#访问本机客户端">访问本机客户端</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

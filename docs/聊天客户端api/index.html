@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  聊天客户端API
+  #
+
+ChatClient提供了一个流畅的API，用于与人工智能模型通信。
+fluent API具有用于构建Prompt的组成部分的方法，该Prompt作为输入传递给AI模型。
+人工智能模型处理两种主要类型的消息：用户消息（来自用户的直接输入）和系统消息（由系统生成以指导对话）。
+这些消息通常包含占位符，这些占位符在运行时根据用户输入进行替换，以定制AI模型对用户输入的响应。
+还可以指定提示选项，例如要使用的AI模型的名称，以及控制生成输出的随机性或创造性的温度设置。
+
+  创建ChatClient
+  #
+
+使用ChatClient创建ChatClient。Builder对象。
+
+  使用自动配置的ChatClient。建筑商
+  #
+
+在最简单的用例中，SpringAI提供了SpringBoot自动配置，创建了一个原型ChatClient。生成器bean，供您注入到类中。
+@RestController
+class MyController {
+
+    private final ChatClient chatClient;
+
+    public MyController(ChatClient.Builder chatClientBuilder) {
+        this.chatClient = chatClientBuilder.build();
+    }
+
+    @GetMapping(&#34;/ai&#34;)
+    String generation(String userInput) {
+        return this.chatClient.prompt()
+            .user(userInput)
+            .call()
+            .content();
+    }
+}
+在这个简单的示例中，用户输入设置用户消息的内容。
+
+  以编程方式创建ChatClient
+  #
+
+您可以禁用ChatClient。通过设置属性spring.ai.chat.client.enabled=false来构建自动配置。
+ChatModel myChatModel = ... // usually autowired
+
+ChatClient.Builder builder = ChatClient.builder(this.myChatModel);
+
+// or create a ChatClient with the default builder settings:
+
+ChatClient chatClient = ChatClient.create(this.myChatModel);
+
+  ChatClient Fluent API
+  #
+
+ChatClient fluent API允许您使用重载提示方法以三种不同的方式创建提示，以启动fluent API:">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="聊天客户端API">
+  <meta property="og:description" content="聊天客户端API # ChatClient提供了一个流畅的API，用于与人工智能模型通信。 fluent API具有用于构建Prompt的组成部分的方法，该Prompt作为输入传递给AI模型。 人工智能模型处理两种主要类型的消息：用户消息（来自用户的直接输入）和系统消息（由系统生成以指导对话）。 这些消息通常包含占位符，这些占位符在运行时根据用户输入进行替换，以定制AI模型对用户输入的响应。 还可以指定提示选项，例如要使用的AI模型的名称，以及控制生成输出的随机性或创造性的温度设置。
+创建ChatClient # 使用ChatClient创建ChatClient。Builder对象。
+使用自动配置的ChatClient。建筑商 # 在最简单的用例中，SpringAI提供了SpringBoot自动配置，创建了一个原型ChatClient。生成器bean，供您注入到类中。
+@RestController class MyController { private final ChatClient chatClient; public MyController(ChatClient.Builder chatClientBuilder) { this.chatClient = chatClientBuilder.build(); } @GetMapping(&#34;/ai&#34;) String generation(String userInput) { return this.chatClient.prompt() .user(userInput) .call() .content(); } } 在这个简单的示例中，用户输入设置用户消息的内容。
+以编程方式创建ChatClient # 您可以禁用ChatClient。通过设置属性spring.ai.chat.client.enabled=false来构建自动配置。
+ChatModel myChatModel = ... // usually autowired ChatClient.Builder builder = ChatClient.builder(this.myChatModel); // or create a ChatClient with the default builder settings: ChatClient chatClient = ChatClient.create(this.myChatModel); ChatClient Fluent API # ChatClient fluent API允许您使用重载提示方法以三种不同的方式创建提示，以启动fluent API:">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="website">
+<title>聊天客户端API | Spring AI 1.0.0</title>
+<link rel="icon" href="../../favicon.png" >
+<link rel="manifest" href="../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/">
+<link rel="stylesheet" href="../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../fuse.min.js"></script>
+  <script defer src="../../en.search.min.c2099fe8e92fda5a8bb2e37b214b3da69973489bb96981756a60dc5e82ee687b.js" integrity="sha256-wgmf6Okv2lqLsuN7IUs9pplzSJu5aYF1amDcXoLuaHs=" crossorigin="anonymous"></script>
+<link rel="alternate" type="application/rss+xml" href="https://studyllm.github.io/docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/index.xml" title="Spring AI 1.0.0" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7b6a07f859f4dbd09b8c8b0aa4aaec3d" class="toggle"  />
+    <label for="section-7b6a07f859f4dbd09b8c8b0aa4aaec3d" class="flex justify-between">
+      <a href="../../docs/%E6%A6%82%E8%BF%B0/" class="">引言</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A6%82%E8%BF%B0/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-98a69a52873ff4521c7cbc37085c53f4" class="toggle" checked />
+    <label for="section-98a69a52873ff4521c7cbc37085c53f4" class="flex justify-between">
+      <a href="../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/" class="active">聊天客户端API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AFapi/%E9%A1%BE%E9%97%AE/" class="">顾问API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-19144567cc77a340e1f7113bf4cb4d96" class="toggle"  />
+    <label for="section-19144567cc77a340e1f7113bf4cb4d96" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/" class="">弹簧AI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-84cc529361af621bb91f1f556e56b344" class="toggle"  />
+    <label for="section-84cc529361af621bb91f1f556e56b344" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/" class="">聊天模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9%E5%8C%A1%E5%A8%81/" class="">基岩匡威API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-483267c6684da0c66b47ed3892aae3ae" class="toggle"  />
+    <label for="section-483267c6684da0c66b47ed3892aae3ae" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%BA%E7%B1%BB3/" class="">人类3聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E4%BA%BA%E7%B1%BB3/%E4%BA%BA%E5%B7%A5%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E5%B7%B2%E5%BC%83%E7%94%A8/" class="">人工函数调用（已弃用）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ddce6d1cf71999572cf58e906e650be8" class="toggle"  />
+    <label for="section-ddce6d1cf71999572cf58e906e650be8" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/azure-openai%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8/" class="">Azure OpenAI函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/deepseek%E6%B7%B1%E5%BA%A6%E6%90%9C%E7%B4%A2/" class="">DeepSeek聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/docker%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E5%99%A8/" class="">Docker Model Runner聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e63102d10905af911b0f2f96b381f454" class="toggle"  />
+    <label for="section-e63102d10905af911b0f2f96b381f454" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%B0%B7%E6%AD%8Cvertexai/" class="">谷歌VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%B0%B7%E6%AD%8Cvertexai/vertexai%E5%8F%8C%E5%AD%90%E5%BA%A7/" class="">VertexAI双子座聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%A0%BC%E7%BD%97%E5%85%8B/" class="">Groq聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%8B%A5%E6%8A%B1%E7%9A%84%E8%84%B8/" class="">拥抱式面部聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-efff3eaee6a054e21a884caaa9c9d1d0" class="toggle"  />
+    <label for="section-efff3eaee6a054e21a884caaa9c9d1d0" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Mistral AI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/mistral%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">Mistral AI函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d719d8b286788a6b3bb151561cedf25e" class="toggle"  />
+    <label for="section-d719d8b286788a6b3bb151561cedf25e" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/" class="">MiniMax聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/minmaxfunction%E8%B0%83%E7%94%A8/" class="">函数调用</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/moonshot%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Moonshot AI聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E8%8B%B1%E4%BC%9F%E8%BE%BEnvidia/" class="">NVIDIA聊天室</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b5a2272d9e0cd5e97218ab60fdc2811d" class="toggle"  />
+    <label for="section-b5a2272d9e0cd5e97218ab60fdc2811d" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/" class="">Ollama聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/ollama%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">Ollama函数调用（不推荐）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%9B%B0%E6%83%91%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7b5525ed1291badc6d8e708aba4b059d" class="toggle"  />
+    <label for="section-7b5525ed1291badc6d8e708aba4b059d" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI聊天</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/openai%E5%87%BD%E6%95%B0%E8%B0%83%E7%94%A8%E4%B8%8D%E6%8E%A8%E8%8D%90/" class="">函数调用</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/%E6%99%BA%E6%B5%A6ai/" class="">智浦AI聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-08f2008ddfd43562b35e6c7d7e0ade90" class="toggle"  />
+    <label for="section-08f2008ddfd43562b35e6c7d7e0ade90" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E8%BD%AC%E5%BD%95api/" class="">转录API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E8%BD%AC%E5%BD%95api/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6%E5%8C%96%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">适度性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3bce704ad81d7d95bfdcb61623d32c9" class="toggle"  />
+    <label for="section-f3bce704ad81d7d95bfdcb61623d32c9" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/" class="">嵌入模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-de35e9a68012e455890ae329d58ec54e" class="toggle"  />
+    <label for="section-de35e9a68012e455890ae329d58ec54e" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2cohere/" class="">内聚层嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6/" class="">Titan嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/mistral%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">Mistral AI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E6%9C%80%E5%B0%8F%E6%9C%80%E5%A4%A7%E5%80%BC/" class="">MiniMax聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/oci-genai%E5%85%AC%E5%8F%B8/" class="">Oracle云基础架构（OCI）GenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%A5%A5%E6%8B%89%E9%A9%ACollama/" class="">Ollama嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/onnx%E5%8F%98%E5%8E%8B%E5%99%A8/" class="">变压器（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E9%82%AE%E6%94%BFml/" class="">PostgresML嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千凡嵌件</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B/%E6%99%BA%E6%B5%A6ai/" class="">ZhiPuAI嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3247fe8da2bdf11331fdf12b135a2bd5" class="toggle"  />
+    <label for="section-3247fe8da2bdf11331fdf12b135a2bd5" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E6%96%87%E6%9C%AC%E5%88%B0%E8%AF%AD%E9%9F%B3ttsapi/" class="">文本到语音（TTS）API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E5%9E%8B%E5%8F%B7/%E6%96%87%E6%9C%AC%E5%88%B0%E8%AF%AD%E9%9F%B3ttsapi/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI文本到语音（TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-b7bd5e743ef0ff8d5bae9e8b59690e88" class="toggle"  />
+    <label for="section-b7bd5e743ef0ff8d5bae9e8b59690e88" class="flex justify-between">
+      <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/" class="">映像模型API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/azure-openai%E8%BD%AF%E4%BB%B6/" class="">Azure OpenAI映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%BC%80%E6%94%BE%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD/" class="">OpenAI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E7%A8%B3%E5%AE%9A%E6%80%A7/" class="">稳定性AI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%BF%97%E6%99%AE%E8%89%BE/" class="">ZhiPuAI图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B/%E5%8D%83%E5%B8%86/" class="">千帆形象</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6d7ee8a8c290e614a8d4b11b94d5da92" class="toggle"  />
+    <label for="section-6d7ee8a8c290e614a8d4b11b94d5da92" class="flex justify-between">
+      <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">向量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai%E6%9C%8D%E5%8A%A1/" class="">Azure AI服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">Azure Cosmos数据库</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6chroma/" class="">色度（Chroma）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%B2%99%E5%8F%91%E5%BA%95%E5%BA%A7/" class="">沙发底座</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%B9%E6%80%A7%E6%90%9C%E7%B4%A2/" class="">弹性搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire%E5%85%AC%E5%8F%B8/" class="">GemFire矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%B8%A2%E5%B1%9E/" class="">鸢属</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb%E5%9C%B0%E5%9B%BE%E9%9B%86/" class="">MongoDB地图集</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j%E5%85%AC%E5%8F%B8/" class="">Neo4j公司</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%89%93%E5%BC%80%E6%90%9C%E7%B4%A2/" class="">打开搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%94%B2%E9%AA%A8%E6%96%87%E5%85%AC%E5%8F%B8/" class="">Oracle Database 23ai-AI矢量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg%E8%BD%BD%E4%BD%93/" class="">PG载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C%E4%BD%93/" class="">松果体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/qdrant%E8%B4%A8%E9%87%8F/" class="">Qdrant（质量）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redisredis/" class="">Redis（Redis）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap%E9%9F%A9%E4%BA%9A/" class="">SAP HANA云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B1%BB%E5%9E%8B%E6%84%9Ftypesense/" class="">类型感（Typesense）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%B1%E5%8C%96weaviate/" class="">弱化（Weaviate）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-0a037040fc55c435e3b657a1139d5658" class="toggle"  />
+    <label for="section-0a037040fc55c435e3b657a1139d5658" class="flex justify-between">
+      <a href="../../docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/" class="">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90rag/etl%E7%AE%A1%E9%81%93/" class="">ETL管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E8%81%8A%E5%A4%A9%E5%AE%A4%E5%AD%98%E5%82%A8%E5%99%A8/" class="">聊天室存储器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e44d7b55bf077e5f0c1b5b8f7d9dad2a" class="toggle"  />
+    <label for="section-e44d7b55bf077e5f0c1b5b8f7d9dad2a" class="flex justify-between">
+      <a href="../../docs/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/%E8%BF%81%E7%A7%BB%E5%88%B0toolcallback-api/" class="">从FunctionCallback迁移到ToolCallbackAPI</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f126def055d862aaf56bdc7e619542c7" class="toggle"  />
+    <label for="section-f126def055d862aaf56bdc7e619542c7" class="flex justify-between">
+      <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%90%AF%E5%8A%A8%E7%A8%8B%E5%BA%8F/" class="">MCP客户端引导启动程序</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%90%AF%E5%8A%A8%E7%A8%8B%E5%BA%8F/" class="">MCP服务器引导启动程序</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%A4%9A%E6%A8%A1%E6%80%81/" class="">多模态API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0/" class="">评估和测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%87%BA%E8%B5%84%E6%8C%87%E5%8D%97/" class="">出资指南</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%8F%90%E7%A4%BA/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8D%B3%E6%97%B6%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">即时工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/docker%E4%BD%9C%E6%9B%B2/" class="">Docker作曲</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BA%91%E7%BB%91%E5%AE%9Acloud-bindings/" class="">云绑定（Cloud Bindings）</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E7%9B%B8%E5%B9%B2cohere/" class="">OCI GenAI Cohere聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">谷歌VertexAI文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">谷歌VertexAI多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>聊天客户端API</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#聊天客户端api">聊天客户端API</a>
+      <ul>
+        <li><a href="#创建chatclient">创建ChatClient</a></li>
+        <li><a href="#使用自动配置的chatclient建筑商">使用自动配置的ChatClient。建筑商</a></li>
+        <li><a href="#以编程方式创建chatclient">以编程方式创建ChatClient</a></li>
+        <li><a href="#chatclient-fluent-api">ChatClient Fluent API</a></li>
+        <li><a href="#chatclient响应">ChatClient响应</a></li>
+        <li><a href="#返回chatresponse">返回ChatResponse</a></li>
+        <li><a href="#返回实体">返回实体</a></li>
+        <li><a href="#流式处理响应">流式处理响应</a></li>
+        <li><a href="#提示模板">提示模板</a></li>
+        <li><a href="#call返回值">call（）返回值</a></li>
+        <li><a href="#stream返回值">stream（）返回值</a></li>
+        <li><a href="#使用默认值">使用默认值</a></li>
+        <li><a href="#默认系统文本">默认系统文本</a></li>
+        <li><a href="#带参数的默认系统文本">带参数的默认系统文本</a></li>
+        <li><a href="#其他默认值">其他默认值</a></li>
+        <li><a href="#顾问">顾问</a></li>
+        <li><a href="#chatclient中的advisor配置">ChatClient中的Advisor配置</a></li>
+        <li><a href="#检索增强生成">检索增强生成</a></li>
+        <li><a href="#日志记录">日志记录</a></li>
+        <li><a href="#聊天记忆不推荐">聊天记忆（不推荐）</a></li>
+        <li><a href="#cassandra聊天存储器">Cassandra聊天存储器</a></li>
+        <li><a href="#neo4j聊天记忆">Neo4j聊天记忆</a></li>
+        <li><a href="#jdbc聊天记忆">Jdbc聊天记忆</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="聊天客户端api">
+  聊天客户端API
+  <a class="anchor" href="#%e8%81%8a%e5%a4%a9%e5%ae%a2%e6%88%b7%e7%ab%afapi">#</a>
+</h1>
+<p><code>ChatClient</code>提供了一个流畅的API，用于与人工智能模型通信。
+fluent API具有用于构建<code>Prompt</code>的组成部分的方法，该<code>Prompt</code>作为输入传递给AI模型。
+人工智能模型处理两种主要类型的消息：用户消息（来自用户的直接输入）和系统消息（由系统生成以指导对话）。
+这些消息通常包含占位符，这些占位符在运行时根据用户输入进行替换，以定制AI模型对用户输入的响应。
+还可以指定提示选项，例如要使用的AI模型的名称，以及控制生成输出的随机性或创造性的温度设置。</p>
+<h2 id="创建chatclient">
+  创建ChatClient
+  <a class="anchor" href="#%e5%88%9b%e5%bb%bachatclient">#</a>
+</h2>
+<p>使用<code>ChatClient</code>创建<code>ChatClient</code>。Builder对象。</p>
+<h2 id="使用自动配置的chatclient建筑商">
+  使用自动配置的ChatClient。建筑商
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae%e7%9a%84chatclient%e5%bb%ba%e7%ad%91%e5%95%86">#</a>
+</h2>
+<p>在最简单的用例中，SpringAI提供了SpringBoot自动配置，创建了一个原型ChatClient。生成器bean，供您注入到类中。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@RestController</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyController</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> ChatClient chatClient;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">MyController</span>(ChatClient.<span style="color:#a6e22e">Builder</span> chatClientBuilder) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span> <span style="color:#f92672">=</span> chatClientBuilder.<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@GetMapping</span>(<span style="color:#e6db74">&#34;/ai&#34;</span>)
+</span></span><span style="display:flex;"><span>    String <span style="color:#a6e22e">generation</span>(String userInput) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span>.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(userInput)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>在这个简单的示例中，用户输入设置用户消息的内容。</p>
+<h2 id="以编程方式创建chatclient">
+  以编程方式创建ChatClient
+  <a class="anchor" href="#%e4%bb%a5%e7%bc%96%e7%a8%8b%e6%96%b9%e5%bc%8f%e5%88%9b%e5%bb%bachatclient">#</a>
+</h2>
+<p>您可以禁用ChatClient。通过设置属性<code>spring.ai.chat.client.enabled=false</code>来构建自动配置。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel myChatModel <span style="color:#f92672">=</span> ... <span style="color:#75715e">// usually autowired</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatClient.<span style="color:#a6e22e">Builder</span> builder <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">myChatModel</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// or create a ChatClient with the default builder settings:</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatClient chatClient <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">myChatModel</span>);
+</span></span></code></pre></div><h2 id="chatclient-fluent-api">
+  ChatClient Fluent API
+  <a class="anchor" href="#chatclient-fluent-api">#</a>
+</h2>
+<p><code>ChatClient</code> fluent API允许您使用重载提示方法以三种不同的方式创建提示，以启动fluent API:</p>
+<ul>
+<li>prompt（）：这个没有参数的方法允许您开始使用fluent API，允许您构建提示符的用户、系统和其他部分。</li>
+<li>prompt（prompt-prompt）：该方法接受prompt参数，允许您传入使用prompt的非流畅API创建的prompt实例。</li>
+<li>prompt（Stringcontent）：这是一种与前面的重载类似的方便方法。它接受用户的文本内容。</li>
+</ul>
+<h2 id="chatclient响应">
+  ChatClient响应
+  <a class="anchor" href="#chatclient%e5%93%8d%e5%ba%94">#</a>
+</h2>
+<p><code>ChatClient</code> API提供了几种使用fluent API格式化来自AI模型的响应的方法。</p>
+<h2 id="返回chatresponse">
+  返回ChatResponse
+  <a class="anchor" href="#%e8%bf%94%e5%9b%9echatresponse">#</a>
+</h2>
+<p>来自AI模型的响应是由类型<code>ChatResponse</code>定义的丰富结构。
+下面显示了一个返回包含元数据的<code>ChatResponse</code>对象的示例，方法是在call（）方法之后调用chatRespons（）。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatResponse chatResponse <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;Tell me a joke&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">chatResponse</span>();
+</span></span></code></pre></div><h2 id="返回实体">
+  返回实体
+  <a class="anchor" href="#%e8%bf%94%e5%9b%9e%e5%ae%9e%e4%bd%93">#</a>
+</h2>
+<p>您通常希望返回从返回的<code>String</code>映射的实体类。
+例如，给定Java记录：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">record</span> <span style="color:#a6e22e">ActorFilms</span>(String actor, List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> movies) {}
+</span></span></code></pre></div><p>您可以使用entity（）方法轻松地将AI模型的输出映射到此记录，如下所示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ActorFilms actorFilms <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;Generate the filmography for a random actor.&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">entity</span>(ActorFilms.<span style="color:#a6e22e">class</span>);
+</span></span></code></pre></div><p>还有一个具有签名实体（ParameterizedTypeReference<T>类型）的重载实体方法，允许您指定类型，如泛型Lists：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>ActorFilms<span style="color:#f92672">&gt;</span> actorFilms <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;Generate the filmography of 5 movies for Tom Hanks and Bill Murray.&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">entity</span>(<span style="color:#66d9ef">new</span> ParameterizedTypeReference<span style="color:#f92672">&lt;</span>List<span style="color:#f92672">&lt;</span>ActorFilms<span style="color:#f92672">&gt;&gt;</span>() {});
+</span></span></code></pre></div><h2 id="流式处理响应">
+  流式处理响应
+  <a class="anchor" href="#%e6%b5%81%e5%bc%8f%e5%a4%84%e7%90%86%e5%93%8d%e5%ba%94">#</a>
+</h2>
+<p>stream（）方法允许您获得异步响应，如下所示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Flux<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> output <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;Tell me a joke&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">stream</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p>您还可以使用方法Flux&lt;<code>ChatResponse</code>&gt;chatRespons（）来流式传输ChatRespense。
+在将来，我们将提供一种方便的方法，允许您使用reactive stream（）方法返回Java实体。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> converter <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> BeanOutputConverter<span style="color:#f92672">&lt;&gt;</span>(<span style="color:#66d9ef">new</span> ParameterizedTypeReference<span style="color:#f92672">&lt;</span>List<span style="color:#f92672">&lt;</span>ActorsFilms<span style="color:#f92672">&gt;&gt;</span>() {});
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Flux<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> flux <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span>.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        Generate the filmography for a random actor.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        {format}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                      &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;format&#34;</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">converter</span>.<span style="color:#a6e22e">getFormat</span>()))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">stream</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String content <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">flux</span>.<span style="color:#a6e22e">collectList</span>().<span style="color:#a6e22e">block</span>().<span style="color:#a6e22e">stream</span>().<span style="color:#a6e22e">collect</span>(Collectors.<span style="color:#a6e22e">joining</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>ActorFilms<span style="color:#f92672">&gt;</span> actorFilms <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">converter</span>.<span style="color:#a6e22e">convert</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">content</span>);
+</span></span></code></pre></div><h2 id="提示模板">
+  提示模板
+  <a class="anchor" href="#%e6%8f%90%e7%a4%ba%e6%a8%a1%e6%9d%bf">#</a>
+</h2>
+<p><code>ChatClient</code> fluent API允许您将用户和系统文本作为模板提供，其中包含在运行时替换的变量。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String answer <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel).<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;Tell me the names of 5 movies whose soundtrack was composed by {composer}&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;composer&#34;</span>, <span style="color:#e6db74">&#34;John Williams&#34;</span>))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p>在内部，ChatClient使用<code>PromptTemplate</code>类来处理用户和系统文本，并根据给定的<code>TemplateRenderer</code>实现，用运行时提供的值替换变量。
+Spring AI还为不需要模板处理的情况提供<code>NoOpTemplateRenderer</code>。
+Spring AI还提供<code>NoOpTemplateRenderer</code>。
+如果希望使用不同的模板引擎，可以直接向ChatClient提供<code>TemplateRenderer</code>接口的自定义实现。您也可以继续使用默认的St<code>TemplateRenderer</code>，但需要自定义配置。
+例如，默认情况下，模板变量由<code>{}</code>语法标识。如果您计划在提示符中包含JSON，您可能希望使用不同的语法来避免与JSON语法冲突。例如，可以使用<code>&lt;</code>和<code>&gt;</code>分隔符。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String answer <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel).<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;Tell me the names of 5 movies whose soundtrack was composed by &lt;composer&gt;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;composer&#34;</span>, <span style="color:#e6db74">&#34;John Williams&#34;</span>))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">templateRenderer</span>(StTemplateRenderer.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">startDelimiterToken</span>(<span style="color:#e6db74">&#39;&lt;&#39;</span>).<span style="color:#a6e22e">endDelimiterToken</span>(<span style="color:#e6db74">&#39;&gt;&#39;</span>).<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><h2 id="call返回值">
+  call（）返回值
+  <a class="anchor" href="#call%e8%bf%94%e5%9b%9e%e5%80%bc">#</a>
+</h2>
+<p>在<code>ChatClient</code>上指定call（）方法后，响应类型有几个不同的选项。</p>
+<ul>
+<li>String content（）：返回响应的String内容</li>
+<li>ChatResponse chatRespons（）：返回包含多个生成的ChatRespense对象，以及关于响应的元数据，例如，用于创建响应的令牌数量。</li>
+<li>ChatClientResponse chatClientRespense（）：返回包含ChatResponse对象和ChatClient执行上下文的ChatClientResponse对象，使您可以访问执行顾问期间使用的其他数据（例如，在RAG流中检索的相关文档）。</li>
+<li>entity（）返回Java类型</li>
+<li>entity（ParameterizedTypeReference<T>类型）：用于返回实体类型的集合。</li>
+<li>实体（类<T>类型）：用于返回特定的实体类型。</li>
+<li>实体（StructuredOutputConverter）：用于指定Structured Outputconverter的实例，以将String转换为实体类型。
+您还可以调用stream（）方法，而不是call（）。</li>
+</ul>
+<h2 id="stream返回值">
+  stream（）返回值
+  <a class="anchor" href="#stream%e8%bf%94%e5%9b%9e%e5%80%bc">#</a>
+</h2>
+<p>在<code>ChatClient</code>上指定stream（）方法后，响应类型有几个选项：</p>
+<ul>
+<li>Flux<String>content（）：返回AI模型生成的字符串的Flux。</li>
+<li>Flux<ChatResponse>chatRespons（）：返回ChatRespense对象的Flux，其中包含关于响应的其他元数据。</li>
+<li>Flux<ChatClientResponse>chatClientRespense（）：返回包含ChatResponse对象和ChatClient执行上下文的ChatClientRepose对象的Flux，使您可以访问执行顾问期间使用的其他数据（例如，在RAG流中检索的相关文档）。</li>
+</ul>
+<h2 id="使用默认值">
+  使用默认值
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e9%bb%98%e8%ae%a4%e5%80%bc">#</a>
+</h2>
+<p>在<code>@Configuration</code>类中创建具有默认系统文本的<code>ChatClient</code>可以简化运行时代码。</p>
+<h2 id="默认系统文本">
+  默认系统文本
+  <a class="anchor" href="#%e9%bb%98%e8%ae%a4%e7%b3%bb%e7%bb%9f%e6%96%87%e6%9c%ac">#</a>
+</h2>
+<p>在下面的示例中，我们将配置系统文本，使其始终以海盗的声音回复。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Configuration</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Config</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>    ChatClient <span style="color:#a6e22e">chatClient</span>(ChatClient.<span style="color:#a6e22e">Builder</span> builder) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> builder.<span style="color:#a6e22e">defaultSystem</span>(<span style="color:#e6db74">&#34;You are a friendly chat bot that answers question in the voice of a Pirate&#34;</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>和<code>@RestController</code>来调用它：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@RestController</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AIController</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> ChatClient chatClient;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	AIController(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span> <span style="color:#f92672">=</span> chatClient;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@GetMapping</span>(<span style="color:#e6db74">&#34;/ai/simple&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> Map<span style="color:#f92672">&lt;</span>String, String<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">completion</span>(<span style="color:#a6e22e">@RequestParam</span>(value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;message&#34;</span>, defaultValue <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Tell me a joke&#34;</span>) String message) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;completion&#34;</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span>.<span style="color:#a6e22e">prompt</span>().<span style="color:#a6e22e">user</span>(message).<span style="color:#a6e22e">call</span>().<span style="color:#a6e22e">content</span>());
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>通过curl调用应用程序端点时，结果是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>❯ curl localhost:8080/ai/simple
+</span></span><span style="display:flex;"><span><span style="color:#f92672">{</span><span style="color:#e6db74">&#34;completion&#34;</span>:<span style="color:#e6db74">&#34;Why did the pirate go to the comedy club? To hear some arrr-rated jokes! Arrr, matey!&#34;</span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="带参数的默认系统文本">
+  带参数的默认系统文本
+  <a class="anchor" href="#%e5%b8%a6%e5%8f%82%e6%95%b0%e7%9a%84%e9%bb%98%e8%ae%a4%e7%b3%bb%e7%bb%9f%e6%96%87%e6%9c%ac">#</a>
+</h2>
+<p>在下面的示例中，我们将在系统文本中使用占位符来指定运行时而不是设计时的完成声音。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Configuration</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Config</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>    ChatClient <span style="color:#a6e22e">chatClient</span>(ChatClient.<span style="color:#a6e22e">Builder</span> builder) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> builder.<span style="color:#a6e22e">defaultSystem</span>(<span style="color:#e6db74">&#34;You are a friendly chat bot that answers question in the voice of a {voice}&#34;</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@RestController</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AIController</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> ChatClient chatClient;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	AIController(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span> <span style="color:#f92672">=</span> chatClient;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@GetMapping</span>(<span style="color:#e6db74">&#34;/ai&#34;</span>)
+</span></span><span style="display:flex;"><span>	Map<span style="color:#f92672">&lt;</span>String, String<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">completion</span>(<span style="color:#a6e22e">@RequestParam</span>(value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;message&#34;</span>, defaultValue <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Tell me a joke&#34;</span>) String message, String voice) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;completion&#34;</span>,
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span>.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>						.<span style="color:#a6e22e">system</span>(sp <span style="color:#f92672">-&gt;</span> sp.<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;voice&#34;</span>, voice))
+</span></span><span style="display:flex;"><span>						.<span style="color:#a6e22e">user</span>(message)
+</span></span><span style="display:flex;"><span>						.<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>						.<span style="color:#a6e22e">content</span>());
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>通过httpie调用应用程序端点时，结果是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>http localhost:8080<span style="color:#f92672">/</span>ai voice<span style="color:#f92672">==</span><span style="color:#960050;background-color:#1e0010">&#39;</span>Robert DeNiro<span style="color:#960050;background-color:#1e0010">&#39;</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;completion&#34;</span>: <span style="color:#e6db74">&#34;You talkin&#39; to me? Okay, here&#39;s a joke for ya: Why couldn&#39;t the bicycle stand up by itself? Because it was two tired! Classic, right?&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="其他默认值">
+  其他默认值
+  <a class="anchor" href="#%e5%85%b6%e4%bb%96%e9%bb%98%e8%ae%a4%e5%80%bc">#</a>
+</h2>
+<p>在ChatClient上。生成器级别，可以指定默认提示配置。</p>
+<ul>
+<li>defaultOptions（ChatOptions ChatOptions）：传入在ChatOptions类中定义的可移植选项或特定于模型的选项，如OpenAiChatOptions。有关特定于模型的ChatOptions实现的更多信息，请参阅JavaDocs。</li>
+<li>defaultFunction（字符串名称，字符串描述，java.util.function.function&lt;I，O&gt;function）：名称用于引用用户文本中的函数。该描述解释了函数的用途，并帮助AI模型选择正确的函数以获得准确的响应。函数参数是模型将在必要时执行的Java函数实例。</li>
+<li>defaultFunctions（字符串…​ functionNames）：`java.util的bean名称。函数在应用程序上下文中定义。</li>
+<li>defaultUser（String text）、defaultUser（Resource text）和默认用户（Consumer<UserSpec>userSpecConsumer）：这些方法允许您定义用户文本。Consumer<UserSpec>允许您使用lambda来指定用户文本和任何默认参数。</li>
+<li>defaultAdvisors（顾问…​ advisor）：advisor允许修改用于创建提示的数据。QuestionAnswerAdvisor实现通过在提示中附加与用户文本相关的上下文信息来启用检索增强生成模式。</li>
+<li>defaultAdvisors（Consumer<AdvisorSpec>advisorSpecConsumer）：此方法允许您定义一个Consumer，以使用AdvisorSpec配置多个顾问。顾问可以修改用于创建最终提示的数据。Consumer<AdvisorSpec>允许您指定lambda来添加顾问，如QuestionAnswerAdvisor，它通过在提示中附加基于用户文本的相关上下文信息来支持检索增强生成。
+您可以在运行时使用没有默认前缀的相应方法覆盖这些默认值。</li>
+<li>选项（聊天室选项聊天室选项）</li>
+<li>函数（字符串名称，字符串描述，</li>
+<li>函数（字符串…​ 函数名称）</li>
+<li>user（字符串文本），user（资源文本），用户（Consumer<UserSpec>userSpecConsumer）</li>
+<li>顾问（顾问…​ 顾问）</li>
+<li>顾问（Consumer<AdvisorSpec>advisorSpecConsumer）</li>
+</ul>
+<h2 id="顾问">
+  顾问
+  <a class="anchor" href="#%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>Advisors API提供了一种灵活而强大的方法来拦截、修改和增强Spring应用程序中的AI驱动交互。
+使用用户文本调用AI模型时的一个常见模式是使用上下文数据附加或增强提示。
+此上下文数据可以是不同的类型。常见类型包括：</p>
+<ul>
+<li>您自己的数据：这是人工智能模型尚未训练的数据。即使模型看到类似的数据，附加的上下文数据在生成响应时优先。</li>
+<li>对话历史：聊天模型的API是无状态的。如果你告诉人工智能模型你的名字，它将不会在随后的交互中记住它。会话历史记录必须与每个请求一起发送，以确保在生成响应时考虑以前的交互。</li>
+</ul>
+<h2 id="chatclient中的advisor配置">
+  ChatClient中的Advisor配置
+  <a class="anchor" href="#chatclient%e4%b8%ad%e7%9a%84advisor%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>ChatClient fluent API提供用于配置顾问的<code>AdvisorSpec</code>接口。该接口提供了用于添加参数、一次设置多个参数以及向链添加一个或多个顾问的方法。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">AdvisorSpec</span> {
+</span></span><span style="display:flex;"><span>    AdvisorSpec <span style="color:#a6e22e">param</span>(String k, Object v);
+</span></span><span style="display:flex;"><span>    AdvisorSpec <span style="color:#a6e22e">params</span>(Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> p);
+</span></span><span style="display:flex;"><span>    AdvisorSpec <span style="color:#a6e22e">advisors</span>(Advisor... advisors);
+</span></span><span style="display:flex;"><span>    AdvisorSpec <span style="color:#a6e22e">advisors</span>(List<span style="color:#f92672">&lt;</span>Advisor<span style="color:#f92672">&gt;</span> advisors);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatClient.<span style="color:#a6e22e">builder</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">advisors</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> MessageChatMemoryAdvisor(chatMemory),
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> QuestionAnswerAdvisor(vectorStore)
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(userText)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p>在此配置中，将首先执行<code>MessageChatMemoryAdvisor</code>，将对话历史添加到提示符中。然后，<code>QuestionAnswerAdvisor</code>将根据用户的问题和添加的对话历史记录执行搜索，可能会提供更相关的结果。
+
+  <a href="retrieval-augmented-generation.html#_questionansweradvisor">了解问答顾问</a>
+以下advisor实现使用<code>ChatMemory</code>接口向提示符提供对话历史的建议，对话历史在如何将内存添加到提示符的细节上有所不同</p>
+<ul>
+<li>MessageChatMemoryAdvisor:检索内存，并将其作为消息集合添加到提示符</li>
+<li>PromptChatMemoryAdvisor：检索内存并将其添加到提示符的系统文本中。</li>
+<li>VectorStoreChatMemoryAdvisor:构造函数VectorStore ChatMemoriyAdvisor（VectorStore-VectorStore，String defaultConversationId，int chatHistoryWindowSize，int order）此构造函数允许您：
+VectorStoreChatMemoryAdvisor.builder（）方法允许您指定默认对话ID、聊天历史窗口大小和要检索的聊天历史的顺序。
+下面显示了使用多个顾问的<code>@Service</code>实现示例。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import static</span> org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import static</span> org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CustomerSupportAssistant</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> ChatClient chatClient;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">CustomerSupportAssistant</span>(ChatClient.<span style="color:#a6e22e">Builder</span> builder, VectorStore vectorStore, ChatMemory chatMemory) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span> <span style="color:#f92672">=</span> builder
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">defaultSystem</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    You are a customer chat support agent of an airline named &#34;Funnair&#34;. Respond in a friendly,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    helpful, and joyful manner.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Before providing information about a booking or cancelling a booking, you MUST always
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    get the following information from the user: booking number, customer first name and last name.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Before changing a booking you MUST ensure it is permitted by the terms.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    If there is a charge for the change, you MUST ask the user to consent before proceeding.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">defaultAdvisors</span>(
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">new</span> MessageChatMemoryAdvisor(chatMemory), <span style="color:#75715e">// CHAT MEMORY</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">new</span> QuestionAnswerAdvisor(vectorStore), <span style="color:#75715e">// RAG</span>
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">new</span> SimpleLoggerAdvisor())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">defaultFunctions</span>(<span style="color:#e6db74">&#34;getBookingDetails&#34;</span>, <span style="color:#e6db74">&#34;changeBooking&#34;</span>, <span style="color:#e6db74">&#34;cancelBooking&#34;</span>) <span style="color:#75715e">// FUNCTION CALLING</span>
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Flux<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">chat</span>(String chatId, String userMessageContent) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span>.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">user</span>(userMessageContent)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">advisors</span>(a <span style="color:#f92672">-&gt;</span> a
+</span></span><span style="display:flex;"><span>                        .<span style="color:#a6e22e">param</span>(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+</span></span><span style="display:flex;"><span>                        .<span style="color:#a6e22e">param</span>(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100))
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">stream</span>().<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>
+  <a href="retrieval-augmented-generation.html#_questionansweradvisor">了解问答顾问</a></p>
+<h2 id="检索增强生成">
+  检索增强生成
+  <a class="anchor" href="#%e6%a3%80%e7%b4%a2%e5%a2%9e%e5%bc%ba%e7%94%9f%e6%88%90">#</a>
+</h2>
+<p>请参阅《
+  <a href="retrieval-augmented-generation.html">检索增强生成</a>》指南。</p>
+<h2 id="日志记录">
+  日志记录
+  <a class="anchor" href="#%e6%97%a5%e5%bf%97%e8%ae%b0%e5%bd%95">#</a>
+</h2>
+<p><code>SimpleLoggerAdvisor</code>是记录<code>ChatClient</code>的请求和响应数据的顾问。
+要启用日志记录，请在创建ChatClient时将<code>SimpleLoggerAdvisor</code>添加到advisor链。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatResponse response <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel).<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">advisors</span>(<span style="color:#66d9ef">new</span> SimpleLoggerAdvisor())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;Tell me a joke?&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">chatResponse</span>();
+</span></span></code></pre></div><p>要查看日志，请将advisor包的日志记录级别设置为<code>DEBUG</code>：
+将此添加到<code>application.properties</code>或<code>application.yaml</code>文件中。
+您可以使用以下构造函数自定义记录来自<code>AdvisedRequest</code>和<code>ChatResponse</code>的数据：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>SimpleLoggerAdvisor(
+</span></span><span style="display:flex;"><span>    Function<span style="color:#f92672">&lt;</span>AdvisedRequest, String<span style="color:#f92672">&gt;</span> requestToString,
+</span></span><span style="display:flex;"><span>    Function<span style="color:#f92672">&lt;</span>ChatResponse, String<span style="color:#f92672">&gt;</span> responseToString
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>示例用法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>SimpleLoggerAdvisor customLogger <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> SimpleLoggerAdvisor(
+</span></span><span style="display:flex;"><span>    request <span style="color:#f92672">-&gt;</span> <span style="color:#e6db74">&#34;Custom request: &#34;</span> <span style="color:#f92672">+</span> request.<span style="color:#a6e22e">userText</span>,
+</span></span><span style="display:flex;"><span>    response <span style="color:#f92672">-&gt;</span> <span style="color:#e6db74">&#34;Custom response: &#34;</span> <span style="color:#f92672">+</span> response.<span style="color:#a6e22e">getResult</span>()
+</span></span><span style="display:flex;"><span>);
+</span></span></code></pre></div><p>这允许您根据特定需要定制记录的信息。</p>
+<h2 id="聊天记忆不推荐">
+  聊天记忆（不推荐）
+  <a class="anchor" href="#%e8%81%8a%e5%a4%a9%e8%ae%b0%e5%bf%86%e4%b8%8d%e6%8e%a8%e8%8d%90">#</a>
+</h2>
+<p><code>ChatMemory</code>接口表示聊天室会话历史记录的存储。它提供了向对话中添加消息、从对话中检索消息以及清除对话历史记录的方法。
+目前有四种实现：<code>CassandraChatMemory</code>、Neo4jChatMemority和JdbcChatMemorary，它们分别在内存中为聊天对话历史记录提供存储，在Cassandra中保留生存时间，并在Neo4j和Jdbc中保留没有生存时间。</p>
+<h2 id="cassandra聊天存储器">
+  Cassandra聊天存储器
+  <a class="anchor" href="#cassandra%e8%81%8a%e5%a4%a9%e5%ad%98%e5%82%a8%e5%99%a8">#</a>
+</h2>
+<p>要创建具有生存时间的<code>CassandraChatMemory</code>，请执行以下操作：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>CassandraChatMemory.<span style="color:#a6e22e">create</span>(CassandraChatMemoryConfig.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">withTimeToLive</span>(Duration.<span style="color:#a6e22e">ofDays</span>(1)).<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><h2 id="neo4j聊天记忆">
+  Neo4j聊天记忆
+  <a class="anchor" href="#neo4j%e8%81%8a%e5%a4%a9%e8%ae%b0%e5%bf%86">#</a>
+</h2>
+<p>Neo4j聊天室存储器支持以下配置参数：</p>
+<h2 id="jdbc聊天记忆">
+  Jdbc聊天记忆
+  <a class="anchor" href="#jdbc%e8%81%8a%e5%a4%a9%e8%ae%b0%e5%bf%86">#</a>
+</h2>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#聊天客户端api">聊天客户端API</a>
+      <ul>
+        <li><a href="#创建chatclient">创建ChatClient</a></li>
+        <li><a href="#使用自动配置的chatclient建筑商">使用自动配置的ChatClient。建筑商</a></li>
+        <li><a href="#以编程方式创建chatclient">以编程方式创建ChatClient</a></li>
+        <li><a href="#chatclient-fluent-api">ChatClient Fluent API</a></li>
+        <li><a href="#chatclient响应">ChatClient响应</a></li>
+        <li><a href="#返回chatresponse">返回ChatResponse</a></li>
+        <li><a href="#返回实体">返回实体</a></li>
+        <li><a href="#流式处理响应">流式处理响应</a></li>
+        <li><a href="#提示模板">提示模板</a></li>
+        <li><a href="#call返回值">call（）返回值</a></li>
+        <li><a href="#stream返回值">stream（）返回值</a></li>
+        <li><a href="#使用默认值">使用默认值</a></li>
+        <li><a href="#默认系统文本">默认系统文本</a></li>
+        <li><a href="#带参数的默认系统文本">带参数的默认系统文本</a></li>
+        <li><a href="#其他默认值">其他默认值</a></li>
+        <li><a href="#顾问">顾问</a></li>
+        <li><a href="#chatclient中的advisor配置">ChatClient中的Advisor配置</a></li>
+        <li><a href="#检索增强生成">检索增强生成</a></li>
+        <li><a href="#日志记录">日志记录</a></li>
+        <li><a href="#聊天记忆不推荐">聊天记忆（不推荐）</a></li>
+        <li><a href="#cassandra聊天存储器">Cassandra聊天存储器</a></li>
+        <li><a href="#neo4j聊天记忆">Neo4j聊天记忆</a></li>
+        <li><a href="#jdbc聊天记忆">Jdbc聊天记忆</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
