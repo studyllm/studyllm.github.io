@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  Apache Cassandra 矢量存储
+  #
+
+本节将指导您设置 CassandraVectorStore 以存储文档嵌入并执行相似性搜索。
+
+  什么是 Apache Cassandra？
+  #
+
+[
+  Apache Cassandra®](
+  https://cassandra.apache.org) 是真正的开源分布式数据库，以线性可扩展性、经过验证的容错能力和低延迟而闻名，使其成为任务关键型事务数据的完美平台。
+其矢量相似性搜索 （VSS） 基于 JVector 库，可确保一流的性能和相关性。
+Apache Cassandra 中的向量搜索非常简单：
+SELECT content FROM table ORDER BY content_vector ANN OF query_embedding;
+可以[
+  在此处](
+  https://cassandra.apache.org/doc/latest/cassandra/getting-started/vector-search-quickstart.html)阅读有关此内容的更多文档。
+这个 Spring AI Vector Store 旨在适用于全新的 RAG 应用程序，并能够在现有数据和表之上进行改造。
+该存储还可用于现有数据库中的非 RAG 用例，例如语义搜索、地理位置邻近搜索等。
+存储将根据其配置根据需要自动创建或增强架构。如果您不需要修改架构，请使用 initializeSchema 配置存储。
+使用 spring-boot-autoconfigure initializeSchema 时，根据 Spring Boot 标准默认为 false，您必须通过设置来选择模式创建/修改 ......initialize-schema=true 在 application.properties 文件中。
+
+  什么是 JVector？
+  #
+
+[
+  JVector](
+  https://github.com/jbellis/jvector) 是一个纯 Java 嵌入式矢量搜索引擎。
+它从其他 HNSW 向量相似性搜索实现中脱颖而出，具有以下特点：
+
+算法快速。JVector 使用受 DiskANN 和相关研究启发的最先进的图形算法，这些算法提供高召回率和低延迟。
+实施速度快。JVector 使用 Panama SIMD API 来加速索引构建和查询。
+内存高效。JVector 使用乘积量化来压缩向量，以便它们在搜索期间可以保留在内存中。
+磁盘感知。JVector 的磁盘布局旨在在查询时执行最低的必要 IOPS。
+并发的。索引构建以线性方式扩展到至少 32 个线程。线程翻倍，构建时间减半。
+增量。在构建索引时查询索引。添加向量和在搜索结果中找到它之间没有延迟。
+易于嵌入。API 旨在让人们在生产环境中使用它时轻松嵌入。
+
+
+  先决条件
+  #
+
+
+  依赖
+  #
+
+将这些依赖项添加到您的项目中：">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/vector-databases/apache-cassandra-vector-store/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="Apache Cassandra 矢量存储">
+  <meta property="og:description" content="Apache Cassandra 矢量存储 # 本节将指导您设置 CassandraVectorStore 以存储文档嵌入并执行相似性搜索。
+什么是 Apache Cassandra？ # [ Apache Cassandra®]( https://cassandra.apache.org) 是真正的开源分布式数据库，以线性可扩展性、经过验证的容错能力和低延迟而闻名，使其成为任务关键型事务数据的完美平台。 其矢量相似性搜索 （VSS） 基于 JVector 库，可确保一流的性能和相关性。 Apache Cassandra 中的向量搜索非常简单：
+SELECT content FROM table ORDER BY content_vector ANN OF query_embedding; 可以[ 在此处]( https://cassandra.apache.org/doc/latest/cassandra/getting-started/vector-search-quickstart.html)阅读有关此内容的更多文档。 这个 Spring AI Vector Store 旨在适用于全新的 RAG 应用程序，并能够在现有数据和表之上进行改造。 该存储还可用于现有数据库中的非 RAG 用例，例如语义搜索、地理位置邻近搜索等。 存储将根据其配置根据需要自动创建或增强架构。如果您不需要修改架构，请使用 initializeSchema 配置存储。 使用 spring-boot-autoconfigure initializeSchema 时，根据 Spring Boot 标准默认为 false，您必须通过设置来选择模式创建/修改 ......initialize-schema=true 在 application.properties 文件中。
+什么是 JVector？ # [ JVector]( https://github.com/jbellis/jvector) 是一个纯 Java 嵌入式矢量搜索引擎。 它从其他 HNSW 向量相似性搜索实现中脱颖而出，具有以下特点：
+算法快速。JVector 使用受 DiskANN 和相关研究启发的最先进的图形算法，这些算法提供高召回率和低延迟。 实施速度快。JVector 使用 Panama SIMD API 来加速索引构建和查询。 内存高效。JVector 使用乘积量化来压缩向量，以便它们在搜索期间可以保留在内存中。 磁盘感知。JVector 的磁盘布局旨在在查询时执行最低的必要 IOPS。 并发的。索引构建以线性方式扩展到至少 32 个线程。线程翻倍，构建时间减半。 增量。在构建索引时查询索引。添加向量和在搜索结果中找到它之间没有延迟。 易于嵌入。API 旨在让人们在生产环境中使用它时轻松嵌入。 先决条件 # 依赖 # 将这些依赖项添加到您的项目中：">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>Apache Cassandra 矢量存储 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../favicon.png" >
+<link rel="manifest" href="../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/vector-databases/apache-cassandra-vector-store/">
+<link rel="stylesheet" href="../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../fuse.min.js"></script>
+  <script defer src="../../../en.search.min.fc796ecb96a612ae39040eb9138814514c32a2e7d9265637e01d9c788994e3c8.js" integrity="sha256-/Hluy5amEq45BA65E4gUUUwyoufZJlY34B2ceImU48g=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e2fd78a721f271b7efc6437520b70692" class="toggle"  />
+    <label for="section-e2fd78a721f271b7efc6437520b70692" class="flex justify-between">
+      <a href="../../../docs/overview-%E6%A6%82%E8%BF%B0/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/overview-%E6%A6%82%E8%BF%B0/ai-concepts-ai-%E6%A6%82%E5%BF%B5/" class="">AI 概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/getting-started-%E5%BC%80%E5%A7%8B/" class="">开始</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-46da0dacd3edcb609eb3a30122f798c1" class="toggle"  />
+    <label for="section-46da0dacd3edcb609eb3a30122f798c1" class="flex justify-between">
+      <a href="../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/migrating-functioncallback-to-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-9cc275e26831a4c68f5f0626954bb051" class="toggle"  />
+    <label for="section-9cc275e26831a4c68f5f0626954bb051" class="flex justify-between">
+      <a href="../../../docs/chat-client-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/chat-client-api/advisors/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/prompts/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/structured-output/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/multimodality/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-dff98c888805ee5be8c49a91de636d7a" class="toggle"  />
+    <label for="section-dff98c888805ee5be8c49a91de636d7a" class="flex justify-between">
+      <a href="../../../docs/models/" class="">None</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a549f27d0c7522c5a488c8e70bc18d95" class="toggle"  />
+    <label for="section-a549f27d0c7522c5a488c8e70bc18d95" class="flex justify-between">
+      <a href="../../../docs/models/chat-models/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/chat-models-comparison/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/amazon-bedrock-converse/" class="">基岩版 Converse API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/anthropic-3/" class="">Anthropic 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/azure-openai/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/deepseek/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/docker-model-runner/" class="">Docker Model Runner 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-23643788106caecd71158902b516c092" class="toggle"  />
+    <label for="section-23643788106caecd71158902b516c092" class="flex justify-between">
+      <a href="../../../docs/models/chat-models/google-vertexai/" class="">谷歌 VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/google-vertexai/vertexai-gemini/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/groq/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/hugging-face/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/mistral-ai/" class="">Mistral AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/moonshot-ai/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/nvidia/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/ollama/" class="">Ollama 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/perplexity-ai/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/openai/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/qianfan/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/zhipu-ai/" class="">智普 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-91d39169afbe390a9cfdcf43422a5f77" class="toggle"  />
+    <label for="section-91d39169afbe390a9cfdcf43422a5f77" class="flex justify-between">
+      <a href="../../../docs/models/audio-models/transcription-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/audio-models/transcription-api/azure-openai/" class="">Azure OpenAI 听录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/moderation-models/openai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c7747c1c4ca7e7f27485d3b4a2909173" class="toggle"  />
+    <label for="section-c7747c1c4ca7e7f27485d3b4a2909173" class="flex justify-between">
+      <a href="../../../docs/models/embedding-models/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3b5329a5faed8a311a538c92b457f6a" class="toggle"  />
+    <label for="section-f3b5329a5faed8a311a538c92b457f6a" class="flex justify-between">
+      <a href="../../../docs/models/embedding-models/amazon-bedrock/" class="">亚马逊基岩版</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/amazon-bedrock/cohere/" class="">Cohere 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/amazon-bedrock/titan/" class="">Titan 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/azure-openai/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/mistral-ai/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/oci-genai/" class="">Oracle Cloud Infrastructure （OCI） GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/ollama/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/onnx-transformers/" class="">变压器 （ONNX） 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/openai/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/postgresml/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/qianfan/" class="">QianFan 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/zhipu-ai/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-602ef13071faddbe2271a0f29c030c5f" class="toggle"  />
+    <label for="section-602ef13071faddbe2271a0f29c030c5f" class="flex justify-between">
+      <a href="../../../docs/models/audio-models/text-to-speech-tts-api/" class="">文本转语音 （TTS） API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/audio-models/text-to-speech-tts-api/openai/" class="">OpenAI 文本转语音 （TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/moderation-models/mistral-ai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4c392088dcec5ee943e5103c3c64745e" class="toggle"  />
+    <label for="section-4c392088dcec5ee943e5103c3c64745e" class="flex justify-between">
+      <a href="../../../docs/models/image-models/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/azure-openai/" class="">Azure OpenAI 映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/openai/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/stability/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/zhipuai/" class="">智普 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/qianfan/" class="">千帆镜像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/chat-memory/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/tool-calling/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="toggle"  />
+    <label for="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="flex justify-between">
+      <a href="../../../docs/model-context-protocol-mcp/" class="">模型上下文协议 （MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-context-protocol-mcp/mcp-client-boot-starters/" class="">MCP 客户端启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-context-protocol-mcp/mcp-server-boot-starters/" class="">MCP 服务器启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-context-protocol-mcp/mcp-utilities/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-14207920bac243191ad5fb9d8690ff76" class="toggle"  />
+    <label for="section-14207920bac243191ad5fb9d8690ff76" class="flex justify-between">
+      <a href="../../../docs/retrieval-augmented-generation-rag/" class="">检索增强一代</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/retrieval-augmented-generation-rag/etl-pipeline/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-evaluation/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="toggle" checked />
+    <label for="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="flex justify-between">
+      <a href="../../../docs/vector-databases/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/azure-ai-service/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/azure-cosmos-db/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/apache-cassandra-vector-store/" class="active">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/chroma/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/couchbase/" class="">沙发基地</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/elasticsearch/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/gemfire/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/mariadb-vector-store/" class="">MariaDB 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/milvus/" class="">米尔沃斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/mongodb-atlas/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/neo4j/" class="">新 4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/opensearch/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/oracle/" class="">Oracle Database 23ai — AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/pgvector/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/pinecone/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/qdrant/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/redis/" class="">雷迪斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/sap-hana/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/typesense/" class="">Typesense 字体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/weaviate/" class="">维维亚特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/observability/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/development-time-services/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/prompt-engineering-patterns/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/building-effective-agents/" class="">Building Effective Agents</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/deploying-to-the-cloud/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/testcontainers/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/cohere/" class="">OCI GenAI Cohere 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/text-embedding/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/multimodal-embedding/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Apache Cassandra 矢量存储</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#apache-cassandra-矢量存储">Apache Cassandra 矢量存储</a>
+      <ul>
+        <li><a href="#什么是-apache-cassandra">什么是 Apache Cassandra？</a></li>
+        <li><a href="#什么是-jvector">什么是 JVector？</a></li>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#依赖">依赖</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#用法">用法</a></li>
+        <li><a href="#基本用法">基本用法</a></li>
+        <li><a href="#高级配置">高级配置</a></li>
+        <li><a href="#连接配置">连接配置</a></li>
+        <li><a href="#元数据筛选">元数据筛选</a></li>
+        <li><a href="#高级示例vector-store-on-top-of-wikipedia-dataset">高级示例：Vector Store on top of Wikipedia Dataset</a></li>
+        <li><a href="#加载完整的-wikipedia-数据集">加载完整的 Wikipedia 数据集</a></li>
+        <li><a href="#访问-native-client">访问 Native Client</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="apache-cassandra-矢量存储">
+  Apache Cassandra 矢量存储
+  <a class="anchor" href="#apache-cassandra-%e7%9f%a2%e9%87%8f%e5%ad%98%e5%82%a8">#</a>
+</h1>
+<p>本节将指导您设置 <code>CassandraVectorStore</code> 以存储文档嵌入并执行相似性搜索。</p>
+<h2 id="什么是-apache-cassandra">
+  什么是 Apache Cassandra？
+  <a class="anchor" href="#%e4%bb%80%e4%b9%88%e6%98%af-apache-cassandra">#</a>
+</h2>
+<p>[
+  <a href="https://cassandra.apache.org">Apache Cassandra®</a>](
+  <a href="https://cassandra.apache.org">https://cassandra.apache.org</a>) 是真正的开源分布式数据库，以线性可扩展性、经过验证的容错能力和低延迟而闻名，使其成为任务关键型事务数据的完美平台。
+其矢量相似性搜索 （VSS） 基于 JVector 库，可确保一流的性能和相关性。
+Apache Cassandra 中的向量搜索非常简单：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> content <span style="color:#66d9ef">FROM</span> <span style="color:#66d9ef">table</span> <span style="color:#66d9ef">ORDER</span> <span style="color:#66d9ef">BY</span> content_vector ANN <span style="color:#66d9ef">OF</span> query_embedding;
+</span></span></code></pre></div><p>可以[
+  <a href="https://cassandra.apache.org/doc/latest/cassandra/getting-started/vector-search-quickstart.html">在此处</a>](
+  <a href="https://cassandra.apache.org/doc/latest/cassandra/getting-started/vector-search-quickstart.html">https://cassandra.apache.org/doc/latest/cassandra/getting-started/vector-search-quickstart.html</a>)阅读有关此内容的更多文档。
+这个 Spring AI Vector Store 旨在适用于全新的 RAG 应用程序，并能够在现有数据和表之上进行改造。
+该存储还可用于现有数据库中的非 RAG 用例，例如语义搜索、地理位置邻近搜索等。
+存储将根据其配置根据需要自动创建或增强架构。如果您不需要修改架构，请使用 <code>initializeSchema</code> 配置存储。
+使用 spring-boot-autoconfigure <code>initializeSchema</code> 时，根据 Spring Boot 标准默认为 <code>false</code>，您必须通过设置来选择模式创建/修改 <code>......initialize-schema=true</code> 在 <code>application.properties</code> 文件中。</p>
+<h2 id="什么是-jvector">
+  什么是 JVector？
+  <a class="anchor" href="#%e4%bb%80%e4%b9%88%e6%98%af-jvector">#</a>
+</h2>
+<p>[
+  <a href="https://github.com/jbellis/jvector">JVector</a>](
+  <a href="https://github.com/jbellis/jvector">https://github.com/jbellis/jvector</a>) 是一个纯 Java 嵌入式矢量搜索引擎。
+它从其他 HNSW 向量相似性搜索实现中脱颖而出，具有以下特点：</p>
+<ul>
+<li>算法快速。JVector 使用受 DiskANN 和相关研究启发的最先进的图形算法，这些算法提供高召回率和低延迟。</li>
+<li>实施速度快。JVector 使用 Panama SIMD API 来加速索引构建和查询。</li>
+<li>内存高效。JVector 使用乘积量化来压缩向量，以便它们在搜索期间可以保留在内存中。</li>
+<li>磁盘感知。JVector 的磁盘布局旨在在查询时执行最低的必要 IOPS。</li>
+<li>并发的。索引构建以线性方式扩展到至少 32 个线程。线程翻倍，构建时间减半。</li>
+<li>增量。在构建索引时查询索引。添加向量和在搜索结果中找到它之间没有延迟。</li>
+<li>易于嵌入。API 旨在让人们在生产环境中使用它时轻松嵌入。</li>
+</ul>
+<h2 id="先决条件">
+  先决条件
+  <a class="anchor" href="#%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6">#</a>
+</h2>
+<h2 id="依赖">
+  依赖
+  <a class="anchor" href="#%e4%be%9d%e8%b5%96">#</a>
+</h2>
+<p>将这些依赖项添加到您的项目中：</p>
+<ul>
+<li>仅适用于 Cassandra Vector Store：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-cassandra-store<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><ul>
+<li>或者，对于 RAG 应用程序中需要的一切（使用默认的 ONNX 嵌入模型）：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-starter-vector-store-cassandra<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><h2 id="配置属性">
+  配置属性
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>您可以在 Spring Boot 配置中使用以下属性来自定义 Apache Cassandra 矢量存储。</p>
+<h2 id="用法">
+  用法
+  <a class="anchor" href="#%e7%94%a8%e6%b3%95">#</a>
+</h2>
+<h2 id="基本用法">
+  基本用法
+  <a class="anchor" href="#%e5%9f%ba%e6%9c%ac%e7%94%a8%e6%b3%95">#</a>
+</h2>
+<p>创建一个 CassandraVectorStore 实例作为 Spring Bean：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> VectorStore <span style="color:#a6e22e">vectorStore</span>(CqlSession session, EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> CassandraVectorStore.<span style="color:#a6e22e">builder</span>(embeddingModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">session</span>(session)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">keyspace</span>(<span style="color:#e6db74">&#34;my_keyspace&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">table</span>(<span style="color:#e6db74">&#34;my_vectors&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>拥有向量存储实例后，您可以添加文档并执行搜索：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Add documents</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">add</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;1&#34;</span>, <span style="color:#e6db74">&#34;content1&#34;</span>, Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;key1&#34;</span>, <span style="color:#e6db74">&#34;value1&#34;</span>)),
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;2&#34;</span>, <span style="color:#e6db74">&#34;content2&#34;</span>, Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;key2&#34;</span>, <span style="color:#e6db74">&#34;value2&#34;</span>))
+</span></span><span style="display:flex;"><span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Search with filters</span>
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> results <span style="color:#f92672">=</span> vectorStore.<span style="color:#a6e22e">similaritySearch</span>(
+</span></span><span style="display:flex;"><span>    SearchRequest.<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;search text&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">withTopK</span>(5)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">withSimilarityThreshold</span>(0.<span style="color:#a6e22e">7f</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">withFilterExpression</span>(<span style="color:#e6db74">&#34;metadata.key1 == &#39;value1&#39;&#34;</span>)
+</span></span><span style="display:flex;"><span>);
+</span></span></code></pre></div><h2 id="高级配置">
+  高级配置
+  <a class="anchor" href="#%e9%ab%98%e7%ba%a7%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>对于更复杂的用例，您可以在 Spring Bean 中配置其他设置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> VectorStore <span style="color:#a6e22e">vectorStore</span>(CqlSession session, EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> CassandraVectorStore.<span style="color:#a6e22e">builder</span>(embeddingModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">session</span>(session)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">keyspace</span>(<span style="color:#e6db74">&#34;my_keyspace&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">table</span>(<span style="color:#e6db74">&#34;my_vectors&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Configure primary keys</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">partitionKeys</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;id&#34;</span>, DataTypes.<span style="color:#a6e22e">TEXT</span>),
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;category&#34;</span>, DataTypes.<span style="color:#a6e22e">TEXT</span>)
+</span></span><span style="display:flex;"><span>        ))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">clusteringKeys</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;timestamp&#34;</span>, DataTypes.<span style="color:#a6e22e">TIMESTAMP</span>)
+</span></span><span style="display:flex;"><span>        ))
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Add metadata columns with optional indexing</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">addMetadataColumns</span>(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;category&#34;</span>, DataTypes.<span style="color:#a6e22e">TEXT</span>, SchemaColumnTags.<span style="color:#a6e22e">INDEXED</span>),
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;score&#34;</span>, DataTypes.<span style="color:#a6e22e">DOUBLE</span>)
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Customize column names</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">contentColumnName</span>(<span style="color:#e6db74">&#34;text&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">embeddingColumnName</span>(<span style="color:#e6db74">&#34;vector&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Performance tuning</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">fixedThreadPoolExecutorSize</span>(32)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Schema management</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">initializeSchema</span>(<span style="color:#66d9ef">true</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Custom batching strategy</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">batchingStrategy</span>(<span style="color:#66d9ef">new</span> TokenCountBatchingStrategy())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="连接配置">
+  连接配置
+  <a class="anchor" href="#%e8%bf%9e%e6%8e%a5%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>有两种方法可以配置与 Cassandra 的连接：</p>
+<ul>
+<li>使用注入的 CqlSession（推荐）：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> VectorStore <span style="color:#a6e22e">vectorStore</span>(CqlSession session, EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> CassandraVectorStore.<span style="color:#a6e22e">builder</span>(embeddingModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">session</span>(session)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">keyspace</span>(<span style="color:#e6db74">&#34;my_keyspace&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">table</span>(<span style="color:#e6db74">&#34;my_vectors&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>直接在生成器中使用连接详细信息：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> VectorStore <span style="color:#a6e22e">vectorStore</span>(EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> CassandraVectorStore.<span style="color:#a6e22e">builder</span>(embeddingModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">contactPoint</span>(<span style="color:#66d9ef">new</span> InetSocketAddress(<span style="color:#e6db74">&#34;localhost&#34;</span>, 9042))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">localDatacenter</span>(<span style="color:#e6db74">&#34;datacenter1&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">keyspace</span>(<span style="color:#e6db74">&#34;my_keyspace&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="元数据筛选">
+  元数据筛选
+  <a class="anchor" href="#%e5%85%83%e6%95%b0%e6%8d%ae%e7%ad%9b%e9%80%89">#</a>
+</h2>
+<p>您可以将通用的可移植元数据筛选器与 CassandraVectorStore 结合使用。要使元数据列可搜索，它们必须是主键或 SAI 索引。要使非主键列编制索引，请使用 <code>SchemaColumnTags.INDEXED</code> 配置 metadata 列。
+例如，您可以使用文本表达式语言：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">similaritySearch</span>(
+</span></span><span style="display:flex;"><span>    SearchRequest.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;The World&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">topK</span>(5)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">filterExpression</span>(<span style="color:#e6db74">&#34;country in [&#39;UK&#39;, &#39;NL&#39;] &amp;&amp; year &gt;= 2020&#34;</span>).<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><p>或者以编程方式使用表达式 DSL：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Filter.<span style="color:#a6e22e">Expression</span> f <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FilterExpressionBuilder()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">and</span>(
+</span></span><span style="display:flex;"><span>        f.<span style="color:#a6e22e">in</span>(<span style="color:#e6db74">&#34;country&#34;</span>, <span style="color:#e6db74">&#34;UK&#34;</span>, <span style="color:#e6db74">&#34;NL&#34;</span>),
+</span></span><span style="display:flex;"><span>        f.<span style="color:#a6e22e">gte</span>(<span style="color:#e6db74">&#34;year&#34;</span>, 2020)
+</span></span><span style="display:flex;"><span>    ).<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">similaritySearch</span>(
+</span></span><span style="display:flex;"><span>    SearchRequest.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;The World&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">topK</span>(5)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">filterExpression</span>(f).<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><p>可移植的筛选表达式会自动转换为 [
+  <a href="https://cassandra.apache.org/doc/latest/cassandra/developing/cql/index.html">CQL 查询</a>](
+  <a href="https://cassandra.apache.org/doc/latest/cassandra/developing/cql/index.html">https://cassandra.apache.org/doc/latest/cassandra/developing/cql/index.html</a>) 。</p>
+<h2 id="高级示例vector-store-on-top-of-wikipedia-dataset">
+  高级示例：Vector Store on top of Wikipedia Dataset
+  <a class="anchor" href="#%e9%ab%98%e7%ba%a7%e7%a4%ba%e4%be%8bvector-store-on-top-of-wikipedia-dataset">#</a>
+</h2>
+<p>以下示例演示如何在现有架构上使用存储。在这里，我们使用 [
+  <a href="https://github.com/datastax-labs/colbert-wikipedia-data">github.com/datastax-labs/colbert-wikipedia-data</a>](https://
+  <a href="https://github.com/datastax-labs/colbert-wikipedia-data">github.com/datastax-labs/colbert-wikipedia-data</a>) 项目中的架构，该项目附带了为您准备好的完整 wikipedia 数据集。
+首先，在 Cassandra 数据库中创建架构：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>wget https://s.apache.org/colbert-wikipedia-schema-cql -O colbert-wikipedia-schema.cql
+</span></span><span style="display:flex;"><span>cqlsh -f colbert-wikipedia-schema.cql
+</span></span></code></pre></div><p>然后使用生成器模式配置 store：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> VectorStore <span style="color:#a6e22e">vectorStore</span>(CqlSession session, EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>    List<span style="color:#f92672">&lt;</span>SchemaColumn<span style="color:#f92672">&gt;</span> partitionColumns <span style="color:#f92672">=</span> List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;wiki&#34;</span>, DataTypes.<span style="color:#a6e22e">TEXT</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;language&#34;</span>, DataTypes.<span style="color:#a6e22e">TEXT</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;title&#34;</span>, DataTypes.<span style="color:#a6e22e">TEXT</span>)
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    List<span style="color:#f92672">&lt;</span>SchemaColumn<span style="color:#f92672">&gt;</span> clusteringColumns <span style="color:#f92672">=</span> List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;chunk_no&#34;</span>, DataTypes.<span style="color:#a6e22e">INT</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;bert_embedding_no&#34;</span>, DataTypes.<span style="color:#a6e22e">INT</span>)
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    List<span style="color:#f92672">&lt;</span>SchemaColumn<span style="color:#f92672">&gt;</span> extraColumns <span style="color:#f92672">=</span> List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;revision&#34;</span>, DataTypes.<span style="color:#a6e22e">INT</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> SchemaColumn(<span style="color:#e6db74">&#34;id&#34;</span>, DataTypes.<span style="color:#a6e22e">INT</span>)
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> CassandraVectorStore.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">session</span>(session)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">embeddingModel</span>(embeddingModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">keyspace</span>(<span style="color:#e6db74">&#34;wikidata&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">table</span>(<span style="color:#e6db74">&#34;articles&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">partitionKeys</span>(partitionColumns)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">clusteringKeys</span>(clusteringColumns)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">contentColumnName</span>(<span style="color:#e6db74">&#34;body&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">embeddingColumnName</span>(<span style="color:#e6db74">&#34;all_minilm_l6_v2_embedding&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">indexName</span>(<span style="color:#e6db74">&#34;all_minilm_l6_v2_ann&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">initializeSchema</span>(<span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">addMetadataColumns</span>(extraColumns)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">primaryKeyTranslator</span>((List<span style="color:#f92672">&lt;</span>Object<span style="color:#f92672">&gt;</span> primaryKeys) <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (primaryKeys.<span style="color:#a6e22e">isEmpty</span>()) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;test§¶0&#34;</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> String.<span style="color:#a6e22e">format</span>(<span style="color:#e6db74">&#34;%s§¶%s&#34;</span>, primaryKeys.<span style="color:#a6e22e">get</span>(2), primaryKeys.<span style="color:#a6e22e">get</span>(3));
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">documentIdTranslator</span>((id) <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>            String<span style="color:#f92672">[]</span> parts <span style="color:#f92672">=</span> id.<span style="color:#a6e22e">split</span>(<span style="color:#e6db74">&#34;§¶&#34;</span>);
+</span></span><span style="display:flex;"><span>            String title <span style="color:#f92672">=</span> parts<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> chunk_no <span style="color:#f92672">=</span> parts.<span style="color:#a6e22e">length</span> <span style="color:#f92672">&gt;</span> 1 <span style="color:#f92672">?</span> Integer.<span style="color:#a6e22e">parseInt</span>(parts<span style="color:#f92672">[</span>1<span style="color:#f92672">]</span>) : 0;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> List.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;simplewiki&#34;</span>, <span style="color:#e6db74">&#34;en&#34;</span>, title, chunk_no, 0);
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> EmbeddingModel <span style="color:#a6e22e">embeddingModel</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// default is ONNX all-MiniLM-L6-v2 which is what we want</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> TransformersEmbeddingModel();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="加载完整的-wikipedia-数据集">
+  加载完整的 Wikipedia 数据集
+  <a class="anchor" href="#%e5%8a%a0%e8%bd%bd%e5%ae%8c%e6%95%b4%e7%9a%84-wikipedia-%e6%95%b0%e6%8d%ae%e9%9b%86">#</a>
+</h2>
+<p>要加载完整的 wikipedia 数据集：</p>
+<h2 id="访问-native-client">
+  访问 Native Client
+  <a class="anchor" href="#%e8%ae%bf%e9%97%ae-native-client">#</a>
+</h2>
+<p>Cassandra Vector Store 实现通过 <code>getNativeClient（）</code> 方法提供对底层本机 Cassandra 客户端 （<code>CqlSession</code>） 的访问：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>CassandraVectorStore vectorStore <span style="color:#f92672">=</span> context.<span style="color:#a6e22e">getBean</span>(CassandraVectorStore.<span style="color:#a6e22e">class</span>);
+</span></span><span style="display:flex;"><span>Optional<span style="color:#f92672">&lt;</span>CqlSession<span style="color:#f92672">&gt;</span> nativeClient <span style="color:#f92672">=</span> vectorStore.<span style="color:#a6e22e">getNativeClient</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (nativeClient.<span style="color:#a6e22e">isPresent</span>()) {
+</span></span><span style="display:flex;"><span>    CqlSession session <span style="color:#f92672">=</span> nativeClient.<span style="color:#a6e22e">get</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Use the native client for Cassandra-specific operations</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>本机客户端允许您访问特定于 Cassandra 的功能和作，这些功能和作可能不会通过 <code>VectorStore</code> 接口公开。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#apache-cassandra-矢量存储">Apache Cassandra 矢量存储</a>
+      <ul>
+        <li><a href="#什么是-apache-cassandra">什么是 Apache Cassandra？</a></li>
+        <li><a href="#什么是-jvector">什么是 JVector？</a></li>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#依赖">依赖</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#用法">用法</a></li>
+        <li><a href="#基本用法">基本用法</a></li>
+        <li><a href="#高级配置">高级配置</a></li>
+        <li><a href="#连接配置">连接配置</a></li>
+        <li><a href="#元数据筛选">元数据筛选</a></li>
+        <li><a href="#高级示例vector-store-on-top-of-wikipedia-dataset">高级示例：Vector Store on top of Wikipedia Dataset</a></li>
+        <li><a href="#加载完整的-wikipedia-数据集">加载完整的 Wikipedia 数据集</a></li>
+        <li><a href="#访问-native-client">访问 Native Client</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

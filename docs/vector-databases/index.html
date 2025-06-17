@@ -1,0 +1,2164 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  矢量数据库
+  #
+
+矢量数据库是一种特殊类型的数据库，在 AI 应用程序中起着至关重要的作用。
+在矢量数据库中，查询不同于传统的关系数据库。它们执行相似性搜索，而不是完全匹配。当给定一个向量作为查询时，向量数据库会返回与查询向量“相似”的向量。有关如何在高级别计算此相似性的更多详细信息，请参阅  [
+  向量相似性](vectordbs/understand-vectordbs.html#vectordbs-similarity) .
+矢量数据库用于将数据与 AI 模型集成。使用它们的第一步是将您的数据加载到矢量数据库中。然后，当要将用户查询发送到 AI 模型时，首先检索一组类似的文档。然后，这些文档用作用户问题的上下文，并与用户的查询一起发送到 AI 模型。这种技术被称为[
+  检索增强生成 （RAG）。](../concepts.html#concept-rag)
+以下部分描述了使用多个矢量数据库实现的 Spring AI 接口和一些高级示例用法。
+最后一部分旨在揭开向量数据库中相似性搜索的基本方法的神秘面纱。
+
+  API 概述
+  #
+
+本节作为 Spring AI 框架中 VectorStore 接口及其关联类的指南。
+Spring AI 提供了一个抽象的 API，用于通过 VectorStore 接口与向量数据库进行交互。
+以下是 VectorStore 接口定义：
+public interface VectorStore extends DocumentWriter {
+
+    default String getName() {
+		return this.getClass().getSimpleName();
+	}
+
+    void add(List&lt;Document&gt; documents);
+
+    void delete(List&lt;String&gt; idList);
+
+    void delete(Filter.Expression filterExpression);
+
+    default void delete(String filterExpression) { ... };
+
+    List&lt;Document&gt; similaritySearch(String query);
+
+    List&lt;Document&gt; similaritySearch(SearchRequest request);
+
+    default &lt;T&gt; Optional&lt;T&gt; getNativeClient() {
+		return Optional.empty();
+	}
+}
+和相关的 SearchRequest 构建器：">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/vector-databases/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="矢量数据库">
+  <meta property="og:description" content="矢量数据库 # 矢量数据库是一种特殊类型的数据库，在 AI 应用程序中起着至关重要的作用。 在矢量数据库中，查询不同于传统的关系数据库。它们执行相似性搜索，而不是完全匹配。当给定一个向量作为查询时，向量数据库会返回与查询向量“相似”的向量。有关如何在高级别计算此相似性的更多详细信息，请参阅 [ 向量相似性](vectordbs/understand-vectordbs.html#vectordbs-similarity) . 矢量数据库用于将数据与 AI 模型集成。使用它们的第一步是将您的数据加载到矢量数据库中。然后，当要将用户查询发送到 AI 模型时，首先检索一组类似的文档。然后，这些文档用作用户问题的上下文，并与用户的查询一起发送到 AI 模型。这种技术被称为[ 检索增强生成 （RAG）。](../concepts.html#concept-rag) 以下部分描述了使用多个矢量数据库实现的 Spring AI 接口和一些高级示例用法。 最后一部分旨在揭开向量数据库中相似性搜索的基本方法的神秘面纱。
+API 概述 # 本节作为 Spring AI 框架中 VectorStore 接口及其关联类的指南。 Spring AI 提供了一个抽象的 API，用于通过 VectorStore 接口与向量数据库进行交互。 以下是 VectorStore 接口定义：
+public interface VectorStore extends DocumentWriter { default String getName() { return this.getClass().getSimpleName(); } void add(List&lt;Document&gt; documents); void delete(List&lt;String&gt; idList); void delete(Filter.Expression filterExpression); default void delete(String filterExpression) { ... }; List&lt;Document&gt; similaritySearch(String query); List&lt;Document&gt; similaritySearch(SearchRequest request); default &lt;T&gt; Optional&lt;T&gt; getNativeClient() { return Optional.empty(); } } 和相关的 SearchRequest 构建器：">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="website">
+<title>矢量数据库 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../favicon.png" >
+<link rel="manifest" href="../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/vector-databases/">
+<link rel="stylesheet" href="../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../fuse.min.js"></script>
+  <script defer src="../../en.search.min.fc796ecb96a612ae39040eb9138814514c32a2e7d9265637e01d9c788994e3c8.js" integrity="sha256-/Hluy5amEq45BA65E4gUUUwyoufZJlY34B2ceImU48g=" crossorigin="anonymous"></script>
+<link rel="alternate" type="application/rss+xml" href="https://studyllm.github.io/docs/vector-databases/index.xml" title="Spring AI 1.0.0" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e2fd78a721f271b7efc6437520b70692" class="toggle"  />
+    <label for="section-e2fd78a721f271b7efc6437520b70692" class="flex justify-between">
+      <a href="../../docs/overview-%E6%A6%82%E8%BF%B0/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/overview-%E6%A6%82%E8%BF%B0/ai-concepts-ai-%E6%A6%82%E5%BF%B5/" class="">AI 概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/getting-started-%E5%BC%80%E5%A7%8B/" class="">开始</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-46da0dacd3edcb609eb3a30122f798c1" class="toggle"  />
+    <label for="section-46da0dacd3edcb609eb3a30122f798c1" class="flex justify-between">
+      <a href="../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/migrating-functioncallback-to-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-9cc275e26831a4c68f5f0626954bb051" class="toggle"  />
+    <label for="section-9cc275e26831a4c68f5f0626954bb051" class="flex justify-between">
+      <a href="../../docs/chat-client-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/chat-client-api/advisors/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/prompts/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/structured-output/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/multimodality/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-dff98c888805ee5be8c49a91de636d7a" class="toggle"  />
+    <label for="section-dff98c888805ee5be8c49a91de636d7a" class="flex justify-between">
+      <a href="../../docs/models/" class="">None</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a549f27d0c7522c5a488c8e70bc18d95" class="toggle"  />
+    <label for="section-a549f27d0c7522c5a488c8e70bc18d95" class="flex justify-between">
+      <a href="../../docs/models/chat-models/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/chat-models-comparison/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/amazon-bedrock-converse/" class="">基岩版 Converse API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/anthropic-3/" class="">Anthropic 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/azure-openai/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/deepseek/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/docker-model-runner/" class="">Docker Model Runner 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-23643788106caecd71158902b516c092" class="toggle"  />
+    <label for="section-23643788106caecd71158902b516c092" class="flex justify-between">
+      <a href="../../docs/models/chat-models/google-vertexai/" class="">谷歌 VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/google-vertexai/vertexai-gemini/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/groq/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/hugging-face/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/mistral-ai/" class="">Mistral AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/moonshot-ai/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/nvidia/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/ollama/" class="">Ollama 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/perplexity-ai/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/openai/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/qianfan/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/zhipu-ai/" class="">智普 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-91d39169afbe390a9cfdcf43422a5f77" class="toggle"  />
+    <label for="section-91d39169afbe390a9cfdcf43422a5f77" class="flex justify-between">
+      <a href="../../docs/models/audio-models/transcription-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/audio-models/transcription-api/azure-openai/" class="">Azure OpenAI 听录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/moderation-models/openai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c7747c1c4ca7e7f27485d3b4a2909173" class="toggle"  />
+    <label for="section-c7747c1c4ca7e7f27485d3b4a2909173" class="flex justify-between">
+      <a href="../../docs/models/embedding-models/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3b5329a5faed8a311a538c92b457f6a" class="toggle"  />
+    <label for="section-f3b5329a5faed8a311a538c92b457f6a" class="flex justify-between">
+      <a href="../../docs/models/embedding-models/amazon-bedrock/" class="">亚马逊基岩版</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/amazon-bedrock/cohere/" class="">Cohere 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/amazon-bedrock/titan/" class="">Titan 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/azure-openai/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/mistral-ai/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/oci-genai/" class="">Oracle Cloud Infrastructure （OCI） GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/ollama/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/onnx-transformers/" class="">变压器 （ONNX） 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/openai/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/postgresml/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/qianfan/" class="">QianFan 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/zhipu-ai/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-602ef13071faddbe2271a0f29c030c5f" class="toggle"  />
+    <label for="section-602ef13071faddbe2271a0f29c030c5f" class="flex justify-between">
+      <a href="../../docs/models/audio-models/text-to-speech-tts-api/" class="">文本转语音 （TTS） API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/audio-models/text-to-speech-tts-api/openai/" class="">OpenAI 文本转语音 （TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/moderation-models/mistral-ai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4c392088dcec5ee943e5103c3c64745e" class="toggle"  />
+    <label for="section-4c392088dcec5ee943e5103c3c64745e" class="flex justify-between">
+      <a href="../../docs/models/image-models/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/azure-openai/" class="">Azure OpenAI 映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/openai/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/stability/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/zhipuai/" class="">智普 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/qianfan/" class="">千帆镜像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/chat-memory/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/tool-calling/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="toggle"  />
+    <label for="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="flex justify-between">
+      <a href="../../docs/model-context-protocol-mcp/" class="">模型上下文协议 （MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-client-boot-starters/" class="">MCP 客户端启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-server-boot-starters/" class="">MCP 服务器启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-utilities/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-14207920bac243191ad5fb9d8690ff76" class="toggle"  />
+    <label for="section-14207920bac243191ad5fb9d8690ff76" class="flex justify-between">
+      <a href="../../docs/retrieval-augmented-generation-rag/" class="">检索增强一代</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/retrieval-augmented-generation-rag/etl-pipeline/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-evaluation/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="toggle" checked />
+    <label for="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="flex justify-between">
+      <a href="../../docs/vector-databases/" class="active">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/azure-ai-service/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/azure-cosmos-db/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/apache-cassandra-vector-store/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/chroma/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/couchbase/" class="">沙发基地</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/elasticsearch/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/gemfire/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/mariadb-vector-store/" class="">MariaDB 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/milvus/" class="">米尔沃斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/mongodb-atlas/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/neo4j/" class="">新 4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/opensearch/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/oracle/" class="">Oracle Database 23ai — AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/pgvector/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/pinecone/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/qdrant/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/redis/" class="">雷迪斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/sap-hana/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/typesense/" class="">Typesense 字体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/weaviate/" class="">维维亚特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/observability/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/development-time-services/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/prompt-engineering-patterns/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/building-effective-agents/" class="">Building Effective Agents</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/deploying-to-the-cloud/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/testcontainers/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/cohere/" class="">OCI GenAI Cohere 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/text-embedding/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/multimodal-embedding/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>矢量数据库</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#矢量数据库">矢量数据库</a>
+      <ul>
+        <li><a href="#api-概述">API 概述</a></li>
+        <li><a href="#schema-初始化">Schema 初始化</a></li>
+        <li><a href="#分批处理策略">分批处理策略</a></li>
+        <li><a href="#默认实现">默认实现</a></li>
+        <li><a href="#使用自动截断">使用自动截断</a></li>
+        <li><a href="#自动截断的配置">自动截断的配置</a></li>
+        <li><a href="#为什么有效">为什么有效</a></li>
+        <li><a href="#最佳实践">最佳实践</a></li>
+        <li><a href="#spring-boot-自动配置">Spring Boot 自动配置</a></li>
+        <li><a href="#自定义实现">自定义实现</a></li>
+        <li><a href="#vectorstore-实现">VectorStore 实现</a></li>
+        <li><a href="#示例用法">示例用法</a></li>
+        <li><a href="#元数据过滤器">元数据过滤器</a></li>
+        <li><a href="#filterexpression-筛选表达式">Filter.Expression （筛选.表达式）</a></li>
+        <li><a href="#从-vector-store-中删除文档">从 Vector Store 中删除文档</a></li>
+        <li><a href="#按文档-id-删除">按文档 ID 删除</a></li>
+        <li><a href="#按筛选表达式删除">按筛选表达式删除</a></li>
+        <li><a href="#delete-by-string-筛选表达式">Delete by String 筛选表达式</a></li>
+        <li><a href="#删除文档时的性能注意事项">删除文档时的性能注意事项</a></li>
+        <li><a href="#了解向量">了解向量</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="矢量数据库">
+  矢量数据库
+  <a class="anchor" href="#%e7%9f%a2%e9%87%8f%e6%95%b0%e6%8d%ae%e5%ba%93">#</a>
+</h1>
+<p>矢量数据库是一种特殊类型的数据库，在 AI 应用程序中起着至关重要的作用。
+在矢量数据库中，查询不同于传统的关系数据库。它们执行相似性搜索，而不是完全匹配。当给定一个向量作为查询时，向量数据库会返回与查询向量“相似”的向量。有关如何在高级别计算此相似性的更多详细信息，请参阅  [
+  <a href="vectordbs/understand-vectordbs.html#vectordbs-similarity">向量相似性</a>](vectordbs/understand-vectordbs.html#vectordbs-similarity) .
+矢量数据库用于将数据与 AI 模型集成。使用它们的第一步是将您的数据加载到矢量数据库中。然后，当要将用户查询发送到 AI 模型时，首先检索一组类似的文档。然后，这些文档用作用户问题的上下文，并与用户的查询一起发送到 AI 模型。这种技术被称为[
+  <a href="../concepts.html#concept-rag">检索增强生成 （RAG）。</a>](../concepts.html#concept-rag)
+以下部分描述了使用多个矢量数据库实现的 Spring AI 接口和一些高级示例用法。
+最后一部分旨在揭开向量数据库中相似性搜索的基本方法的神秘面纱。</p>
+<h2 id="api-概述">
+  API 概述
+  <a class="anchor" href="#api-%e6%a6%82%e8%bf%b0">#</a>
+</h2>
+<p>本节作为 Spring AI 框架中 <code>VectorStore</code> 接口及其关联类的指南。
+Spring AI 提供了一个抽象的 API，用于通过 <code>VectorStore</code> 接口与向量数据库进行交互。
+以下是 <code>VectorStore</code> 接口定义：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">VectorStore</span> <span style="color:#66d9ef">extends</span> DocumentWriter {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">default</span> String <span style="color:#a6e22e">getName</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">getClass</span>().<span style="color:#a6e22e">getSimpleName</span>();
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">add</span>(List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> documents);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">delete</span>(List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> idList);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">delete</span>(Filter.<span style="color:#a6e22e">Expression</span> filterExpression);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">default</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">delete</span>(String filterExpression) { ... };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">similaritySearch</span>(String query);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">similaritySearch</span>(SearchRequest request);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">default</span> <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> Optional<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">getNativeClient</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> Optional.<span style="color:#a6e22e">empty</span>();
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>和相关的 <code>SearchRequest</code> 构建器：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SearchRequest</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">double</span> SIMILARITY_THRESHOLD_ACCEPT_ALL <span style="color:#f92672">=</span> 0.<span style="color:#a6e22e">0</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> DEFAULT_TOP_K <span style="color:#f92672">=</span> 4;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> String query <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> <span style="color:#66d9ef">int</span> topK <span style="color:#f92672">=</span> DEFAULT_TOP_K;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> <span style="color:#66d9ef">double</span> similarityThreshold <span style="color:#f92672">=</span> SIMILARITY_THRESHOLD_ACCEPT_ALL;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Nullable</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> Filter.<span style="color:#a6e22e">Expression</span> filterExpression;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> Builder <span style="color:#a6e22e">from</span>(SearchRequest originalSearchRequest) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> builder().<span style="color:#a6e22e">query</span>(originalSearchRequest.<span style="color:#a6e22e">getQuery</span>())
+</span></span><span style="display:flex;"><span>			.<span style="color:#a6e22e">topK</span>(originalSearchRequest.<span style="color:#a6e22e">getTopK</span>())
+</span></span><span style="display:flex;"><span>			.<span style="color:#a6e22e">similarityThreshold</span>(originalSearchRequest.<span style="color:#a6e22e">getSimilarityThreshold</span>())
+</span></span><span style="display:flex;"><span>			.<span style="color:#a6e22e">filterExpression</span>(originalSearchRequest.<span style="color:#a6e22e">getFilterExpression</span>());
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Builder</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> SearchRequest searchRequest <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> SearchRequest();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">public</span> Builder <span style="color:#a6e22e">query</span>(String query) {
+</span></span><span style="display:flex;"><span>			Assert.<span style="color:#a6e22e">notNull</span>(query, <span style="color:#e6db74">&#34;Query can not be null.&#34;</span>);
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">searchRequest</span>.<span style="color:#a6e22e">query</span> <span style="color:#f92672">=</span> query;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">public</span> Builder <span style="color:#a6e22e">topK</span>(<span style="color:#66d9ef">int</span> topK) {
+</span></span><span style="display:flex;"><span>			Assert.<span style="color:#a6e22e">isTrue</span>(topK <span style="color:#f92672">&gt;=</span> 0, <span style="color:#e6db74">&#34;TopK should be positive.&#34;</span>);
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">searchRequest</span>.<span style="color:#a6e22e">topK</span> <span style="color:#f92672">=</span> topK;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">public</span> Builder <span style="color:#a6e22e">similarityThreshold</span>(<span style="color:#66d9ef">double</span> threshold) {
+</span></span><span style="display:flex;"><span>			Assert.<span style="color:#a6e22e">isTrue</span>(threshold <span style="color:#f92672">&gt;=</span> 0 <span style="color:#f92672">&amp;&amp;</span> threshold <span style="color:#f92672">&lt;=</span> 1, <span style="color:#e6db74">&#34;Similarity threshold must be in [0,1] range.&#34;</span>);
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">searchRequest</span>.<span style="color:#a6e22e">similarityThreshold</span> <span style="color:#f92672">=</span> threshold;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">public</span> Builder <span style="color:#a6e22e">similarityThresholdAll</span>() {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">searchRequest</span>.<span style="color:#a6e22e">similarityThreshold</span> <span style="color:#f92672">=</span> 0.<span style="color:#a6e22e">0</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">public</span> Builder <span style="color:#a6e22e">filterExpression</span>(<span style="color:#a6e22e">@Nullable</span> Filter.<span style="color:#a6e22e">Expression</span> expression) {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">searchRequest</span>.<span style="color:#a6e22e">filterExpression</span> <span style="color:#f92672">=</span> expression;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">public</span> Builder <span style="color:#a6e22e">filterExpression</span>(<span style="color:#a6e22e">@Nullable</span> String textExpression) {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">searchRequest</span>.<span style="color:#a6e22e">filterExpression</span> <span style="color:#f92672">=</span> (textExpression <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>)
+</span></span><span style="display:flex;"><span>					<span style="color:#f92672">?</span> <span style="color:#66d9ef">new</span> FilterExpressionTextParser().<span style="color:#a6e22e">parse</span>(textExpression) : <span style="color:#66d9ef">null</span>;
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">public</span> SearchRequest <span style="color:#a6e22e">build</span>() {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">searchRequest</span>;
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">getQuery</span>() {...}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">getTopK</span>() {...}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">double</span> <span style="color:#a6e22e">getSimilarityThreshold</span>() {...}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> Filter.<span style="color:#a6e22e">Expression</span> <span style="color:#a6e22e">getFilterExpression</span>() {...}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>若要将数据插入矢量数据库，请将其封装在 <code>Document</code> 对象中。<code>Document</code> 类封装数据源（如 PDF 或 Word 文档）中的内容，并包含表示为字符串的文本。它还包含键值对形式的元数据，包括文件名等详细信息。
+插入向量数据库后，使用嵌入模型将文本内容转换为数字数组或 <code>float[]</code>，称为向量嵌入。嵌入模型（如 [
+  <a href="https://en.wikipedia.org/wiki/Word2vec">Word2Vec</a>](
+  <a href="https://en.wikipedia.org/wiki/Word2vec">https://en.wikipedia.org/wiki/Word2vec</a>)、[
+  <a href="https://en.wikipedia.org/wiki/GloVe_%28machine_learning%29">GLoVE</a>](
+  <a href="https://en.wikipedia.org/wiki/GloVe_%28machine_learning%29">https://en.wikipedia.org/wiki/GloVe_(machine_learning)</a>) 和 [
+  <a href="https://en.wikipedia.org/wiki/BERT_%28language_model%29">BERT）</a>](
+  <a href="https://en.wikipedia.org/wiki/BERT_%28language_model%29">https://en.wikipedia.org/wiki/BERT_(language_model)</a>) 或 OpenAI 的 <code>text-embedding-ada-002</code> 用于将单词、句子或段落转换为这些向量嵌入。
+向量数据库的作用是存储和促进这些嵌入的相似性搜索。它本身不会生成嵌入向量。要创建向量嵌入，应使用 <code>EmbeddingModel</code>。
+界面中的 <code>similaritySearch</code> 方法允许检索与给定查询字符串类似的文档。可以使用以下参数对这些方法进行微调：</p>
+<ul>
+<li>k：一个整数，指定要返回的相似文档的最大数量。这通常被称为 “top K” 搜索或 “K 最近邻” （KNN）。</li>
+<li>threshold：介于 0 到 1 之间的双精度值，其中值越接近 1 表示相似度越高。默认情况下，例如，如果将阈值设置为 0.75，则仅返回相似度高于此值的文档。</li>
+<li>Filter.Expression：一个用于传递 Fluent DSL（域特定语言）表达式的类，其功能类似于 SQL 中的“where”子句，但它仅适用于 Document 的元数据键值对。</li>
+<li>filterExpression：基于 ANTLR4 的外部 DSL，接受筛选表达式作为字符串。例如，对于 country、year 和 isActive 等元数据键，您可以使用如下表达式： country == &lsquo;UK&rsquo; &amp;&amp; year &gt;= 2020 &amp;&amp; isActive == true.
+在 [
+  <a href="../../#metadata-filters">Metadata Filters</a>](#metadata-filters) 部分中查找有关 <code>Filter.Expression</code> 的更多信息。</li>
+</ul>
+<h2 id="schema-初始化">
+  Schema 初始化
+  <a class="anchor" href="#schema-%e5%88%9d%e5%a7%8b%e5%8c%96">#</a>
+</h2>
+<p>某些 vector store 要求在使用前初始化其后端 schema。默认情况下，它不会为您初始化。您必须通过为适当的构造函数参数传递<code>布尔</code>值来选择加入，或者如果使用 Spring Boot，则在 <code>application.properties</code> 或 <code>application.yml</code> 中将适当的 <code>initialize-schema</code> 属性设置为 <code>true</code>。有关特定属性名称，请查看您正在使用的矢量存储的文档。</p>
+<h2 id="分批处理策略">
+  分批处理策略
+  <a class="anchor" href="#%e5%88%86%e6%89%b9%e5%a4%84%e7%90%86%e7%ad%96%e7%95%a5">#</a>
+</h2>
+<p>使用矢量存储时，通常需要嵌入大量文档。虽然一次调用嵌入所有文档似乎很简单，但这种方法可能会导致问题。嵌入模型将文本作为标记处理，并且具有最大标记限制，通常称为上下文窗口大小。此限制限制了可在单个嵌入请求中处理的文本量。尝试在一次调用中嵌入过多的标记可能会导致错误或嵌入被截断。
+为了解决此令牌限制，Spring AI 实现了批处理策略。这种方法将大型文档集分解为适合嵌入模型的最大上下文窗口的较小批次。批处理不仅可以解决令牌限制问题，还可以提高性能并更有效地使用 API 速率限制。
+Spring AI 通过 <code>BatchingStrategy</code> 接口提供此功能，该接口允许根据其令牌计数在子批处理中处理文档。
+核心 <code>BatchingStrategy</code> 接口定义如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">BatchingStrategy</span> {
+</span></span><span style="display:flex;"><span>    List<span style="color:#f92672">&lt;</span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;&gt;</span> <span style="color:#a6e22e">batch</span>(List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> documents);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>此接口定义了一个方法 <code>batch</code>，该方法采用文档列表并返回文档批次列表。</p>
+<h2 id="默认实现">
+  默认实现
+  <a class="anchor" href="#%e9%bb%98%e8%ae%a4%e5%ae%9e%e7%8e%b0">#</a>
+</h2>
+<p>Spring AI 提供了一个名为 <code>TokenCountBatchingStrategy</code> 的默认实现。此策略根据文档的令牌计数对文档进行批处理，确保每个批处理不超过计算的最大输入令牌计数。
+<code>TokenCountBatchingStrategy</code> 的主要特点：
+该策略估计每个文档的令牌计数，在不超过最大输入令牌计数的情况下将它们分组为批次，如果单个文档超过此限制，则引发异常。
+您还可以自定义 <code>TokenCountBatchingStrategy</code> 以更好地满足您的特定要求。这可以通过在 Spring Boot <code>@Configuration</code> 类中创建具有自定义参数的新实例来完成。
+下面是如何创建自定义 <code>TokenCountBatchingStrategy</code> bean 的示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Configuration</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">EmbeddingConfig</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> BatchingStrategy <span style="color:#a6e22e">customTokenCountBatchingStrategy</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> TokenCountBatchingStrategy(
+</span></span><span style="display:flex;"><span>            EncodingType.<span style="color:#a6e22e">CL100K_BASE</span>,  <span style="color:#75715e">// Specify the encoding type</span>
+</span></span><span style="display:flex;"><span>            8000,                      <span style="color:#75715e">// Set the maximum input token count</span>
+</span></span><span style="display:flex;"><span>            0.<span style="color:#a6e22e">1</span>                        <span style="color:#75715e">// Set the reserve percentage</span>
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>在此配置中：
+默认情况下，此构造函数用于 <code>Document.DEFAULT_CONTENT_FORMATTER</code> 内容格式设置，<code>MetadataMode.NONE</code> 用于元数据处理。如果需要自定义这些参数，可以将 full 构造函数与其他参数一起使用。
+定义后，此应用程序中的 <code>EmbeddingModel</code> 实现将自动使用此自定义 <code>TokenCountBatchingStrategy</code> Bean，以替换默认策略。
+<code>TokenCountBatchingStrategy</code> 在内部使用 <code>TokenCountEstimator</code>（特别是 JTokkit<code>TokenCountEstimator</code>）来计算令牌计数以实现高效批处理。这可确保根据指定的编码类型进行准确的令牌估计。
+此外，<code>TokenCountBatchingStrategy</code> 允许您传入自己的 <code>TokenCountEstimator</code> 接口实现，从而提供了灵活性。此功能使您能够使用根据您的特定需求量身定制的自定义代币计数策略。例如：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>TokenCountEstimator customEstimator <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> YourCustomTokenCountEstimator();
+</span></span><span style="display:flex;"><span>TokenCountBatchingStrategy strategy <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> TokenCountBatchingStrategy(
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">customEstimator</span>,
+</span></span><span style="display:flex;"><span>    8000,  <span style="color:#75715e">// maxInputTokenCount</span>
+</span></span><span style="display:flex;"><span>    0.<span style="color:#a6e22e">1</span>,   <span style="color:#75715e">// reservePercentage</span>
+</span></span><span style="display:flex;"><span>    Document.<span style="color:#a6e22e">DEFAULT_CONTENT_FORMATTER</span>,
+</span></span><span style="display:flex;"><span>    MetadataMode.<span style="color:#a6e22e">NONE</span>
+</span></span><span style="display:flex;"><span>);
+</span></span></code></pre></div><h2 id="使用自动截断">
+  使用自动截断
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e8%87%aa%e5%8a%a8%e6%88%aa%e6%96%ad">#</a>
+</h2>
+<p>某些嵌入模型（如 Vertex AI 文本嵌入）支持 <code>auto_truncate</code> 功能。启用后，模型会以静默方式截断超过最大大小的文本输入并继续处理;禁用后，它会为太大的输入引发显式错误。
+在批处理策略中使用自动截断时，您必须为批处理策略配置的输入令牌计数远高于模型的实际最大值。这可以防止批处理策略为大型文档引发异常，从而允许嵌入模型在内部处理截断。</p>
+<h2 id="自动截断的配置">
+  自动截断的配置
+  <a class="anchor" href="#%e8%87%aa%e5%8a%a8%e6%88%aa%e6%96%ad%e7%9a%84%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>启用自动截断时，请将批处理策略的最大输入令牌计数设置为远高于模型的实际限制。这可以防止批处理策略为大型文档引发异常，从而允许嵌入模型在内部处理截断。
+以下是将 Vertex AI 与自动截断和自定义 <code>BatchingStrategy</code> 结合使用，然后在 PgVectorStore 中使用它们的示例配置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Configuration</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AutoTruncationEmbeddingConfig</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> VertexAiTextEmbeddingModel <span style="color:#a6e22e">vertexAiEmbeddingModel</span>(
+</span></span><span style="display:flex;"><span>            VertexAiEmbeddingConnectionDetails connectionDetails) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        VertexAiTextEmbeddingOptions options <span style="color:#f92672">=</span> VertexAiTextEmbeddingOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">model</span>(VertexAiTextEmbeddingOptions.<span style="color:#a6e22e">DEFAULT_MODEL_NAME</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">autoTruncate</span>(<span style="color:#66d9ef">true</span>)  <span style="color:#75715e">// Enable auto-truncation</span>
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> VertexAiTextEmbeddingModel(connectionDetails, options);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> BatchingStrategy <span style="color:#a6e22e">batchingStrategy</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Only use a high token limit if auto-truncation is enabled in your embedding model.</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Set a much higher token count than the model actually supports</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// (e.g., 132,900 when Vertex AI supports only up to 20,000)</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> TokenCountBatchingStrategy(
+</span></span><span style="display:flex;"><span>                EncodingType.<span style="color:#a6e22e">CL100K_BASE</span>,
+</span></span><span style="display:flex;"><span>                132900,  <span style="color:#75715e">// Artificially high limit</span>
+</span></span><span style="display:flex;"><span>                0.<span style="color:#a6e22e">1</span>      <span style="color:#75715e">// 10% reserve</span>
+</span></span><span style="display:flex;"><span>        );
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> VectorStore <span style="color:#a6e22e">vectorStore</span>(JdbcTemplate jdbcTemplate, EmbeddingModel embeddingModel, BatchingStrategy batchingStrategy) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> PgVectorStore.<span style="color:#a6e22e">builder</span>(jdbcTemplate, embeddingModel)
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// other properties omitted here</span>
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>在此配置中：</p>
+<h2 id="为什么有效">
+  为什么有效
+  <a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%9c%89%e6%95%88">#</a>
+</h2>
+<p>这种方法之所以有效，是因为：</p>
+<h2 id="最佳实践">
+  最佳实践
+  <a class="anchor" href="#%e6%9c%80%e4%bd%b3%e5%ae%9e%e8%b7%b5">#</a>
+</h2>
+<p>使用自动截断时：</p>
+<ul>
+<li>将批处理策略的最大输入令牌计数设置为至少比模型的实际限制大 5-10 倍，以避免批处理策略过早出现异常。</li>
+<li>监控日志中是否有来自嵌入模型的截断警告（注意：并非所有模型都会记录截断事件）。</li>
+<li>考虑静默截断对嵌入质量的影响。</li>
+<li>使用示例文档进行测试，以确保截断的嵌入仍然满足您的要求。</li>
+<li>为未来的维护者记录此配置，因为它是非标准的。</li>
+</ul>
+<h2 id="spring-boot-自动配置">
+  Spring Boot 自动配置
+  <a class="anchor" href="#spring-boot-%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>如果你正在使用 Spring Boot 自动配置，则必须提供一个自定义的 <code>BatchingStrategy</code> Bean 来覆盖 Spring AI 附带的默认 Bean：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> BatchingStrategy <span style="color:#a6e22e">customBatchingStrategy</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// This bean will override the default BatchingStrategy</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> TokenCountBatchingStrategy(
+</span></span><span style="display:flex;"><span>            EncodingType.<span style="color:#a6e22e">CL100K_BASE</span>,
+</span></span><span style="display:flex;"><span>            132900,  <span style="color:#75715e">// Much higher than model&#39;s actual limit</span>
+</span></span><span style="display:flex;"><span>            0.<span style="color:#a6e22e">1</span>
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>应用程序上下文中存在此 bean 将自动替换所有向量存储使用的默认批处理策略。</p>
+<h2 id="自定义实现">
+  自定义实现
+  <a class="anchor" href="#%e8%87%aa%e5%ae%9a%e4%b9%89%e5%ae%9e%e7%8e%b0">#</a>
+</h2>
+<p>虽然 <code>TokenCountBatchingStrategy</code> 提供了强大的默认实现，但您可以自定义批处理策略以满足您的特定需求。这可以通过 Spring Boot 的自动配置来完成。
+要自定义批处理策略，请在 Spring Boot 应用程序中定义 <code>BatchingStrategy</code> Bean：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Configuration</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">EmbeddingConfig</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> BatchingStrategy <span style="color:#a6e22e">customBatchingStrategy</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> CustomBatchingStrategy();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>然后，此应用程序中的 <code>EmbeddingModel</code> 实现将自动使用此自定义 <code>BatchingStrategy</code>。</p>
+<h2 id="vectorstore-实现">
+  VectorStore 实现
+  <a class="anchor" href="#vectorstore-%e5%ae%9e%e7%8e%b0">#</a>
+</h2>
+<p>以下是 <code>VectorStore</code> 接口的可用实现：</p>
+<ul>
+<li>Azure 矢量搜索  - Azure 矢量存储。</li>
+<li>Apache Cassandra - Apache Cassandra 矢量存储。</li>
+<li>Chroma Vector Store （色度矢量存储 ） - Chroma 矢量存储。</li>
+<li>Elasticsearch 矢量存储  - Elasticsearch 矢量存储。</li>
+<li>GemFire 矢量存储  - GemFire 矢量存储。</li>
+<li>MariaDB 矢量存储  - MariaDB 矢量存储。</li>
+<li>Milvus Vector Store - Milvus 矢量存储。</li>
+<li>MongoDB Atlas 矢量存储  - MongoDB Atlas 矢量存储。</li>
+<li>Neo4j 矢量存储区  - Neo4j 矢量存储区。</li>
+<li>OpenSearch 矢量存储  - OpenSearch 矢量存储。</li>
+<li>Oracle 矢量存储  - Oracle Database 矢量存储。</li>
+<li>PgVector Store - PostgreSQL/PGVector 矢量存储。</li>
+<li>Pinecone Vector Store - PineCone 矢量存储。</li>
+<li>Qdrant 向量存储  - Qdrant 向量存储。</li>
+<li>Redis 矢量存储  - Redis 矢量存储。</li>
+<li>SAP Hana 矢量存储  - SAP HANA 矢量存储。</li>
+<li>Typesense Vector Store - Typesense 矢量存储。</li>
+<li>Weaviate 矢量存储  - Weaviate 矢量存储。</li>
+<li>SimpleVectorStore - 持久向量存储的简单实现，适用于教育目的。
+未来版本可能支持更多实施。
+如果你有一个需要 Spring AI 支持的向量数据库，请在 GitHub 上打开一个问题，或者更好的是，提交一个带有实现的拉取请求。
+有关每个 <code>VectorStore</code> 实现的信息，请参阅本章的小节。</li>
+</ul>
+<h2 id="示例用法">
+  示例用法
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b%e7%94%a8%e6%b3%95">#</a>
+</h2>
+<p>要计算向量数据库的嵌入向量，您需要选择与正在使用的更高级别 AI 模型匹配的嵌入模型。
+例如，对于 OpenAI 的 ChatGPT，我们使用 <code>OpenAiEmbeddingModel</code> 和一个名为 <code>text-embedding-ada-002</code> 的模型。
+Spring Boot 启动器对 OpenAI 的自动配置使 <code>EmbeddingModel</code> 的实现在 Spring 应用程序上下文中可用于依赖项注入。
+将数据加载到向量存储中的一般用法是你在类似批处理的工作中做的事情，首先将数据加载到 Spring AI 的 <code>Document</code> 类中，然后调用 <code>save</code> 方法。
+给定对源文件的 <code>String</code> 引用，该源文件表示一个 JSON 文件，其中包含我们要加载到向量数据库中的数据，我们使用 Spring AI 的 <code>JsonReader</code> 加载 JSON 中的特定字段，该字段将它们拆分为小块，然后将这些小块传递给向量存储实现。<code>VectorStore</code> 实现计算嵌入向量并将 JSON 和嵌入向量存储在向量数据库中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Autowired</span>
+</span></span><span style="display:flex;"><span>  VectorStore vectorStore;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">load</span>(String sourceFile) {
+</span></span><span style="display:flex;"><span>            JsonReader jsonReader <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> JsonReader(<span style="color:#66d9ef">new</span> FileSystemResource(sourceFile),
+</span></span><span style="display:flex;"><span>                    <span style="color:#e6db74">&#34;price&#34;</span>, <span style="color:#e6db74">&#34;name&#34;</span>, <span style="color:#e6db74">&#34;shortDescription&#34;</span>, <span style="color:#e6db74">&#34;description&#34;</span>, <span style="color:#e6db74">&#34;tags&#34;</span>);
+</span></span><span style="display:flex;"><span>            List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> documents <span style="color:#f92672">=</span> jsonReader.<span style="color:#a6e22e">get</span>();
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">vectorStore</span>.<span style="color:#a6e22e">add</span>(documents);
+</span></span><span style="display:flex;"><span>  }
+</span></span></code></pre></div><p>稍后，当用户问题传递到 AI 模型时，将执行相似性搜索以检索相似文档，然后将这些文档作为用户问题的上下文“塞入”提示中。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String question <span style="color:#f92672">=</span> <span style="color:#f92672">&lt;</span>question from user<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>   List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> similarDocuments <span style="color:#f92672">=</span> store.<span style="color:#a6e22e">similaritySearch</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">question</span>);
+</span></span></code></pre></div><p>可以将其他选项传递到 <code>similaritySearch</code> 方法中，以定义要检索的文档数和相似性搜索的阈值。</p>
+<h2 id="元数据过滤器">
+  元数据过滤器
+  <a class="anchor" href="#%e5%85%83%e6%95%b0%e6%8d%ae%e8%bf%87%e6%bb%a4%e5%99%a8">#</a>
+</h2>
+<p>本节介绍可用于查询结果的各种筛选条件。
+您可以将类似 SQL 的筛选条件表达式作为 <code>String</code> 传递给其中一个 <code>similaritySearch</code> 重载。
+请考虑以下示例：</p>
+<h2 id="filterexpression-筛选表达式">
+  Filter.Expression （筛选.表达式）
+  <a class="anchor" href="#filterexpression-%e7%ad%9b%e9%80%89%e8%a1%a8%e8%be%be%e5%bc%8f">#</a>
+</h2>
+<p>您可以使用公开 Fluent API 的 <code>FilterExpressionBuilder</code> 创建 <code>Filter.Expression</code> 的实例。一个简单的示例如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>FilterExpressionBuilder b <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FilterExpressionBuilder();
+</span></span><span style="display:flex;"><span>Expression expression <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">eq</span>(<span style="color:#e6db74">&#34;country&#34;</span>, <span style="color:#e6db74">&#34;BG&#34;</span>).<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><p>您可以使用以下运算符构建复杂的表达式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>EQUALS: &#39;==&#39;
+</span></span><span style="display:flex;"><span>MINUS : &#39;-&#39;
+</span></span><span style="display:flex;"><span>PLUS: &#39;+&#39;
+</span></span><span style="display:flex;"><span>GT: &#39;&gt;&#39;
+</span></span><span style="display:flex;"><span>GE: &#39;&gt;=&#39;
+</span></span><span style="display:flex;"><span>LT: &#39;&lt;&#39;
+</span></span><span style="display:flex;"><span>LE: &#39;&lt;=&#39;
+</span></span><span style="display:flex;"><span>NE: &#39;!=&#39;
+</span></span></code></pre></div><p>您可以使用以下运算符组合表达式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>AND: &#39;AND&#39; | &#39;and&#39; | &#39;&amp;&amp;&#39;;
+</span></span><span style="display:flex;"><span>OR: &#39;OR&#39; | &#39;or&#39; | &#39;||&#39;;
+</span></span></code></pre></div><p>考虑以下示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Expression exp <span style="color:#f92672">=</span> b.<span style="color:#a6e22e">and</span>(b.<span style="color:#a6e22e">eq</span>(<span style="color:#e6db74">&#34;genre&#34;</span>, <span style="color:#e6db74">&#34;drama&#34;</span>), b.<span style="color:#a6e22e">gte</span>(<span style="color:#e6db74">&#34;year&#34;</span>, 2020)).<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><p>您还可以使用以下运算符：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>IN: &#39;IN&#39; | &#39;in&#39;;
+</span></span><span style="display:flex;"><span>NIN: &#39;NIN&#39; | &#39;nin&#39;;
+</span></span><span style="display:flex;"><span>NOT: &#39;NOT&#39; | &#39;not&#39;;
+</span></span></code></pre></div><p>请考虑以下示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Expression exp <span style="color:#f92672">=</span> b.<span style="color:#a6e22e">and</span>(b.<span style="color:#a6e22e">in</span>(<span style="color:#e6db74">&#34;genre&#34;</span>, <span style="color:#e6db74">&#34;drama&#34;</span>, <span style="color:#e6db74">&#34;documentary&#34;</span>), b.<span style="color:#a6e22e">not</span>(b.<span style="color:#a6e22e">lt</span>(<span style="color:#e6db74">&#34;year&#34;</span>, 2020))).<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="从-vector-store-中删除文档">
+  从 Vector Store 中删除文档
+  <a class="anchor" href="#%e4%bb%8e-vector-store-%e4%b8%ad%e5%88%a0%e9%99%a4%e6%96%87%e6%a1%a3">#</a>
+</h2>
+<p>Vector Store 界面提供了多种删除文档的方法，允许您按特定文档 ID 或使用筛选表达式删除数据。</p>
+<h2 id="按文档-id-删除">
+  按文档 ID 删除
+  <a class="anchor" href="#%e6%8c%89%e6%96%87%e6%a1%a3-id-%e5%88%a0%e9%99%a4">#</a>
+</h2>
+<p>删除文档的最简单方法是提供文档 ID 列表：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">delete</span>(List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> idList);
+</span></span></code></pre></div><p>此方法将删除其 ID 与所提供列表中的 ID 匹配的所有文档。如果列表中的任何 ID 在 store 中不存在，则将被忽略。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Create and add document</span>
+</span></span><span style="display:flex;"><span>Document document <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;The World is Big&#34;</span>,
+</span></span><span style="display:flex;"><span>    Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;country&#34;</span>, <span style="color:#e6db74">&#34;Netherlands&#34;</span>));
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">add</span>(List.<span style="color:#a6e22e">of</span>(document));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Delete document by ID</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">delete</span>(List.<span style="color:#a6e22e">of</span>(document.<span style="color:#a6e22e">getId</span>()));
+</span></span></code></pre></div><h2 id="按筛选表达式删除">
+  按筛选表达式删除
+  <a class="anchor" href="#%e6%8c%89%e7%ad%9b%e9%80%89%e8%a1%a8%e8%be%be%e5%bc%8f%e5%88%a0%e9%99%a4">#</a>
+</h2>
+<p>对于更复杂的删除条件，您可以使用筛选条件表达式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">delete</span>(Filter.<span style="color:#a6e22e">Expression</span> filterExpression);
+</span></span></code></pre></div><p>此方法接受一个 <code>Filter.Expression</code> 对象，该对象定义应删除哪些文档的条件。当您需要根据文档的元数据属性删除文档时，它特别有用。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Create test documents with different metadata</span>
+</span></span><span style="display:flex;"><span>Document bgDocument <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;The World is Big&#34;</span>,
+</span></span><span style="display:flex;"><span>    Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;country&#34;</span>, <span style="color:#e6db74">&#34;Bulgaria&#34;</span>));
+</span></span><span style="display:flex;"><span>Document nlDocument <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;The World is Big&#34;</span>,
+</span></span><span style="display:flex;"><span>    Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;country&#34;</span>, <span style="color:#e6db74">&#34;Netherlands&#34;</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Add documents to the store</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">add</span>(List.<span style="color:#a6e22e">of</span>(bgDocument, nlDocument));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Delete documents from Bulgaria using filter expression</span>
+</span></span><span style="display:flex;"><span>Filter.<span style="color:#a6e22e">Expression</span> filterExpression <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Expression</span>(
+</span></span><span style="display:flex;"><span>    Filter.<span style="color:#a6e22e">ExpressionType</span>.<span style="color:#a6e22e">EQ</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Key</span>(<span style="color:#e6db74">&#34;country&#34;</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Value</span>(<span style="color:#e6db74">&#34;Bulgaria&#34;</span>)
+</span></span><span style="display:flex;"><span>);
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">delete</span>(filterExpression);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Verify deletion with search</span>
+</span></span><span style="display:flex;"><span>SearchRequest request <span style="color:#f92672">=</span> SearchRequest.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;World&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">filterExpression</span>(<span style="color:#e6db74">&#34;country == &#39;Bulgaria&#39;&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> results <span style="color:#f92672">=</span> vectorStore.<span style="color:#a6e22e">similaritySearch</span>(request);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// results will be empty as Bulgarian document was deleted</span>
+</span></span></code></pre></div><h2 id="delete-by-string-筛选表达式">
+  Delete by String 筛选表达式
+  <a class="anchor" href="#delete-by-string-%e7%ad%9b%e9%80%89%e8%a1%a8%e8%be%be%e5%bc%8f">#</a>
+</h2>
+<p>为方便起见，您还可以使用基于字符串的筛选表达式删除文档：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">delete</span>(String filterExpression);
+</span></span></code></pre></div><p>此方法在内部将提供的字符串筛选器转换为 <code>Filter.Expression</code> 对象。当您具有字符串格式的筛选条件时，它非常有用。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Create and add documents</span>
+</span></span><span style="display:flex;"><span>Document bgDocument <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;The World is Big&#34;</span>,
+</span></span><span style="display:flex;"><span>    Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;country&#34;</span>, <span style="color:#e6db74">&#34;Bulgaria&#34;</span>));
+</span></span><span style="display:flex;"><span>Document nlDocument <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;The World is Big&#34;</span>,
+</span></span><span style="display:flex;"><span>    Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;country&#34;</span>, <span style="color:#e6db74">&#34;Netherlands&#34;</span>));
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">add</span>(List.<span style="color:#a6e22e">of</span>(bgDocument, nlDocument));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Delete Bulgarian documents using string filter</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">delete</span>(<span style="color:#e6db74">&#34;country == &#39;Bulgaria&#39;&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Verify remaining documents</span>
+</span></span><span style="display:flex;"><span>SearchRequest request <span style="color:#f92672">=</span> SearchRequest.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;World&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">topK</span>(5)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> results <span style="color:#f92672">=</span> vectorStore.<span style="color:#a6e22e">similaritySearch</span>(request);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// results will only contain the Netherlands document</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>    vectorStore.<span style="color:#a6e22e">delete</span>(<span style="color:#e6db74">&#34;country == &#39;Bulgaria&#39;&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">catch</span> (Exception  e) {
+</span></span><span style="display:flex;"><span>    logger.<span style="color:#a6e22e">error</span>(<span style="color:#e6db74">&#34;Invalid filter expression&#34;</span>, e);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Create initial document (v1) with version metadata</span>
+</span></span><span style="display:flex;"><span>Document documentV1 <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Document(
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;AI and Machine Learning Best Practices&#34;</span>,
+</span></span><span style="display:flex;"><span>    Map.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;docId&#34;</span>, <span style="color:#e6db74">&#34;AIML-001&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;version&#34;</span>, <span style="color:#e6db74">&#34;1.0&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;lastUpdated&#34;</span>, <span style="color:#e6db74">&#34;2024-01-01&#34;</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Add v1 to the vector store</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">add</span>(List.<span style="color:#a6e22e">of</span>(documentV1));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Create updated version (v2) of the same document</span>
+</span></span><span style="display:flex;"><span>Document documentV2 <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Document(
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;AI and Machine Learning Best Practices - Updated&#34;</span>,
+</span></span><span style="display:flex;"><span>    Map.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;docId&#34;</span>, <span style="color:#e6db74">&#34;AIML-001&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;version&#34;</span>, <span style="color:#e6db74">&#34;2.0&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;lastUpdated&#34;</span>, <span style="color:#e6db74">&#34;2024-02-01&#34;</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// First, delete the old version using filter expression</span>
+</span></span><span style="display:flex;"><span>Filter.<span style="color:#a6e22e">Expression</span> deleteOldVersion <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Expression</span>(
+</span></span><span style="display:flex;"><span>    Filter.<span style="color:#a6e22e">ExpressionType</span>.<span style="color:#a6e22e">AND</span>,
+</span></span><span style="display:flex;"><span>    Arrays.<span style="color:#a6e22e">asList</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Expression</span>(
+</span></span><span style="display:flex;"><span>            Filter.<span style="color:#a6e22e">ExpressionType</span>.<span style="color:#a6e22e">EQ</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Key</span>(<span style="color:#e6db74">&#34;docId&#34;</span>),
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Value</span>(<span style="color:#e6db74">&#34;AIML-001&#34;</span>)
+</span></span><span style="display:flex;"><span>        ),
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Expression</span>(
+</span></span><span style="display:flex;"><span>            Filter.<span style="color:#a6e22e">ExpressionType</span>.<span style="color:#a6e22e">EQ</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Key</span>(<span style="color:#e6db74">&#34;version&#34;</span>),
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> Filter.<span style="color:#a6e22e">Value</span>(<span style="color:#e6db74">&#34;1.0&#34;</span>)
+</span></span><span style="display:flex;"><span>        )
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>);
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">delete</span>(deleteOldVersion);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Add the new version</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">add</span>(List.<span style="color:#a6e22e">of</span>(documentV2));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Verify only v2 exists</span>
+</span></span><span style="display:flex;"><span>SearchRequest request <span style="color:#f92672">=</span> SearchRequest.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;AI and Machine Learning&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">filterExpression</span>(<span style="color:#e6db74">&#34;docId == &#39;AIML-001&#39;&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> results <span style="color:#f92672">=</span> vectorStore.<span style="color:#a6e22e">similaritySearch</span>(request);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// results will contain only v2 of the document</span>
+</span></span></code></pre></div><p>您还可以使用字符串筛选条件表达式完成相同的作：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Delete old version using string filter</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">delete</span>(<span style="color:#e6db74">&#34;docId == &#39;AIML-001&#39; AND version == &#39;1.0&#39;&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Add new version</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">add</span>(List.<span style="color:#a6e22e">of</span>(documentV2));
+</span></span></code></pre></div><h2 id="删除文档时的性能注意事项">
+  删除文档时的性能注意事项
+  <a class="anchor" href="#%e5%88%a0%e9%99%a4%e6%96%87%e6%a1%a3%e6%97%b6%e7%9a%84%e6%80%a7%e8%83%bd%e6%b3%a8%e6%84%8f%e4%ba%8b%e9%a1%b9">#</a>
+</h2>
+<ul>
+<li>当您确切知道要删除哪些文档时，按 ID 列表删除通常会更快。</li>
+<li>基于过滤器的删除可能需要扫描索引以查找匹配的文档;但是，这是特定于 Vector Store 实现的。</li>
+<li>应批量执行大型删除作，以避免系统不堪重负。</li>
+<li>根据文档属性删除时，请考虑使用筛选表达式，而不是先收集 ID。</li>
+</ul>
+<h2 id="了解向量">
+  了解向量
+  <a class="anchor" href="#%e4%ba%86%e8%a7%a3%e5%90%91%e9%87%8f">#</a>
+</h2>
+<p>
+  <a href="vectordbs/understand-vectordbs.html">了解向量</a></p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#矢量数据库">矢量数据库</a>
+      <ul>
+        <li><a href="#api-概述">API 概述</a></li>
+        <li><a href="#schema-初始化">Schema 初始化</a></li>
+        <li><a href="#分批处理策略">分批处理策略</a></li>
+        <li><a href="#默认实现">默认实现</a></li>
+        <li><a href="#使用自动截断">使用自动截断</a></li>
+        <li><a href="#自动截断的配置">自动截断的配置</a></li>
+        <li><a href="#为什么有效">为什么有效</a></li>
+        <li><a href="#最佳实践">最佳实践</a></li>
+        <li><a href="#spring-boot-自动配置">Spring Boot 自动配置</a></li>
+        <li><a href="#自定义实现">自定义实现</a></li>
+        <li><a href="#vectorstore-实现">VectorStore 实现</a></li>
+        <li><a href="#示例用法">示例用法</a></li>
+        <li><a href="#元数据过滤器">元数据过滤器</a></li>
+        <li><a href="#filterexpression-筛选表达式">Filter.Expression （筛选.表达式）</a></li>
+        <li><a href="#从-vector-store-中删除文档">从 Vector Store 中删除文档</a></li>
+        <li><a href="#按文档-id-删除">按文档 ID 删除</a></li>
+        <li><a href="#按筛选表达式删除">按筛选表达式删除</a></li>
+        <li><a href="#delete-by-string-筛选表达式">Delete by String 筛选表达式</a></li>
+        <li><a href="#删除文档时的性能注意事项">删除文档时的性能注意事项</a></li>
+        <li><a href="#了解向量">了解向量</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

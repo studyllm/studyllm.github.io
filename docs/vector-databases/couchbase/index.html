@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  沙发基地
+  #
+
+本节将引导您设置 CouchbaseSearchVectorStore 以存储文档嵌入并使用 Couchbase 执行相似性搜索。
+[
+  Couchbase](
+  https://docs.couchbase.com/server/current/vector-search/vector-search.html) 是一个分布式 JSON 文档数据库，具有关系 DBMS 所需的所有功能。除其他功能外，它还允许用户使用基于向量的存储和检索来查询信息。
+
+  先决条件
+  #
+
+一个正在运行的 Couchbase 实例。以下选项可用：Couchbase * [
+  Docker](
+  https://hub.docker.com/_/couchbase/)
+
+[
+  Capella - Couchbase 即服务](
+  https://cloud.couchbase.com/)
+[
+  在本地安装 Couchbase](
+  https://www.couchbase.com/downloads/?family=couchbase-server)
+[
+  Couchbase Kubernetes 作员](
+  https://www.couchbase.com/downloads/?family=open-source-kubernetes)
+
+
+  自动配置
+  #
+
+Spring AI 为 Couchbase Vector Store 提供了 Spring Boot 自动配置。要启用它，请将以下依赖项添加到项目的 Maven pom.xml 文件中：
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-starter-vector-store-couchbase&lt;/artifactId&gt;
+&lt;/dependency&gt;
+或您的 Gradle build.gradle 构建文件。
+dependencies {
+    implementation &#39;org.springframework.ai:spring-ai-couchbase-store-spring-boot-starter&#39;
+}
+矢量存储实现可以使用默认选项为您初始化配置的存储桶、范围、集合和搜索索引，但您必须通过在相应的构造函数中指定 initializeSchema 布尔值来选择加入。
+请查看 vector store 的[
+  配置参数](#couchbasevector-properties)列表，了解默认值和配置选项。
+此外，您将需要一个已配置的 [[EmbeddingModel](../embeddings.html#available-implementations)](../embeddings.html#available-implementations) bean。请参阅 [[EmbeddingModel](../embeddings.html#available-implementations)](../embeddings.html#available-implementations) 部分以了解更多信息。
+现在，您可以将 CouchbaseSearchVectorStore 自动连接为应用程序中的矢量存储。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/vector-databases/couchbase/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="沙发基地">
+  <meta property="og:description" content="沙发基地 # 本节将引导您设置 CouchbaseSearchVectorStore 以存储文档嵌入并使用 Couchbase 执行相似性搜索。 [ Couchbase]( https://docs.couchbase.com/server/current/vector-search/vector-search.html) 是一个分布式 JSON 文档数据库，具有关系 DBMS 所需的所有功能。除其他功能外，它还允许用户使用基于向量的存储和检索来查询信息。
+先决条件 # 一个正在运行的 Couchbase 实例。以下选项可用：Couchbase * [ Docker]( https://hub.docker.com/_/couchbase/)
+[ Capella - Couchbase 即服务]( https://cloud.couchbase.com/) [ 在本地安装 Couchbase]( https://www.couchbase.com/downloads/?family=couchbase-server) [ Couchbase Kubernetes 作员]( https://www.couchbase.com/downloads/?family=open-source-kubernetes) 自动配置 # Spring AI 为 Couchbase Vector Store 提供了 Spring Boot 自动配置。要启用它，请将以下依赖项添加到项目的 Maven pom.xml 文件中：
+&lt;dependency&gt; &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt; &lt;artifactId&gt;spring-ai-starter-vector-store-couchbase&lt;/artifactId&gt; &lt;/dependency&gt; 或您的 Gradle build.gradle 构建文件。
+dependencies { implementation &#39;org.springframework.ai:spring-ai-couchbase-store-spring-boot-starter&#39; } 矢量存储实现可以使用默认选项为您初始化配置的存储桶、范围、集合和搜索索引，但您必须通过在相应的构造函数中指定 initializeSchema 布尔值来选择加入。 请查看 vector store 的[ 配置参数](#couchbasevector-properties)列表，了解默认值和配置选项。 此外，您将需要一个已配置的 [[EmbeddingModel](../embeddings.html#available-implementations)](../embeddings.html#available-implementations) bean。请参阅 [[EmbeddingModel](../embeddings.html#available-implementations)](../embeddings.html#available-implementations) 部分以了解更多信息。 现在，您可以将 CouchbaseSearchVectorStore 自动连接为应用程序中的矢量存储。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>沙发基地 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../favicon.png" >
+<link rel="manifest" href="../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/vector-databases/couchbase/">
+<link rel="stylesheet" href="../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../fuse.min.js"></script>
+  <script defer src="../../../en.search.min.fc796ecb96a612ae39040eb9138814514c32a2e7d9265637e01d9c788994e3c8.js" integrity="sha256-/Hluy5amEq45BA65E4gUUUwyoufZJlY34B2ceImU48g=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e2fd78a721f271b7efc6437520b70692" class="toggle"  />
+    <label for="section-e2fd78a721f271b7efc6437520b70692" class="flex justify-between">
+      <a href="../../../docs/overview-%E6%A6%82%E8%BF%B0/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/overview-%E6%A6%82%E8%BF%B0/ai-concepts-ai-%E6%A6%82%E5%BF%B5/" class="">AI 概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/getting-started-%E5%BC%80%E5%A7%8B/" class="">开始</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-46da0dacd3edcb609eb3a30122f798c1" class="toggle"  />
+    <label for="section-46da0dacd3edcb609eb3a30122f798c1" class="flex justify-between">
+      <a href="../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/migrating-functioncallback-to-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-9cc275e26831a4c68f5f0626954bb051" class="toggle"  />
+    <label for="section-9cc275e26831a4c68f5f0626954bb051" class="flex justify-between">
+      <a href="../../../docs/chat-client-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/chat-client-api/advisors/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/prompts/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/structured-output/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/multimodality/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-dff98c888805ee5be8c49a91de636d7a" class="toggle"  />
+    <label for="section-dff98c888805ee5be8c49a91de636d7a" class="flex justify-between">
+      <a href="../../../docs/models/" class="">None</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a549f27d0c7522c5a488c8e70bc18d95" class="toggle"  />
+    <label for="section-a549f27d0c7522c5a488c8e70bc18d95" class="flex justify-between">
+      <a href="../../../docs/models/chat-models/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/chat-models-comparison/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/amazon-bedrock-converse/" class="">基岩版 Converse API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/anthropic-3/" class="">Anthropic 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/azure-openai/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/deepseek/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/docker-model-runner/" class="">Docker Model Runner 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-23643788106caecd71158902b516c092" class="toggle"  />
+    <label for="section-23643788106caecd71158902b516c092" class="flex justify-between">
+      <a href="../../../docs/models/chat-models/google-vertexai/" class="">谷歌 VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/google-vertexai/vertexai-gemini/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/groq/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/hugging-face/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/mistral-ai/" class="">Mistral AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/moonshot-ai/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/nvidia/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/ollama/" class="">Ollama 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/perplexity-ai/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/openai/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/qianfan/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/zhipu-ai/" class="">智普 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-91d39169afbe390a9cfdcf43422a5f77" class="toggle"  />
+    <label for="section-91d39169afbe390a9cfdcf43422a5f77" class="flex justify-between">
+      <a href="../../../docs/models/audio-models/transcription-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/audio-models/transcription-api/azure-openai/" class="">Azure OpenAI 听录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/moderation-models/openai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c7747c1c4ca7e7f27485d3b4a2909173" class="toggle"  />
+    <label for="section-c7747c1c4ca7e7f27485d3b4a2909173" class="flex justify-between">
+      <a href="../../../docs/models/embedding-models/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3b5329a5faed8a311a538c92b457f6a" class="toggle"  />
+    <label for="section-f3b5329a5faed8a311a538c92b457f6a" class="flex justify-between">
+      <a href="../../../docs/models/embedding-models/amazon-bedrock/" class="">亚马逊基岩版</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/amazon-bedrock/cohere/" class="">Cohere 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/amazon-bedrock/titan/" class="">Titan 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/azure-openai/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/mistral-ai/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/oci-genai/" class="">Oracle Cloud Infrastructure （OCI） GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/ollama/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/onnx-transformers/" class="">变压器 （ONNX） 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/openai/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/postgresml/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/qianfan/" class="">QianFan 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/zhipu-ai/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-602ef13071faddbe2271a0f29c030c5f" class="toggle"  />
+    <label for="section-602ef13071faddbe2271a0f29c030c5f" class="flex justify-between">
+      <a href="../../../docs/models/audio-models/text-to-speech-tts-api/" class="">文本转语音 （TTS） API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/audio-models/text-to-speech-tts-api/openai/" class="">OpenAI 文本转语音 （TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/moderation-models/mistral-ai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4c392088dcec5ee943e5103c3c64745e" class="toggle"  />
+    <label for="section-4c392088dcec5ee943e5103c3c64745e" class="flex justify-between">
+      <a href="../../../docs/models/image-models/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/azure-openai/" class="">Azure OpenAI 映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/openai/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/stability/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/zhipuai/" class="">智普 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/qianfan/" class="">千帆镜像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/chat-memory/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/tool-calling/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="toggle"  />
+    <label for="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="flex justify-between">
+      <a href="../../../docs/model-context-protocol-mcp/" class="">模型上下文协议 （MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-context-protocol-mcp/mcp-client-boot-starters/" class="">MCP 客户端启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-context-protocol-mcp/mcp-server-boot-starters/" class="">MCP 服务器启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-context-protocol-mcp/mcp-utilities/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-14207920bac243191ad5fb9d8690ff76" class="toggle"  />
+    <label for="section-14207920bac243191ad5fb9d8690ff76" class="flex justify-between">
+      <a href="../../../docs/retrieval-augmented-generation-rag/" class="">检索增强一代</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/retrieval-augmented-generation-rag/etl-pipeline/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-evaluation/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="toggle" checked />
+    <label for="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="flex justify-between">
+      <a href="../../../docs/vector-databases/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/azure-ai-service/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/azure-cosmos-db/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/apache-cassandra-vector-store/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/chroma/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/couchbase/" class="active">沙发基地</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/elasticsearch/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/gemfire/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/mariadb-vector-store/" class="">MariaDB 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/milvus/" class="">米尔沃斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/mongodb-atlas/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/neo4j/" class="">新 4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/opensearch/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/oracle/" class="">Oracle Database 23ai — AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/pgvector/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/pinecone/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/qdrant/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/redis/" class="">雷迪斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/sap-hana/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/typesense/" class="">Typesense 字体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/weaviate/" class="">维维亚特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/observability/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/development-time-services/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/prompt-engineering-patterns/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/building-effective-agents/" class="">Building Effective Agents</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/deploying-to-the-cloud/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/testcontainers/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/cohere/" class="">OCI GenAI Cohere 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/text-embedding/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/multimodal-embedding/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>沙发基地</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#沙发基地">沙发基地</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#选项-1使用-spring-表达式语言-spel">选项 1：使用 Spring 表达式语言 （SpEL）</a></li>
+        <li><a href="#选项-2以编程方式访问环境变量">选项 2：以编程方式访问环境变量</a></li>
+        <li><a href="#元数据筛选">元数据筛选</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#局限性">局限性</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="沙发基地">
+  沙发基地
+  <a class="anchor" href="#%e6%b2%99%e5%8f%91%e5%9f%ba%e5%9c%b0">#</a>
+</h1>
+<p>本节将引导您设置 <code>CouchbaseSearchVectorStore</code> 以存储文档嵌入并使用 Couchbase 执行相似性搜索。
+[
+  <a href="https://docs.couchbase.com/server/current/vector-search/vector-search.html">Couchbase</a>](
+  <a href="https://docs.couchbase.com/server/current/vector-search/vector-search.html">https://docs.couchbase.com/server/current/vector-search/vector-search.html</a>) 是一个分布式 JSON 文档数据库，具有关系 DBMS 所需的所有功能。除其他功能外，它还允许用户使用基于向量的存储和检索来查询信息。</p>
+<h2 id="先决条件">
+  先决条件
+  <a class="anchor" href="#%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6">#</a>
+</h2>
+<p>一个正在运行的 Couchbase 实例。以下选项可用：Couchbase * [
+  <a href="https://hub.docker.com/_/couchbase/">Docker</a>](
+  <a href="https://hub.docker.com/_/couchbase/">https://hub.docker.com/_/couchbase/</a>)</p>
+<ul>
+<li>[
+  <a href="https://cloud.couchbase.com/">Capella - Couchbase 即服务</a>](
+  <a href="https://cloud.couchbase.com/">https://cloud.couchbase.com/</a>)</li>
+<li>[
+  <a href="https://www.couchbase.com/downloads/?family=couchbase-server">在本地安装 Couchbase</a>](
+  <a href="https://www.couchbase.com/downloads/?family=couchbase-server">https://www.couchbase.com/downloads/?family=couchbase-server</a>)</li>
+<li>[
+  <a href="https://www.couchbase.com/downloads/?family=open-source-kubernetes">Couchbase Kubernetes 作员</a>](
+  <a href="https://www.couchbase.com/downloads/?family=open-source-kubernetes">https://www.couchbase.com/downloads/?family=open-source-kubernetes</a>)</li>
+</ul>
+<h2 id="自动配置">
+  自动配置
+  <a class="anchor" href="#%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>Spring AI 为 Couchbase Vector Store 提供了 Spring Boot 自动配置。要启用它，请将以下依赖项添加到项目的 Maven <code>pom.xml</code> 文件中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-starter-vector-store-couchbase<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或您的 Gradle <code>build.gradle</code> 构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-couchbase-store-spring-boot-starter&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>矢量存储实现可以使用默认选项为您初始化配置的存储桶、范围、集合和搜索索引，但您必须通过在相应的构造函数中指定 <code>initializeSchema</code> 布尔值来选择加入。
+请查看 vector store 的[
+  <a href="../../../#couchbasevector-properties">配置参数</a>](#couchbasevector-properties)列表，了解默认值和配置选项。
+此外，您将需要一个已配置的 <code>[[EmbeddingModel](../embeddings.html#available-implementations)](../embeddings.html#available-implementations)</code> bean。请参阅 <code>[[EmbeddingModel](../embeddings.html#available-implementations)](../embeddings.html#available-implementations)</code> 部分以了解更多信息。
+现在，您可以将 <code>CouchbaseSearchVectorStore</code> 自动连接为应用程序中的矢量存储。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Autowired</span> VectorStore vectorStore;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>List <span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> documents <span style="color:#f92672">=</span> List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!! Spring AI rocks!!&#34;</span>, Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;meta1&#34;</span>, <span style="color:#e6db74">&#34;meta1&#34;</span>)),
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;The World is Big and Salvation Lurks Around the Corner&#34;</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Document(<span style="color:#e6db74">&#34;You walk forward facing the past and you turn back toward the future.&#34;</span>, Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;meta2&#34;</span>, <span style="color:#e6db74">&#34;meta2&#34;</span>)));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Add the documents to Qdrant</span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">add</span>(documents);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Retrieve documents similar to a query</span>
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Document<span style="color:#f92672">&gt;</span> results <span style="color:#f92672">=</span> vectorStore.<span style="color:#a6e22e">similaritySearch</span>(SearchRequest.<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;Spring&#34;</span>).<span style="color:#a6e22e">withTopK</span>(5));
+</span></span></code></pre></div><h2 id="配置属性">
+  配置属性
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>要连接到 Couchbase 并使用 <code>CouchbaseSearchVectorStore</code>，您需要提供实例的访问详细信息。可以通过 Spring Boot 的 <code>application.properties</code> 提供配置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.api-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;key&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.couchbase.connection-string</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;conn_string&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.couchbase.username</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;username&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.couchbase.password</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;password&gt;</span>
+</span></span></code></pre></div><p>如果您更喜欢对密码或 API 密钥等敏感信息使用环境变量，则有多种选择：</p>
+<h2 id="选项-1使用-spring-表达式语言-spel">
+  选项 1：使用 Spring 表达式语言 （SpEL）
+  <a class="anchor" href="#%e9%80%89%e9%a1%b9-1%e4%bd%bf%e7%94%a8-spring-%e8%a1%a8%e8%be%be%e5%bc%8f%e8%af%ad%e8%a8%80-spel">#</a>
+</h2>
+<p>你可以使用自定义环境变量名称，并使用 SpEL 在应用程序配置中引用它们：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># In application.yml</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">openai</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">api-key</span>: <span style="color:#ae81ff">${OPENAI_API_KEY}</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">couchbase</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">connection-string</span>: <span style="color:#ae81ff">${COUCHBASE_CONN_STRING}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">username</span>: <span style="color:#ae81ff">${COUCHBASE_USER}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">password</span>: <span style="color:#ae81ff">${COUCHBASE_PASSWORD}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># In your environment or .env file</span>
+</span></span><span style="display:flex;"><span>export OPENAI_API_KEY<span style="color:#f92672">=</span>&lt;api-key&gt;
+</span></span><span style="display:flex;"><span>export COUCHBASE_CONN_STRING<span style="color:#f92672">=</span>&lt;couchbase connection string like couchbase://localhost&gt;
+</span></span><span style="display:flex;"><span>export COUCHBASE_USER<span style="color:#f92672">=</span>&lt;couchbase username&gt;
+</span></span><span style="display:flex;"><span>export COUCHBASE_PASSWORD<span style="color:#f92672">=</span>&lt;couchbase password&gt;
+</span></span></code></pre></div><h2 id="选项-2以编程方式访问环境变量">
+  选项 2：以编程方式访问环境变量
+  <a class="anchor" href="#%e9%80%89%e9%a1%b9-2%e4%bb%a5%e7%bc%96%e7%a8%8b%e6%96%b9%e5%bc%8f%e8%ae%bf%e9%97%ae%e7%8e%af%e5%a2%83%e5%8f%98%e9%87%8f">#</a>
+</h2>
+<p>或者，您可以在 Java 代码中访问环境变量：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String apiKey <span style="color:#f92672">=</span> System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>);
+</span></span></code></pre></div><p>此方法使您可以灵活地命名环境变量，同时将敏感信息排除在应用程序配置文件之外。
+Spring Boot 对 Couchbase Cluster 的自动配置功能将创建一个 bean 实例，该实例将由 <code>CouchbaseSearchVectorStore</code> 使用。
+以 <code>spring.couchbase.*</code> 开头的 Spring Boot 属性用于配置 Couchbase 集群实例：
+以 <code>spring.ai.vectorstore.couchbase.*</code> 前缀开头的属性用于配置 <code>CouchbaseSearchVectorStore</code>。
+可以使用以下相似性函数：
+可以使用以下索引优化：</p>
+<ul>
+<li>召回</li>
+<li>延迟
+有关每个选项的更多详细信息，请参阅有关向量搜索的 [
+  <a href="https://docs.couchbase.com/server/current/search/child-field-options-reference.html">Couchbase 文档</a>](
+  <a href="https://docs.couchbase.com/server/current/search/child-field-options-reference.html">https://docs.couchbase.com/server/current/search/child-field-options-reference.html</a>) 。</li>
+</ul>
+<h2 id="元数据筛选">
+  元数据筛选
+  <a class="anchor" href="#%e5%85%83%e6%95%b0%e6%8d%ae%e7%ad%9b%e9%80%89">#</a>
+</h2>
+<p>您可以将通用的可移植[
+  <a href="https://docs.spring.io/spring-ai/reference/api/vectordbs.html#_metadata_filters">元数据筛选器</a>](
+  <a href="https://docs.spring.io/spring-ai/reference/api/vectordbs.html#_metadata_filters">https://docs.spring.io/spring-ai/reference/api/vectordbs.html#_metadata_filters</a>)用于 Couchbase 存储。
+例如，您可以使用文本表达式语言：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">similaritySearch</span>(
+</span></span><span style="display:flex;"><span>    SearchRequest.<span style="color:#a6e22e">defaults</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;The World&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">topK</span>(TOP_K)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">filterExpression</span>(<span style="color:#e6db74">&#34;author in [&#39;john&#39;, &#39;jill&#39;] &amp;&amp; article_type == &#39;blog&#39;&#34;</span>));
+</span></span></code></pre></div><p>或使用 <code>Filter.Expression</code> DSL 以编程方式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>FilterExpressionBuilder b <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FilterExpressionBuilder();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">similaritySearch</span>(SearchRequest.<span style="color:#a6e22e">defaults</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;The World&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">topK</span>(TOP_K)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">filterExpression</span>(b.<span style="color:#a6e22e">and</span>(
+</span></span><span style="display:flex;"><span>        b.<span style="color:#a6e22e">in</span>(<span style="color:#e6db74">&#34;author&#34;</span>,<span style="color:#e6db74">&#34;john&#34;</span>, <span style="color:#e6db74">&#34;jill&#34;</span>),
+</span></span><span style="display:flex;"><span>        b.<span style="color:#a6e22e">eq</span>(<span style="color:#e6db74">&#34;article_type&#34;</span>, <span style="color:#e6db74">&#34;blog&#34;</span>)).<span style="color:#a6e22e">build</span>()));
+</span></span></code></pre></div><h2 id="手动配置">
+  手动配置
+  <a class="anchor" href="#%e6%89%8b%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>您可以手动配置 Couchbase 向量存储，而不是使用 Spring Boot 自动配置。为此，您需要将 <code>spring-ai-couchbase-store</code> 添加到您的项目中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-couchbase-store<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或您的 Gradle <code>build.gradle</code> 构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-couchbase-store&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>创建 Couchbase <code>Cluster</code> Bean。阅读 [
+  <a href="https://docs.couchbase.com/java-sdk/current/hello-world/start-using-sdk.html">Couchbase 文档</a>](
+  <a href="https://docs.couchbase.com/java-sdk/current/hello-world/start-using-sdk.html">https://docs.couchbase.com/java-sdk/current/hello-world/start-using-sdk.html</a>) ，了解有关自定义 <code>Cluster</code> 实例配置的更深入信息。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> Cluster <span style="color:#a6e22e">cluster</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> Cluster.<span style="color:#a6e22e">connect</span>(<span style="color:#e6db74">&#34;couchbase://localhost&#34;</span>, <span style="color:#e6db74">&#34;username&#34;</span>, <span style="color:#e6db74">&#34;password&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>，然后使用构建器模式创建 <code>CouchbaseSearchVectorStore</code> Bean：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> VectorStore <span style="color:#a6e22e">couchbaseSearchVectorStore</span>(Cluster cluster,
+</span></span><span style="display:flex;"><span>                                              EmbeddingModel embeddingModel,
+</span></span><span style="display:flex;"><span>                                              Boolean initializeSchema) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> CouchbaseSearchVectorStore
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">builder</span>(cluster, embeddingModel)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">bucketName</span>(<span style="color:#e6db74">&#34;test&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">scopeName</span>(<span style="color:#e6db74">&#34;test&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">collectionName</span>(<span style="color:#e6db74">&#34;test&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">initializeSchema</span>(initializeSchema)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// This can be any EmbeddingModel implementation.</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> EmbeddingModel <span style="color:#a6e22e">embeddingModel</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> OpenAiEmbeddingModel(OpenAiApi.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">apiKey</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">openaiKey</span>).<span style="color:#a6e22e">build</span>());
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="局限性">
+  局限性
+  <a class="anchor" href="#%e5%b1%80%e9%99%90%e6%80%a7">#</a>
+</h2>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#沙发基地">沙发基地</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#选项-1使用-spring-表达式语言-spel">选项 1：使用 Spring 表达式语言 （SpEL）</a></li>
+        <li><a href="#选项-2以编程方式访问环境变量">选项 2：以编程方式访问环境变量</a></li>
+        <li><a href="#元数据筛选">元数据筛选</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#局限性">局限性</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

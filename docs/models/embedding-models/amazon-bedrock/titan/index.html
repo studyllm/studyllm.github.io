@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  Titan 嵌入
+  #
+
+提供 Bedrock Titan Embedding 模型。
+[
+  Amazon Titan](
+  https://aws.amazon.com/bedrock/titan/) 基础模型 （FM） 通过完全托管的 API 为客户提供了广泛的高性能图像、多模态嵌入和文本模型选择。[
+  Amazon Titan](
+  https://aws.amazon.com/bedrock/titan/) 模型由 AWS 创建，并在大型数据集上进行预训练，使其成为强大的通用模型，旨在支持各种使用案例，同时还支持负责任地使用 AI。按原样使用它们，或使用您自己的数据私下自定义它们。
+[
+  AWS Bedrock Titan 模型页面](
+  https://aws.amazon.com/bedrock/titan/)和 [
+  Amazon Bedrock 用户指南](
+  https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html)包含有关如何使用 AWS 托管模型的详细信息。
+
+  先决条件
+  #
+
+请参阅 [
+  Amazon Bedrock 上的 Spring AI 文档](../bedrock.html)以设置 API 访问。
+
+  添加存储库和 BOM
+  #
+
+Spring AI 工件发布在 Maven Central 和 Spring Snapshot 存储库中。请参阅 [
+  Artifact Repositories](../../getting-started.html#artifact-repositories) 部分，将这些存储库添加到您的构建系统中。
+为了帮助进行[
+  依赖项管理](../../getting-started.html#dependency-management)，Spring AI 提供了一个 BOM（物料清单），以确保在整个项目中使用一致的 Spring AI 版本。请参阅[
+  依赖项管理](../../getting-started.html#dependency-management)部分，将 Spring AI BOM 添加到您的构建系统中。
+
+  自动配置
+  #
+
+将 spring-ai-starter-model-bedrock 依赖项添加到项目的 Maven pom.xml 文件中：">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/models/embedding-models/amazon-bedrock/titan/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="Titan 嵌入">
+  <meta property="og:description" content="Titan 嵌入 # 提供 Bedrock Titan Embedding 模型。 [ Amazon Titan]( https://aws.amazon.com/bedrock/titan/) 基础模型 （FM） 通过完全托管的 API 为客户提供了广泛的高性能图像、多模态嵌入和文本模型选择。[ Amazon Titan]( https://aws.amazon.com/bedrock/titan/) 模型由 AWS 创建，并在大型数据集上进行预训练，使其成为强大的通用模型，旨在支持各种使用案例，同时还支持负责任地使用 AI。按原样使用它们，或使用您自己的数据私下自定义它们。 [ AWS Bedrock Titan 模型页面]( https://aws.amazon.com/bedrock/titan/)和 [ Amazon Bedrock 用户指南]( https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html)包含有关如何使用 AWS 托管模型的详细信息。
+先决条件 # 请参阅 [ Amazon Bedrock 上的 Spring AI 文档](../bedrock.html)以设置 API 访问。
+添加存储库和 BOM # Spring AI 工件发布在 Maven Central 和 Spring Snapshot 存储库中。请参阅 [ Artifact Repositories](../../getting-started.html#artifact-repositories) 部分，将这些存储库添加到您的构建系统中。 为了帮助进行[ 依赖项管理](../../getting-started.html#dependency-management)，Spring AI 提供了一个 BOM（物料清单），以确保在整个项目中使用一致的 Spring AI 版本。请参阅[ 依赖项管理](../../getting-started.html#dependency-management)部分，将 Spring AI BOM 添加到您的构建系统中。
+自动配置 # 将 spring-ai-starter-model-bedrock 依赖项添加到项目的 Maven pom.xml 文件中：">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>Titan 嵌入 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../../../favicon.png" >
+<link rel="manifest" href="../../../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/models/embedding-models/amazon-bedrock/titan/">
+<link rel="stylesheet" href="../../../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../../../fuse.min.js"></script>
+  <script defer src="../../../../../en.search.min.fc796ecb96a612ae39040eb9138814514c32a2e7d9265637e01d9c788994e3c8.js" integrity="sha256-/Hluy5amEq45BA65E4gUUUwyoufZJlY34B2ceImU48g=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e2fd78a721f271b7efc6437520b70692" class="toggle"  />
+    <label for="section-e2fd78a721f271b7efc6437520b70692" class="flex justify-between">
+      <a href="../../../../../docs/overview-%E6%A6%82%E8%BF%B0/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/overview-%E6%A6%82%E8%BF%B0/ai-concepts-ai-%E6%A6%82%E5%BF%B5/" class="">AI 概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/getting-started-%E5%BC%80%E5%A7%8B/" class="">开始</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-46da0dacd3edcb609eb3a30122f798c1" class="toggle"  />
+    <label for="section-46da0dacd3edcb609eb3a30122f798c1" class="flex justify-between">
+      <a href="../../../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/migrating-functioncallback-to-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-9cc275e26831a4c68f5f0626954bb051" class="toggle"  />
+    <label for="section-9cc275e26831a4c68f5f0626954bb051" class="flex justify-between">
+      <a href="../../../../../docs/chat-client-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/chat-client-api/advisors/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/prompts/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/structured-output/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/multimodality/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-dff98c888805ee5be8c49a91de636d7a" class="toggle" checked />
+    <label for="section-dff98c888805ee5be8c49a91de636d7a" class="flex justify-between">
+      <a href="../../../../../docs/models/" class="">None</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a549f27d0c7522c5a488c8e70bc18d95" class="toggle"  />
+    <label for="section-a549f27d0c7522c5a488c8e70bc18d95" class="flex justify-between">
+      <a href="../../../../../docs/models/chat-models/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/chat-models-comparison/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/amazon-bedrock-converse/" class="">基岩版 Converse API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/anthropic-3/" class="">Anthropic 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/azure-openai/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/deepseek/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/docker-model-runner/" class="">Docker Model Runner 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-23643788106caecd71158902b516c092" class="toggle"  />
+    <label for="section-23643788106caecd71158902b516c092" class="flex justify-between">
+      <a href="../../../../../docs/models/chat-models/google-vertexai/" class="">谷歌 VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/google-vertexai/vertexai-gemini/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/groq/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/hugging-face/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/mistral-ai/" class="">Mistral AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/moonshot-ai/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/nvidia/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/ollama/" class="">Ollama 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/perplexity-ai/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/openai/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/qianfan/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/chat-models/zhipu-ai/" class="">智普 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-91d39169afbe390a9cfdcf43422a5f77" class="toggle"  />
+    <label for="section-91d39169afbe390a9cfdcf43422a5f77" class="flex justify-between">
+      <a href="../../../../../docs/models/audio-models/transcription-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/audio-models/transcription-api/azure-openai/" class="">Azure OpenAI 听录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/moderation-models/openai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c7747c1c4ca7e7f27485d3b4a2909173" class="toggle" checked />
+    <label for="section-c7747c1c4ca7e7f27485d3b4a2909173" class="flex justify-between">
+      <a href="../../../../../docs/models/embedding-models/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3b5329a5faed8a311a538c92b457f6a" class="toggle" checked />
+    <label for="section-f3b5329a5faed8a311a538c92b457f6a" class="flex justify-between">
+      <a href="../../../../../docs/models/embedding-models/amazon-bedrock/" class="">亚马逊基岩版</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/amazon-bedrock/cohere/" class="">Cohere 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/amazon-bedrock/titan/" class="active">Titan 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/azure-openai/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/mistral-ai/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/oci-genai/" class="">Oracle Cloud Infrastructure （OCI） GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/ollama/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/onnx-transformers/" class="">变压器 （ONNX） 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/openai/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/postgresml/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/qianfan/" class="">QianFan 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/embedding-models/zhipu-ai/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-602ef13071faddbe2271a0f29c030c5f" class="toggle"  />
+    <label for="section-602ef13071faddbe2271a0f29c030c5f" class="flex justify-between">
+      <a href="../../../../../docs/models/audio-models/text-to-speech-tts-api/" class="">文本转语音 （TTS） API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/audio-models/text-to-speech-tts-api/openai/" class="">OpenAI 文本转语音 （TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/moderation-models/mistral-ai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4c392088dcec5ee943e5103c3c64745e" class="toggle"  />
+    <label for="section-4c392088dcec5ee943e5103c3c64745e" class="flex justify-between">
+      <a href="../../../../../docs/models/image-models/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/image-models/azure-openai/" class="">Azure OpenAI 映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/image-models/openai/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/image-models/stability/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/image-models/zhipuai/" class="">智普 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/models/image-models/qianfan/" class="">千帆镜像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/chat-memory/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/tool-calling/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="toggle"  />
+    <label for="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="flex justify-between">
+      <a href="../../../../../docs/model-context-protocol-mcp/" class="">模型上下文协议 （MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/model-context-protocol-mcp/mcp-client-boot-starters/" class="">MCP 客户端启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/model-context-protocol-mcp/mcp-server-boot-starters/" class="">MCP 服务器启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/model-context-protocol-mcp/mcp-utilities/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-14207920bac243191ad5fb9d8690ff76" class="toggle"  />
+    <label for="section-14207920bac243191ad5fb9d8690ff76" class="flex justify-between">
+      <a href="../../../../../docs/retrieval-augmented-generation-rag/" class="">检索增强一代</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/retrieval-augmented-generation-rag/etl-pipeline/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/model-evaluation/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="toggle"  />
+    <label for="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="flex justify-between">
+      <a href="../../../../../docs/vector-databases/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/azure-ai-service/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/azure-cosmos-db/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/apache-cassandra-vector-store/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/chroma/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/couchbase/" class="">沙发基地</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/elasticsearch/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/gemfire/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/mariadb-vector-store/" class="">MariaDB 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/milvus/" class="">米尔沃斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/mongodb-atlas/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/neo4j/" class="">新 4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/opensearch/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/oracle/" class="">Oracle Database 23ai — AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/pgvector/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/pinecone/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/qdrant/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/redis/" class="">雷迪斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/sap-hana/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/typesense/" class="">Typesense 字体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/vector-databases/weaviate/" class="">维维亚特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/observability/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/development-time-services/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/prompt-engineering-patterns/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/building-effective-agents/" class="">Building Effective Agents</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/deploying-to-the-cloud/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/testcontainers/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/cohere/" class="">OCI GenAI Cohere 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/text-embedding/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/multimodal-embedding/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Titan 嵌入</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#titan-嵌入">Titan 嵌入</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#添加存储库和-bom">添加存储库和 BOM</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#启用-titan-嵌入支持">启用 Titan 嵌入支持</a></li>
+        <li><a href="#嵌入属性">嵌入属性</a></li>
+        <li><a href="#运行时选项">运行时选项</a></li>
+        <li><a href="#样品控制器">样品控制器</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#低级-titanembeddingbedrockapi-客户端">低级 TitanEmbeddingBedrockApi 客户端</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="titan-嵌入">
+  Titan 嵌入
+  <a class="anchor" href="#titan-%e5%b5%8c%e5%85%a5">#</a>
+</h1>
+<p>提供 Bedrock Titan Embedding 模型。
+[
+  <a href="https://aws.amazon.com/bedrock/titan/">Amazon Titan</a>](
+  <a href="https://aws.amazon.com/bedrock/titan/">https://aws.amazon.com/bedrock/titan/</a>) 基础模型 （FM） 通过完全托管的 API 为客户提供了广泛的高性能图像、多模态嵌入和文本模型选择。[
+  <a href="https://aws.amazon.com/bedrock/titan/">Amazon Titan</a>](
+  <a href="https://aws.amazon.com/bedrock/titan/">https://aws.amazon.com/bedrock/titan/</a>) 模型由 AWS 创建，并在大型数据集上进行预训练，使其成为强大的通用模型，旨在支持各种使用案例，同时还支持负责任地使用 AI。按原样使用它们，或使用您自己的数据私下自定义它们。
+[
+  <a href="https://aws.amazon.com/bedrock/titan/">AWS Bedrock Titan 模型页面</a>](
+  <a href="https://aws.amazon.com/bedrock/titan/">https://aws.amazon.com/bedrock/titan/</a>)和 [
+  <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html">Amazon Bedrock 用户指南</a>](
+  <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html">https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html</a>)包含有关如何使用 AWS 托管模型的详细信息。</p>
+<h2 id="先决条件">
+  先决条件
+  <a class="anchor" href="#%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6">#</a>
+</h2>
+<p>请参阅 [
+  <a href="../bedrock.html">Amazon Bedrock 上的 Spring AI 文档</a>](../bedrock.html)以设置 API 访问。</p>
+<h2 id="添加存储库和-bom">
+  添加存储库和 BOM
+  <a class="anchor" href="#%e6%b7%bb%e5%8a%a0%e5%ad%98%e5%82%a8%e5%ba%93%e5%92%8c-bom">#</a>
+</h2>
+<p>Spring AI 工件发布在 Maven Central 和 Spring Snapshot 存储库中。请参阅 [
+  <a href="../../getting-started.html#artifact-repositories">Artifact Repositories</a>](../../getting-started.html#artifact-repositories) 部分，将这些存储库添加到您的构建系统中。
+为了帮助进行[
+  <a href="../../getting-started.html#dependency-management">依赖项管理</a>](../../getting-started.html#dependency-management)，Spring AI 提供了一个 BOM（物料清单），以确保在整个项目中使用一致的 Spring AI 版本。请参阅[
+  <a href="../../getting-started.html#dependency-management">依赖项管理</a>](../../getting-started.html#dependency-management)部分，将 Spring AI BOM 添加到您的构建系统中。</p>
+<h2 id="自动配置">
+  自动配置
+  <a class="anchor" href="#%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>将 <code>spring-ai-starter-model-bedrock</code> 依赖项添加到项目的 Maven <code>pom.xml</code> 文件中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-starter-model-bedrock<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或您的 Gradle <code>build.gradle</code> 构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-gradle" data-lang="gradle"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-starter-model-bedrock&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="启用-titan-嵌入支持">
+  启用 Titan 嵌入支持
+  <a class="anchor" href="#%e5%90%af%e7%94%a8-titan-%e5%b5%8c%e5%85%a5%e6%94%af%e6%8c%81">#</a>
+</h2>
+<p>默认情况下，Titan 嵌入模型处于禁用状态。要启用它，请在应用程序配置中将 <code>spring.ai.model.embedding</code> 属性设置为 <code>bedrock-titan</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.model.embedding</span><span style="color:#f92672">=</span><span style="color:#e6db74">bedrock-titan</span>
+</span></span></code></pre></div><p>或者，你可以使用 Spring 表达式语言 （SpEL） 来引用环境变量：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># In application.yml</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">model</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">embedding</span>: <span style="color:#ae81ff">${AI_MODEL_EMBEDDING}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># In your environment or .env file</span>
+</span></span><span style="display:flex;"><span>export AI_MODEL_EMBEDDING<span style="color:#f92672">=</span>bedrock-titan
+</span></span></code></pre></div><p>您还可以在启动应用程序时使用 Java 系统属性设置此属性：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>java -Dspring.ai.model.embedding<span style="color:#f92672">=</span>bedrock-titan -jar your-application.jar
+</span></span></code></pre></div><h2 id="嵌入属性">
+  嵌入属性
+  <a class="anchor" href="#%e5%b5%8c%e5%85%a5%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>前缀 <code>spring.ai.bedrock.aws</code> 是用于配置与 AWS Bedrock 的连接的属性前缀。
+前缀 <code>spring.ai.bedrock.titan.embedding</code> （在 <code>BedrockTitanEmbeddingProperties</code> 中定义）是为 Titan 配置嵌入模型实现的属性前缀。
+支持的值为：<code>amazon.titan-embed-image-v1</code>、<code>amazon.titan-embed-text-v1</code> 和 <code>amazon.titan-embed-text-v2：0</code>。模型 ID 值也可以在 [
+  <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html">AWS Bedrock 文档中找到基本模型 ID</a>](
+  <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html">https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids-arns.html</a>)。</p>
+<h2 id="运行时选项">
+  运行时选项
+  <a class="anchor" href="#%e8%bf%90%e8%a1%8c%e6%97%b6%e9%80%89%e9%a1%b9">#</a>
+</h2>
+<p>[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/BedrockTitanEmbeddingOptions.java">BedrockTitanEmbeddingOptions.java</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/[BedrockTitanEmbeddingOptions.java]%28https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/BedrockTitanEmbeddingOptions.java%29">https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/[BedrockTitanEmbeddingOptions.java](https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/BedrockTitanEmbeddingOptions.java)</a>) 提供 model 配置，例如 <code>input-type</code>。启动时，可以使用 <code>BedrockTitanEmbeddingModel(api).withInputType(type)</code> method 或 spring.ai.bedrock.titan.embedding.<code>input-type</code> properties 配置默认选项。
+在运行时，您可以通过向 <code>EmbeddingRequest</code> 调用添加新的、特定于请求的选项来覆盖默认选项。例如，要覆盖特定请求的默认温度：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>EmbeddingResponse embeddingResponse <span style="color:#f92672">=</span> embeddingModel.<span style="color:#a6e22e">call</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> EmbeddingRequest(List.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;Hello World&#34;</span>, <span style="color:#e6db74">&#34;World is big and salvation is near&#34;</span>),
+</span></span><span style="display:flex;"><span>        BedrockTitanEmbeddingOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        	.<span style="color:#a6e22e">withInputType</span>(InputType.<span style="color:#a6e22e">TEXT</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>()));
+</span></span></code></pre></div><h2 id="样品控制器">
+  样品控制器
+  <a class="anchor" href="#%e6%a0%b7%e5%93%81%e6%8e%a7%e5%88%b6%e5%99%a8">#</a>
+</h2>
+<p>[
+  <a href="https://start.spring.io/">创建一个新</a>](
+  <a href="https://start.spring.io/">https://start.spring.io/</a>)的 Spring Boot 项目，并将 添加到您的 <code>spring-ai-starter-model-bedrock</code> pom（或 gradle）依赖项中。
+在 <code>src/main/resources</code> 目录下添加一个 <code>application.properties</code> 文件，以启用和配置 Titan Embedding 模型：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>spring.<span style="color:#a6e22e">ai</span>.<span style="color:#a6e22e">bedrock</span>.<span style="color:#a6e22e">aws</span>.<span style="color:#a6e22e">region</span><span style="color:#f92672">=</span>eu<span style="color:#f92672">-</span>central<span style="color:#f92672">-</span>1
+</span></span><span style="display:flex;"><span>spring.<span style="color:#a6e22e">ai</span>.<span style="color:#a6e22e">bedrock</span>.<span style="color:#a6e22e">aws</span>.<span style="color:#a6e22e">access</span><span style="color:#f92672">-</span>key<span style="color:#f92672">=</span>${AWS_ACCESS_KEY_ID}
+</span></span><span style="display:flex;"><span>spring.<span style="color:#a6e22e">ai</span>.<span style="color:#a6e22e">bedrock</span>.<span style="color:#a6e22e">aws</span>.<span style="color:#a6e22e">secret</span><span style="color:#f92672">-</span>key<span style="color:#f92672">=</span>${AWS_SECRET_ACCESS_KEY}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>spring.<span style="color:#a6e22e">ai</span>.<span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">embedding</span><span style="color:#f92672">=</span>bedrock<span style="color:#f92672">-</span>titan
+</span></span></code></pre></div><p>这将创建一个 <code>EmbeddingController</code> 实现，您可以将其注入到您的类中。下面是一个简单的 <code>@Controller</code> 类示例，该类使用 chat 模型生成文本。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@RestController</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">EmbeddingController</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> EmbeddingModel embeddingModel;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Autowired</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">EmbeddingController</span>(EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">embeddingModel</span> <span style="color:#f92672">=</span> embeddingModel;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@GetMapping</span>(<span style="color:#e6db74">&#34;/ai/embedding&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Map <span style="color:#a6e22e">embed</span>(<span style="color:#a6e22e">@RequestParam</span>(value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;message&#34;</span>, defaultValue <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Tell me a joke&#34;</span>) String message) {
+</span></span><span style="display:flex;"><span>        EmbeddingResponse embeddingResponse <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">embeddingModel</span>.<span style="color:#a6e22e">embedForResponse</span>(List.<span style="color:#a6e22e">of</span>(message));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;embedding&#34;</span>, embeddingResponse);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="手动配置">
+  手动配置
+  <a class="anchor" href="#%e6%89%8b%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>BedrockTitan<code>EmbeddingModel</code> 实现 <code>EmbeddingModel</code>，并使用[
+  <a href="../../../../../#low-level-api">低级 TitanEmbeddingBedrockApi 客户端</a>](#low-level-api)连接到 Bedrock Titan 服务。
+将 <code>spring-ai-bedrock</code> 依赖项添加到项目的 Maven <code>pom.xml</code> 文件中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-bedrock<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或您的 Gradle <code>build.gradle</code> 构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-gradle" data-lang="gradle"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-bedrock&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>接下来，创建一个 [
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/BedrockTitanEmbeddingModel.java">BedrockTitanEmbeddingModel</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/[BedrockTitanEmbeddingModel]%28https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/BedrockTitanEmbeddingModel.java%29.java">https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/[BedrockTitanEmbeddingModel](https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/BedrockTitanEmbeddingModel.java).java</a>) 并将其用于文本嵌入：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> titanEmbeddingApi <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> TitanEmbeddingBedrockApi(
+</span></span><span style="display:flex;"><span>	TitanEmbeddingModel.<span style="color:#a6e22e">TITAN_EMBED_IMAGE_V1</span>.<span style="color:#a6e22e">id</span>(), Region.<span style="color:#a6e22e">US_EAST_1</span>.<span style="color:#a6e22e">id</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> embeddingModel <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> BedrockTitanEmbeddingModel(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">titanEmbeddingApi</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>EmbeddingResponse embeddingResponse <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">embeddingModel</span>
+</span></span><span style="display:flex;"><span>	.<span style="color:#a6e22e">embedForResponse</span>(List.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;Hello World&#34;</span>)); <span style="color:#75715e">// NOTE titan does not support batch embedding.</span>
+</span></span></code></pre></div><h2 id="低级-titanembeddingbedrockapi-客户端">
+  低级 TitanEmbeddingBedrockApi 客户端
+  <a class="anchor" href="#%e4%bd%8e%e7%ba%a7-titanembeddingbedrockapi-%e5%ae%a2%e6%88%b7%e7%ab%af">#</a>
+</h2>
+<p>[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/api/TitanEmbeddingBedrockApi.java">TitanEmbeddingBedrockApi</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/api/[TitanEmbeddingBedrockApi]%28https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/api/TitanEmbeddingBedrockApi.java%29.java">https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/api/[TitanEmbeddingBedrockApi](https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-bedrock/src/main/java/org/springframework/ai/bedrock/titan/api/TitanEmbeddingBedrockApi.java).java</a>) 提供的是基于 AWS Bedrock [
+  <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/titan-multiemb-models.html">Titan Embedding 模型的</a>](
+  <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/titan-multiemb-models.html">https://docs.aws.amazon.com/bedrock/latest/userguide/titan-multiemb-models.html</a>)轻量级 Java 客户端。
+下面的类图说明了 TitanEmbeddingBedrockApi 接口和构建块：
+
+  <img src="../../../../../images/bedrock/bedrock-titan-embedding-low-level-api.jpg" alt="" />
+TitanEmbeddingBedrockApi 支持使用 <code>amazon.titan-embed-image-v1</code> 和 <code>amazon.titan-embed-image-v1</code> 模型进行单次和批量嵌入计算。
+以下是如何以编程方式使用 api 的简单代码段：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>TitanEmbeddingBedrockApi titanEmbedApi <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> TitanEmbeddingBedrockApi(
+</span></span><span style="display:flex;"><span>		TitanEmbeddingModel.<span style="color:#a6e22e">TITAN_EMBED_TEXT_V1</span>.<span style="color:#a6e22e">id</span>(), Region.<span style="color:#a6e22e">US_EAST_1</span>.<span style="color:#a6e22e">id</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>TitanEmbeddingRequest request <span style="color:#f92672">=</span> TitanEmbeddingRequest.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>	.<span style="color:#a6e22e">withInputText</span>(<span style="color:#e6db74">&#34;I like to eat apples.&#34;</span>)
+</span></span><span style="display:flex;"><span>	.<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>TitanEmbeddingResponse response <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">titanEmbedApi</span>.<span style="color:#a6e22e">embedding</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">request</span>);
+</span></span></code></pre></div><p>要嵌入图像，您需要将其转换为 <code>base64</code> 格式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>TitanEmbeddingBedrockApi titanEmbedApi <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> TitanEmbeddingBedrockApi(
+</span></span><span style="display:flex;"><span>		TitanEmbeddingModel.<span style="color:#a6e22e">TITAN_EMBED_IMAGE_V1</span>.<span style="color:#a6e22e">id</span>(), Region.<span style="color:#a6e22e">US_EAST_1</span>.<span style="color:#a6e22e">id</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> image <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> DefaultResourceLoader()
+</span></span><span style="display:flex;"><span>	.<span style="color:#a6e22e">getResource</span>(<span style="color:#e6db74">&#34;classpath:/spring_framework.png&#34;</span>)
+</span></span><span style="display:flex;"><span>	.<span style="color:#a6e22e">getContentAsByteArray</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>TitanEmbeddingRequest request <span style="color:#f92672">=</span> TitanEmbeddingRequest.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>	.<span style="color:#a6e22e">withInputImage</span>(Base64.<span style="color:#a6e22e">getEncoder</span>().<span style="color:#a6e22e">encodeToString</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">image</span>))
+</span></span><span style="display:flex;"><span>	.<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>TitanEmbeddingResponse response <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">titanEmbedApi</span>.<span style="color:#a6e22e">embedding</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">request</span>);
+</span></span></code></pre></div></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#titan-嵌入">Titan 嵌入</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#添加存储库和-bom">添加存储库和 BOM</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#启用-titan-嵌入支持">启用 Titan 嵌入支持</a></li>
+        <li><a href="#嵌入属性">嵌入属性</a></li>
+        <li><a href="#运行时选项">运行时选项</a></li>
+        <li><a href="#样品控制器">样品控制器</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#低级-titanembeddingbedrockapi-客户端">低级 TitanEmbeddingBedrockApi 客户端</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
