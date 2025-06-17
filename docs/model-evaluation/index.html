@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  评估测试
+  #
+
+测试 AI 应用程序需要评估生成的内容，以确保 AI 模型没有产生幻觉响应。
+评估响应的一种方法是使用 AI 模型本身进行评估。选择最佳 AI 模型进行评估，该模型可能与用于生成响应的模型不同。
+用于评估响应的 Spring AI 接口是 Evaluator，定义为：
+评估的输入是 EvaluationRequest，定义为
+
+  相关性评估器
+  #
+
+`RelevancyEvaluator``` 是 Evaluator接口的一种实现，旨在评估 AI 生成的响应与提供的上下文的相关性。此评估器通过确定 AI 模型的响应是否与用户对检索到的上下文的输入相关，帮助评估 RAG 流的质量。 评估基于用户输入、AI 模型的响应和上下文信息。它使用提示模板询问 AI 模型响应是否与用户输入和上下文相关。 这是RelevancyEvaluator`` 使用的默认提示模板：
+Your task is to evaluate if the response for the query
+is in line with the context information provided.
+
+You have two options to answer. Either YES or NO.
+
+Answer YES, if the response for the query
+is in line with context information otherwise NO.
+
+Query:
+{query}
+
+Response:
+{response}
+
+Context:
+{context}
+
+Answer:
+
+  集成测试中的使用
+  #
+
+以下是在集成测试中使用 RelevancyEvaluator 的示例，使用 RetrievalAugmentationAdvisor 验证 RAG 流的结果：">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/model-evaluation/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="评估测试">
+  <meta property="og:description" content="评估测试 # 测试 AI 应用程序需要评估生成的内容，以确保 AI 模型没有产生幻觉响应。 评估响应的一种方法是使用 AI 模型本身进行评估。选择最佳 AI 模型进行评估，该模型可能与用于生成响应的模型不同。 用于评估响应的 Spring AI 接口是 Evaluator，定义为： 评估的输入是 EvaluationRequest，定义为
+相关性评估器 # `RelevancyEvaluator``` 是 Evaluator接口的一种实现，旨在评估 AI 生成的响应与提供的上下文的相关性。此评估器通过确定 AI 模型的响应是否与用户对检索到的上下文的输入相关，帮助评估 RAG 流的质量。 评估基于用户输入、AI 模型的响应和上下文信息。它使用提示模板询问 AI 模型响应是否与用户输入和上下文相关。 这是RelevancyEvaluator`` 使用的默认提示模板：
+Your task is to evaluate if the response for the query is in line with the context information provided. You have two options to answer. Either YES or NO. Answer YES, if the response for the query is in line with context information otherwise NO. Query: {query} Response: {response} Context: {context} Answer: 集成测试中的使用 # 以下是在集成测试中使用 RelevancyEvaluator 的示例，使用 RetrievalAugmentationAdvisor 验证 RAG 流的结果：">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>评估测试 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../favicon.png" >
+<link rel="manifest" href="../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/model-evaluation/">
+<link rel="stylesheet" href="../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../fuse.min.js"></script>
+  <script defer src="../../en.search.min.fc796ecb96a612ae39040eb9138814514c32a2e7d9265637e01d9c788994e3c8.js" integrity="sha256-/Hluy5amEq45BA65E4gUUUwyoufZJlY34B2ceImU48g=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e2fd78a721f271b7efc6437520b70692" class="toggle"  />
+    <label for="section-e2fd78a721f271b7efc6437520b70692" class="flex justify-between">
+      <a href="../../docs/overview-%E6%A6%82%E8%BF%B0/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/overview-%E6%A6%82%E8%BF%B0/ai-concepts-ai-%E6%A6%82%E5%BF%B5/" class="">AI 概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/getting-started-%E5%BC%80%E5%A7%8B/" class="">开始</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-46da0dacd3edcb609eb3a30122f798c1" class="toggle"  />
+    <label for="section-46da0dacd3edcb609eb3a30122f798c1" class="flex justify-between">
+      <a href="../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/migrating-functioncallback-to-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-9cc275e26831a4c68f5f0626954bb051" class="toggle"  />
+    <label for="section-9cc275e26831a4c68f5f0626954bb051" class="flex justify-between">
+      <a href="../../docs/chat-client-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/chat-client-api/advisors/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/prompts/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/structured-output/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/multimodality/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-dff98c888805ee5be8c49a91de636d7a" class="toggle"  />
+    <label for="section-dff98c888805ee5be8c49a91de636d7a" class="flex justify-between">
+      <a href="../../docs/models/" class="">None</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a549f27d0c7522c5a488c8e70bc18d95" class="toggle"  />
+    <label for="section-a549f27d0c7522c5a488c8e70bc18d95" class="flex justify-between">
+      <a href="../../docs/models/chat-models/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/chat-models-comparison/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/amazon-bedrock-converse/" class="">基岩版 Converse API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/anthropic-3/" class="">Anthropic 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/azure-openai/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/deepseek/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/docker-model-runner/" class="">Docker Model Runner 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-23643788106caecd71158902b516c092" class="toggle"  />
+    <label for="section-23643788106caecd71158902b516c092" class="flex justify-between">
+      <a href="../../docs/models/chat-models/google-vertexai/" class="">谷歌 VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/google-vertexai/vertexai-gemini/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/groq/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/hugging-face/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/mistral-ai/" class="">Mistral AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/moonshot-ai/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/nvidia/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/ollama/" class="">Ollama 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/perplexity-ai/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/openai/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/qianfan/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/zhipu-ai/" class="">智普 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-91d39169afbe390a9cfdcf43422a5f77" class="toggle"  />
+    <label for="section-91d39169afbe390a9cfdcf43422a5f77" class="flex justify-between">
+      <a href="../../docs/models/audio-models/transcription-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/audio-models/transcription-api/azure-openai/" class="">Azure OpenAI 听录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/moderation-models/openai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c7747c1c4ca7e7f27485d3b4a2909173" class="toggle"  />
+    <label for="section-c7747c1c4ca7e7f27485d3b4a2909173" class="flex justify-between">
+      <a href="../../docs/models/embedding-models/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3b5329a5faed8a311a538c92b457f6a" class="toggle"  />
+    <label for="section-f3b5329a5faed8a311a538c92b457f6a" class="flex justify-between">
+      <a href="../../docs/models/embedding-models/amazon-bedrock/" class="">亚马逊基岩版</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/amazon-bedrock/cohere/" class="">Cohere 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/amazon-bedrock/titan/" class="">Titan 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/azure-openai/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/mistral-ai/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/oci-genai/" class="">Oracle Cloud Infrastructure （OCI） GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/ollama/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/onnx-transformers/" class="">变压器 （ONNX） 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/openai/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/postgresml/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/qianfan/" class="">QianFan 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/zhipu-ai/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-602ef13071faddbe2271a0f29c030c5f" class="toggle"  />
+    <label for="section-602ef13071faddbe2271a0f29c030c5f" class="flex justify-between">
+      <a href="../../docs/models/audio-models/text-to-speech-tts-api/" class="">文本转语音 （TTS） API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/audio-models/text-to-speech-tts-api/openai/" class="">OpenAI 文本转语音 （TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/moderation-models/mistral-ai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4c392088dcec5ee943e5103c3c64745e" class="toggle"  />
+    <label for="section-4c392088dcec5ee943e5103c3c64745e" class="flex justify-between">
+      <a href="../../docs/models/image-models/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/azure-openai/" class="">Azure OpenAI 映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/openai/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/stability/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/zhipuai/" class="">智普 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/qianfan/" class="">千帆镜像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/chat-memory/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/tool-calling/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="toggle"  />
+    <label for="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="flex justify-between">
+      <a href="../../docs/model-context-protocol-mcp/" class="">模型上下文协议 （MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-client-boot-starters/" class="">MCP 客户端启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-server-boot-starters/" class="">MCP 服务器启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-utilities/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-14207920bac243191ad5fb9d8690ff76" class="toggle"  />
+    <label for="section-14207920bac243191ad5fb9d8690ff76" class="flex justify-between">
+      <a href="../../docs/retrieval-augmented-generation-rag/" class="">检索增强一代</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/retrieval-augmented-generation-rag/etl-pipeline/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-evaluation/" class="active">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="toggle"  />
+    <label for="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="flex justify-between">
+      <a href="../../docs/vector-databases/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/azure-ai-service/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/azure-cosmos-db/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/apache-cassandra-vector-store/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/chroma/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/couchbase/" class="">沙发基地</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/elasticsearch/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/gemfire/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/mariadb-vector-store/" class="">MariaDB 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/milvus/" class="">米尔沃斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/mongodb-atlas/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/neo4j/" class="">新 4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/opensearch/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/oracle/" class="">Oracle Database 23ai — AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/pgvector/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/pinecone/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/qdrant/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/redis/" class="">雷迪斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/sap-hana/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/typesense/" class="">Typesense 字体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/weaviate/" class="">维维亚特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/observability/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/development-time-services/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/prompt-engineering-patterns/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/building-effective-agents/" class="">Building Effective Agents</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/deploying-to-the-cloud/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/testcontainers/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/cohere/" class="">OCI GenAI Cohere 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/text-embedding/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/multimodal-embedding/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>评估测试</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#评估测试">评估测试</a>
+      <ul>
+        <li><a href="#相关性评估器">相关性评估器</a></li>
+        <li><a href="#集成测试中的使用">集成测试中的使用</a></li>
+        <li><a href="#自定义模板">自定义模板</a></li>
+        <li><a href="#事实核查评估员">事实核查评估员</a></li>
+        <li><a href="#用法">用法</a></li>
+        <li><a href="#例">例</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="评估测试">
+  评估测试
+  <a class="anchor" href="#%e8%af%84%e4%bc%b0%e6%b5%8b%e8%af%95">#</a>
+</h1>
+<p>测试 AI 应用程序需要评估生成的内容，以确保 AI 模型没有产生幻觉响应。
+评估响应的一种方法是使用 AI 模型本身进行评估。选择最佳 AI 模型进行评估，该模型可能与用于生成响应的模型不同。
+用于评估响应的 Spring AI 接口是 <code>Evaluator</code>，定义为：
+评估的输入是 <code>EvaluationRequest</code>，定义为</p>
+<h2 id="相关性评估器">
+  相关性评估器
+  <a class="anchor" href="#%e7%9b%b8%e5%85%b3%e6%80%a7%e8%af%84%e4%bc%b0%e5%99%a8">#</a>
+</h2>
+<p>`Relevancy<code>Evaluator``` 是 </code>Evaluator<code>接口的一种实现，旨在评估 AI 生成的响应与提供的上下文的相关性。此评估器通过确定 AI 模型的响应是否与用户对检索到的上下文的输入相关，帮助评估 RAG 流的质量。 评估基于用户输入、AI 模型的响应和上下文信息。它使用提示模板询问 AI 模型响应是否与用户输入和上下文相关。 这是</code>RelevancyEvaluator`` 使用的默认提示模板：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>Your task is to evaluate if the response for the query
+</span></span><span style="display:flex;"><span>is in line with the context information provided.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>You have two options to answer. Either YES or NO.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Answer YES, if the response for the query
+</span></span><span style="display:flex;"><span>is in line with context information otherwise NO.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Query:
+</span></span><span style="display:flex;"><span>{query}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Response:
+</span></span><span style="display:flex;"><span>{response}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Context:
+</span></span><span style="display:flex;"><span>{context}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Answer:
+</span></span></code></pre></div><h2 id="集成测试中的使用">
+  集成测试中的使用
+  <a class="anchor" href="#%e9%9b%86%e6%88%90%e6%b5%8b%e8%af%95%e4%b8%ad%e7%9a%84%e4%bd%bf%e7%94%a8">#</a>
+</h2>
+<p>以下是在集成测试中使用 <code>RelevancyEvaluator</code> 的示例，使用 <code>RetrievalAugmentationAdvisor</code> 验证 RAG 流的结果：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Test</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">evaluateRelevancy</span>() {
+</span></span><span style="display:flex;"><span>    String question <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Where does the adventure of Anacletus and Birba take place?&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    RetrievalAugmentationAdvisor ragAdvisor <span style="color:#f92672">=</span> RetrievalAugmentationAdvisor.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">documentRetriever</span>(VectorStoreDocumentRetriever.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">vectorStore</span>(pgVectorStore)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    ChatResponse chatResponse <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(chatModel).<span style="color:#a6e22e">build</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">prompt</span>(question)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">advisors</span>(ragAdvisor)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">chatResponse</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    EvaluationRequest evaluationRequest <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> EvaluationRequest(
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// The original user question</span>
+</span></span><span style="display:flex;"><span>        question,
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// The retrieved context from the RAG flow</span>
+</span></span><span style="display:flex;"><span>        chatResponse.<span style="color:#a6e22e">getMetadata</span>().<span style="color:#a6e22e">get</span>(RetrievalAugmentationAdvisor.<span style="color:#a6e22e">DOCUMENT_CONTEXT</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// The AI model&#39;s response</span>
+</span></span><span style="display:flex;"><span>        chatResponse.<span style="color:#a6e22e">getResult</span>().<span style="color:#a6e22e">getOutput</span>().<span style="color:#a6e22e">getText</span>()
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    RelevancyEvaluator evaluator <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RelevancyEvaluator(ChatClient.<span style="color:#a6e22e">builder</span>(chatModel));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    EvaluationResponse evaluationResponse <span style="color:#f92672">=</span> evaluator.<span style="color:#a6e22e">evaluate</span>(evaluationRequest);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    assertThat(evaluationResponse.<span style="color:#a6e22e">isPass</span>()).<span style="color:#a6e22e">isTrue</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>你可以在 Spring AI 项目中找到几个集成测试，这些测试使用 <code>RelevancyEvaluator</code> 来测试 <code>QuestionAnswerAdvisor</code>（参见 [[[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>/src/test/java/org/springframework/ai/integration/
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>/client/advisor/QuestionAnswerAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>/src/test/java/org/springframework/ai/integration/
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>/client/advisor/QuestionAnswerAdvisorIT.java)/src/test/java/org/springframework/ai/integration/
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java">[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)</a>/client/advisor/RetrievalAugmentationAdvisorIT.java)](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java</a>)）和 <code>RetrievalAugmentationAdvisor</code>（参见 [[[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>/src/test/java/org/springframework/ai/integration/
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>/client/advisor/QuestionAnswerAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>/src/test/java/org/springframework/ai/integration/
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java">tests</a>/client/advisor/QuestionAnswerAdvisorIT.java)/src/test/java/org/springframework/ai/integration/
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java">[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)</a>/client/advisor/RetrievalAugmentationAdvisorIT.java)](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/src/test/java/org/springframework/ai/integration/[tests]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java%29/client/advisor/RetrievalAugmentationAdvisorIT.java%29/client/advisor/QuestionAnswerAdvisorIT.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/src/test/java/org/springframework/ai/integration/[tests](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-integration-tests/src/test/java/org/springframework/ai/integration/tests/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java)/client/advisor/RetrievalAugmentationAdvisorIT.java)/client/advisor/QuestionAnswerAdvisorIT.java</a>)）的功能。</p>
+<h2 id="自定义模板">
+  自定义模板
+  <a class="anchor" href="#%e8%87%aa%e5%ae%9a%e4%b9%89%e6%a8%a1%e6%9d%bf">#</a>
+</h2>
+<p><code>RelevancyEvaluator</code> 使用默认模板提示 AI 模型进行评估。您可以通过 <code>.promptTemplate（）</code> 构建器方法提供自己的 <code>PromptTemplate</code> 对象来自定义此行为。
+自定义 <code>PromptTemplate</code> 可以使用任何 <code>TemplateRenderer</code> 实现（默认情况下，它使用基于 [
+  <a href="https://www.stringtemplate.org/">StringTemplate</a>](
+  <a href="https://www.stringtemplate.org/">https://www.stringtemplate.org/</a>) 引擎的 St<code>PromptTemplate</code>）。重要的要求是模板必须包含以下占位符：</p>
+<ul>
+<li>用于接收用户问题的查询占位符。</li>
+<li>用于接收 AI 模型的响应的响应占位符。</li>
+<li>用于接收上下文信息的上下文占位符。</li>
+</ul>
+<h2 id="事实核查评估员">
+  事实核查评估员
+  <a class="anchor" href="#%e4%ba%8b%e5%ae%9e%e6%a0%b8%e6%9f%a5%e8%af%84%e4%bc%b0%e5%91%98">#</a>
+</h2>
+<p>FactCheckingEvaluator 是 Evaluator 接口的另一种实现，旨在根据提供的上下文评估 AI 生成的响应的事实准确性。此评估器通过验证给定的陈述（声明）是否在逻辑上得到提供的上下文（文档）的支持，帮助检测和减少 AI 输出中的幻觉。
+“claim”和“document”将提交给 AI 模型进行评估。可以使用专门用于此目的的更小、更高效的 AI 模型，例如 Bespoke 的 Minicheck，与 GPT-4 等旗舰模型相比，它有助于降低执行这些检查的成本。Minicheck 也可通过 Ollama 使用。</p>
+<h2 id="用法">
+  用法
+  <a class="anchor" href="#%e7%94%a8%e6%b3%95">#</a>
+</h2>
+<p>FactCheckingEvaluator 构造函数将 ChatClient.Builder 作为参数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">FactCheckingEvaluator</span>(ChatClient.<span style="color:#a6e22e">Builder</span> chatClientBuilder) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClientBuilder</span> <span style="color:#f92672">=</span> chatClientBuilder;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>评估员使用以下提示模板进行事实核查：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>Document: {document}
+</span></span><span style="display:flex;"><span>Claim: {claim}
+</span></span></code></pre></div><p>其中 <code>{document}</code> 是上下文信息，<code>{claim}</code> 是要评估的 AI 模型的响应。</p>
+<h2 id="例">
+  例
+  <a class="anchor" href="#%e4%be%8b">#</a>
+</h2>
+<p>以下是如何将 FactCheckingEvaluator 与基于 Ollama 的 ChatModel（特别是 Bespoke-Minicheck 模型）一起使用的示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Test</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">testFactChecking</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Set up the Ollama API</span>
+</span></span><span style="display:flex;"><span>  OllamaApi ollamaApi <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> OllamaApi(<span style="color:#e6db74">&#34;http://localhost:11434&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  ChatModel chatModel <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> OllamaChatModel(ollamaApi,
+</span></span><span style="display:flex;"><span>				OllamaOptions.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">model</span>(BESPOKE_MINICHECK).<span style="color:#a6e22e">numPredict</span>(2).<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">0d</span>).<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Create the FactCheckingEvaluator</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">var</span> factCheckingEvaluator <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FactCheckingEvaluator(ChatClient.<span style="color:#a6e22e">builder</span>(chatModel));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Example context and claim</span>
+</span></span><span style="display:flex;"><span>  String context <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The Earth is the third planet from the Sun and the only astronomical object known to harbor life.&#34;</span>;
+</span></span><span style="display:flex;"><span>  String claim <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The Earth is the fourth planet from the Sun.&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Create an EvaluationRequest</span>
+</span></span><span style="display:flex;"><span>  EvaluationRequest evaluationRequest <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> EvaluationRequest(context, Collections.<span style="color:#a6e22e">emptyList</span>(), claim);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// Perform the evaluation</span>
+</span></span><span style="display:flex;"><span>  EvaluationResponse evaluationResponse <span style="color:#f92672">=</span> factCheckingEvaluator.<span style="color:#a6e22e">evaluate</span>(evaluationRequest);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  assertFalse(evaluationResponse.<span style="color:#a6e22e">isPass</span>(), <span style="color:#e6db74">&#34;The claim should not be supported by the context&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#评估测试">评估测试</a>
+      <ul>
+        <li><a href="#相关性评估器">相关性评估器</a></li>
+        <li><a href="#集成测试中的使用">集成测试中的使用</a></li>
+        <li><a href="#自定义模板">自定义模板</a></li>
+        <li><a href="#事实核查评估员">事实核查评估员</a></li>
+        <li><a href="#用法">用法</a></li>
+        <li><a href="#例">例</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

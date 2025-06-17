@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  Ollama 嵌入
+  #
+
+使用 [
+  Ollama](
+  https://ollama.ai/)，您可以在本地运行各种 [
+  AI 模型](
+  https://ollama.com/search?c=embedding)并从中生成嵌入。嵌入是浮点数的向量（列表）。两个向量之间的距离衡量它们的相关性。小距离表示高相关性，大距离表示低相关性。
+OllamaEmbeddingModel 实现利用 Ollama [
+  Embeddings API](
+  https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings) 端点。
+
+  先决条件
+  #
+
+您首先需要访问 Ollama 实例。有几个选项，包括：
+
+在本地计算机上下载并安装 Ollama。
+通过 Testcontainers 配置和运行 Ollama。
+通过 Kubernetes 服务绑定绑定到 Ollama 实例。
+您可以从 [
+  Ollama 模型库](
+  https://ollama.com/search?c=embedding)中提取要在应用程序中使用的模型：
+
+ollama pull &lt;model-name&gt;
+您还可以提取数千个免费的 [
+  GGUF 紧贴脸模型](
+  https://huggingface.co/models?library=gguf&sort=trending)中的任何一个：
+ollama pull hf.co/&lt;username&gt;/&lt;model-repository&gt;
+或者，您可以启用选项以自动下载任何需要的模型：[
+  Auto-pull Models （自动拉取模型](#auto-pulling-models) ）。
+
+  自动配置
+  #
+
+Spring AI 为 Azure Ollama 嵌入模型提供 Spring Boot 自动配置。要启用它，请将以下依赖项添加到您的 Maven pom.xml 或 Gradle build.gradle 构建文件中：
+
+  基本属性
+  #
+
+前缀 spring.ai.ollama 是配置与 Ollama 的连接的属性前缀
+以下是用于初始化 Ollama 集成和[
+  自动拉取模型](#auto-pulling-models)的属性。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/models/embedding-models/ollama/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="Ollama 嵌入">
+  <meta property="og:description" content="Ollama 嵌入 # 使用 [ Ollama]( https://ollama.ai/)，您可以在本地运行各种 [ AI 模型]( https://ollama.com/search?c=embedding)并从中生成嵌入。嵌入是浮点数的向量（列表）。两个向量之间的距离衡量它们的相关性。小距离表示高相关性，大距离表示低相关性。 OllamaEmbeddingModel 实现利用 Ollama [ Embeddings API]( https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings) 端点。
+先决条件 # 您首先需要访问 Ollama 实例。有几个选项，包括：
+在本地计算机上下载并安装 Ollama。 通过 Testcontainers 配置和运行 Ollama。 通过 Kubernetes 服务绑定绑定到 Ollama 实例。 您可以从 [ Ollama 模型库]( https://ollama.com/search?c=embedding)中提取要在应用程序中使用的模型： ollama pull &lt;model-name&gt; 您还可以提取数千个免费的 [ GGUF 紧贴脸模型]( https://huggingface.co/models?library=gguf&amp;sort=trending)中的任何一个：
+ollama pull hf.co/&lt;username&gt;/&lt;model-repository&gt; 或者，您可以启用选项以自动下载任何需要的模型：[ Auto-pull Models （自动拉取模型](#auto-pulling-models) ）。
+自动配置 # Spring AI 为 Azure Ollama 嵌入模型提供 Spring Boot 自动配置。要启用它，请将以下依赖项添加到您的 Maven pom.xml 或 Gradle build.gradle 构建文件中：
+基本属性 # 前缀 spring.ai.ollama 是配置与 Ollama 的连接的属性前缀 以下是用于初始化 Ollama 集成和[ 自动拉取模型](#auto-pulling-models)的属性。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>Ollama 嵌入 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../../favicon.png" >
+<link rel="manifest" href="../../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/models/embedding-models/ollama/">
+<link rel="stylesheet" href="../../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../../fuse.min.js"></script>
+  <script defer src="../../../../en.search.min.fc796ecb96a612ae39040eb9138814514c32a2e7d9265637e01d9c788994e3c8.js" integrity="sha256-/Hluy5amEq45BA65E4gUUUwyoufZJlY34B2ceImU48g=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e2fd78a721f271b7efc6437520b70692" class="toggle"  />
+    <label for="section-e2fd78a721f271b7efc6437520b70692" class="flex justify-between">
+      <a href="../../../../docs/overview-%E6%A6%82%E8%BF%B0/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/overview-%E6%A6%82%E8%BF%B0/ai-concepts-ai-%E6%A6%82%E5%BF%B5/" class="">AI 概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/getting-started-%E5%BC%80%E5%A7%8B/" class="">开始</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-46da0dacd3edcb609eb3a30122f798c1" class="toggle"  />
+    <label for="section-46da0dacd3edcb609eb3a30122f798c1" class="flex justify-between">
+      <a href="../../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/migrating-functioncallback-to-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-9cc275e26831a4c68f5f0626954bb051" class="toggle"  />
+    <label for="section-9cc275e26831a4c68f5f0626954bb051" class="flex justify-between">
+      <a href="../../../../docs/chat-client-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/chat-client-api/advisors/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/prompts/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/structured-output/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/multimodality/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-dff98c888805ee5be8c49a91de636d7a" class="toggle" checked />
+    <label for="section-dff98c888805ee5be8c49a91de636d7a" class="flex justify-between">
+      <a href="../../../../docs/models/" class="">None</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a549f27d0c7522c5a488c8e70bc18d95" class="toggle"  />
+    <label for="section-a549f27d0c7522c5a488c8e70bc18d95" class="flex justify-between">
+      <a href="../../../../docs/models/chat-models/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/chat-models-comparison/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/amazon-bedrock-converse/" class="">基岩版 Converse API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/anthropic-3/" class="">Anthropic 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/azure-openai/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/deepseek/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/docker-model-runner/" class="">Docker Model Runner 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-23643788106caecd71158902b516c092" class="toggle"  />
+    <label for="section-23643788106caecd71158902b516c092" class="flex justify-between">
+      <a href="../../../../docs/models/chat-models/google-vertexai/" class="">谷歌 VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/google-vertexai/vertexai-gemini/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/groq/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/hugging-face/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/mistral-ai/" class="">Mistral AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/moonshot-ai/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/nvidia/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/ollama/" class="">Ollama 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/perplexity-ai/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/openai/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/qianfan/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/chat-models/zhipu-ai/" class="">智普 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-91d39169afbe390a9cfdcf43422a5f77" class="toggle"  />
+    <label for="section-91d39169afbe390a9cfdcf43422a5f77" class="flex justify-between">
+      <a href="../../../../docs/models/audio-models/transcription-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/audio-models/transcription-api/azure-openai/" class="">Azure OpenAI 听录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/moderation-models/openai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c7747c1c4ca7e7f27485d3b4a2909173" class="toggle" checked />
+    <label for="section-c7747c1c4ca7e7f27485d3b4a2909173" class="flex justify-between">
+      <a href="../../../../docs/models/embedding-models/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3b5329a5faed8a311a538c92b457f6a" class="toggle"  />
+    <label for="section-f3b5329a5faed8a311a538c92b457f6a" class="flex justify-between">
+      <a href="../../../../docs/models/embedding-models/amazon-bedrock/" class="">亚马逊基岩版</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/amazon-bedrock/cohere/" class="">Cohere 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/amazon-bedrock/titan/" class="">Titan 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/azure-openai/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/mistral-ai/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/oci-genai/" class="">Oracle Cloud Infrastructure （OCI） GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/ollama/" class="active">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/onnx-transformers/" class="">变压器 （ONNX） 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/openai/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/postgresml/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/qianfan/" class="">QianFan 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/embedding-models/zhipu-ai/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-602ef13071faddbe2271a0f29c030c5f" class="toggle"  />
+    <label for="section-602ef13071faddbe2271a0f29c030c5f" class="flex justify-between">
+      <a href="../../../../docs/models/audio-models/text-to-speech-tts-api/" class="">文本转语音 （TTS） API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/audio-models/text-to-speech-tts-api/openai/" class="">OpenAI 文本转语音 （TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/moderation-models/mistral-ai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4c392088dcec5ee943e5103c3c64745e" class="toggle"  />
+    <label for="section-4c392088dcec5ee943e5103c3c64745e" class="flex justify-between">
+      <a href="../../../../docs/models/image-models/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/image-models/azure-openai/" class="">Azure OpenAI 映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/image-models/openai/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/image-models/stability/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/image-models/zhipuai/" class="">智普 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/models/image-models/qianfan/" class="">千帆镜像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/chat-memory/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/tool-calling/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="toggle"  />
+    <label for="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="flex justify-between">
+      <a href="../../../../docs/model-context-protocol-mcp/" class="">模型上下文协议 （MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/model-context-protocol-mcp/mcp-client-boot-starters/" class="">MCP 客户端启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/model-context-protocol-mcp/mcp-server-boot-starters/" class="">MCP 服务器启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/model-context-protocol-mcp/mcp-utilities/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-14207920bac243191ad5fb9d8690ff76" class="toggle"  />
+    <label for="section-14207920bac243191ad5fb9d8690ff76" class="flex justify-between">
+      <a href="../../../../docs/retrieval-augmented-generation-rag/" class="">检索增强一代</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/retrieval-augmented-generation-rag/etl-pipeline/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/model-evaluation/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="toggle"  />
+    <label for="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="flex justify-between">
+      <a href="../../../../docs/vector-databases/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/azure-ai-service/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/azure-cosmos-db/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/apache-cassandra-vector-store/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/chroma/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/couchbase/" class="">沙发基地</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/elasticsearch/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/gemfire/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/mariadb-vector-store/" class="">MariaDB 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/milvus/" class="">米尔沃斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/mongodb-atlas/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/neo4j/" class="">新 4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/opensearch/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/oracle/" class="">Oracle Database 23ai — AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/pgvector/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/pinecone/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/qdrant/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/redis/" class="">雷迪斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/sap-hana/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/typesense/" class="">Typesense 字体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/vector-databases/weaviate/" class="">维维亚特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/observability/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/development-time-services/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/prompt-engineering-patterns/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/building-effective-agents/" class="">Building Effective Agents</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/deploying-to-the-cloud/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/testcontainers/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/cohere/" class="">OCI GenAI Cohere 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/text-embedding/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/multimodal-embedding/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>Ollama 嵌入</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#ollama-嵌入">Ollama 嵌入</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#基本属性">基本属性</a></li>
+        <li><a href="#嵌入属性">嵌入属性</a></li>
+        <li><a href="#运行时选项">运行时选项</a></li>
+        <li><a href="#自动拉取模型">自动拉取模型</a></li>
+        <li><a href="#huggingface-模特">HuggingFace 模特</a></li>
+        <li><a href="#样品控制器">样品控制器</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="ollama-嵌入">
+  Ollama 嵌入
+  <a class="anchor" href="#ollama-%e5%b5%8c%e5%85%a5">#</a>
+</h1>
+<p>使用 [
+  <a href="https://ollama.ai/">Ollama</a>](
+  <a href="https://ollama.ai/">https://ollama.ai/</a>)，您可以在本地运行各种 [
+  <a href="https://ollama.com/search?c=embedding">AI 模型</a>](
+  <a href="https://ollama.com/search?c=embedding">https://ollama.com/search?c=embedding</a>)并从中生成嵌入。嵌入是浮点数的向量（列表）。两个向量之间的距离衡量它们的相关性。小距离表示高相关性，大距离表示低相关性。
+<code>OllamaEmbeddingModel</code> 实现利用 Ollama [
+  <a href="https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings">Embeddings API</a>](
+  <a href="https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings">https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings</a>) 端点。</p>
+<h2 id="先决条件">
+  先决条件
+  <a class="anchor" href="#%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6">#</a>
+</h2>
+<p>您首先需要访问 Ollama 实例。有几个选项，包括：</p>
+<ul>
+<li>在本地计算机上下载并安装 Ollama。</li>
+<li>通过 Testcontainers 配置和运行 Ollama。</li>
+<li>通过 Kubernetes 服务绑定绑定到 Ollama 实例。
+您可以从 [
+  <a href="https://ollama.com/search?c=embedding">Ollama 模型库</a>](
+  <a href="https://ollama.com/search?c=embedding">https://ollama.com/search?c=embedding</a>)中提取要在应用程序中使用的模型：</li>
+</ul>
+<pre tabindex="0"><code class="language-shellscript" data-lang="shellscript">ollama pull &lt;model-name&gt;
+</code></pre><p>您还可以提取数千个免费的 [
+  <a href="https://huggingface.co/models?library=gguf&amp;sort=trending">GGUF 紧贴脸模型</a>](
+  <a href="https://huggingface.co/models?library=gguf&amp;sort=trending">https://huggingface.co/models?library=gguf&sort=trending</a>)中的任何一个：</p>
+<pre tabindex="0"><code class="language-shellscript" data-lang="shellscript">ollama pull hf.co/&lt;username&gt;/&lt;model-repository&gt;
+</code></pre><p>或者，您可以启用选项以自动下载任何需要的模型：[
+  <a href="../../../../#auto-pulling-models">Auto-pull Models （自动拉取模型</a>](#auto-pulling-models) ）。</p>
+<h2 id="自动配置">
+  自动配置
+  <a class="anchor" href="#%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>Spring AI 为 Azure Ollama 嵌入模型提供 Spring Boot 自动配置。要启用它，请将以下依赖项添加到您的 Maven <code>pom.xml</code> 或 Gradle <code>build.gradle</code> 构建文件中：</p>
+<h2 id="基本属性">
+  基本属性
+  <a class="anchor" href="#%e5%9f%ba%e6%9c%ac%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>前缀 <code>spring.ai.ollama</code> 是配置与 Ollama 的连接的属性前缀
+以下是用于初始化 Ollama 集成和[
+  <a href="../../../../#auto-pulling-models">自动拉取模型</a>](#auto-pulling-models)的属性。</p>
+<h2 id="嵌入属性">
+  嵌入属性
+  <a class="anchor" href="#%e5%b5%8c%e5%85%a5%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>prefix <code>spring.ai.ollama.embedding.``options``` 是配置 Ollama 嵌入模型的属性前缀。它包括 Ollama 请求（高级）参数，例如 ``model``、``keep-alive`` 和 ``truncate`` 以及 Ollama ``model`` ``options`` 属性。 以下是 Ollama 嵌入模型的高级请求参数： 其余</code>选项`属性基于 [
+  <a href="https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values">Ollama Valid Parameters and Values</a>](
+  <a href="https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values">https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values</a>) 和 [
+  <a href="https://github.com/ollama/ollama/blob/main/api/types.go">Ollama Types</a>](
+  <a href="https://github.com/ollama/ollama/blob/main/api/types.go">https://github.com/ollama/ollama/blob/main/api/types.go</a>)。默认值基于：[
+  <a href="https://github.com/ollama/ollama/blob/b538dc3858014f94b099730a592751a5454cab0a/api/types.go#L364">Ollama 类型默认值</a>](
+  <a href="https://github.com/ollama/ollama/blob/b538dc3858014f94b099730a592751a5454cab0a/api/types.go#L364">https://github.com/ollama/ollama/blob/b538dc3858014f94b099730a592751a5454cab0a/api/types.go#L364</a>) 。</p>
+<h2 id="运行时选项">
+  运行时选项
+  <a class="anchor" href="#%e8%bf%90%e8%a1%8c%e6%97%b6%e9%80%89%e9%a1%b9">#</a>
+</h2>
+<p>[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-ollama/src/main/java/org/springframework/ai/ollama/api/OllamaOptions.java">OllamaOptions.java</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-ollama/src/main/java/org/springframework/ai/ollama/api/[OllamaOptions.java]%28https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-ollama/src/main/java/org/springframework/ai/ollama/api/OllamaOptions.java%29">https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-ollama/src/main/java/org/springframework/ai/ollama/api/[OllamaOptions.java](https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-ollama/src/main/java/org/springframework/ai/ollama/api/OllamaOptions.java)</a>) 提供了 Ollama 配置，例如要使用的模型、低级 GPU 和 CPU 调优等。
+也可以使用 <code>spring.ai.ollama.embedding.options</code> properties 配置默认选项。
+在启动时，使用 配置 <code>OllamaEmbeddingModel(OllamaApi ollamaApi, ``OllamaOptions`` defaultOptions)</code> 用于所有嵌入请求的默认选项。在运行时，您可以使用 <code>OllamaOptions</code> 实例作为 <code>EmbeddingRequest</code> 的一部分来覆盖默认选项。
+例如，要覆盖特定请求的默认模型名称：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>EmbeddingResponse embeddingResponse <span style="color:#f92672">=</span> embeddingModel.<span style="color:#a6e22e">call</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> EmbeddingRequest(List.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;Hello World&#34;</span>, <span style="color:#e6db74">&#34;World is big and salvation is near&#34;</span>),
+</span></span><span style="display:flex;"><span>        OllamaOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;Different-Embedding-Model-Deployment-Name&#34;</span>))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">truncates</span>(<span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><h2 id="自动拉取模型">
+  自动拉取模型
+  <a class="anchor" href="#%e8%87%aa%e5%8a%a8%e6%8b%89%e5%8f%96%e6%a8%a1%e5%9e%8b">#</a>
+</h2>
+<p>Spring AI Ollama 可以在模型在 Ollama 实例中不可用时自动拉取模型。此功能对于开发和测试以及将应用程序部署到新环境特别有用。
+拉取模型有三种策略：</p>
+<ul>
+<li>always（在 PullModelStrategy.ALWAYS 中定义）：始终拉取模型，即使它已经可用。有助于确保您使用的是最新版本的模型。</li>
+<li>when_missing （定义于 PullModelStrategy.WHEN_MISSING ）：仅在模型尚不可用时拉取模型。这可能会导致使用旧版本的模型。</li>
+<li>never （defined in PullModelStrategy.NEVER）：从不自动拉取模型。
+通过配置属性和默认选项定义的所有模型都可以在启动时自动拉取。您可以使用配置属性配置拉取策略、超时和最大重试次数：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">ollama</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">init</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">pull-model-strategy</span>: <span style="color:#ae81ff">always</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">timeout</span>: <span style="color:#ae81ff">60s</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">max-retries</span>: <span style="color:#ae81ff">1</span>
+</span></span></code></pre></div><p>您可以在启动时初始化其他模型，这对于在运行时动态使用的模型非常有用：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">ollama</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">init</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">pull-model-strategy</span>: <span style="color:#ae81ff">always</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">embedding</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">additional-models</span>:
+</span></span><span style="display:flex;"><span>            - <span style="color:#ae81ff">mxbai-embed-large</span>
+</span></span><span style="display:flex;"><span>            - <span style="color:#ae81ff">nomic-embed-text</span>
+</span></span></code></pre></div><p>如果只想将拉取策略应用于特定类型的模型，则可以从初始化任务中排除嵌入模型：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">ollama</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">init</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">pull-model-strategy</span>: <span style="color:#ae81ff">always</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">embedding</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">include</span>: <span style="color:#66d9ef">false</span>
+</span></span></code></pre></div><p>此配置会将拉取策略应用于除 embedding 模型之外的所有模型。</p>
+<h2 id="huggingface-模特">
+  HuggingFace 模特
+  <a class="anchor" href="#huggingface-%e6%a8%a1%e7%89%b9">#</a>
+</h2>
+<p>Ollama 可以开箱即用地访问所有 [
+  <a href="https://huggingface.co/models?library=gguf&amp;sort=trending">GGUF Hugging Face</a>](
+  <a href="https://huggingface.co/models?library=gguf&amp;sort=trending">https://huggingface.co/models?library=gguf&sort=trending</a>) Embedding 模型。您可以按名称拉取这些模型中的任何一个： <code>ollama pull hf.co/&lt;username&gt;/&lt;model-repository&gt;</code> 或配置自动拉取策略： [
+  <a href="../../../../#auto-pulling-models">自动拉取模型</a>](#auto-pulling-models) ：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>spring.<span style="color:#a6e22e">ai</span>.<span style="color:#a6e22e">ollama</span>.<span style="color:#a6e22e">embedding</span>.<span style="color:#a6e22e">options</span>.<span style="color:#a6e22e">model</span><span style="color:#f92672">=</span>hf.<span style="color:#a6e22e">co</span><span style="color:#f92672">/</span>mixedbread<span style="color:#f92672">-</span>ai<span style="color:#f92672">/</span>mxbai<span style="color:#f92672">-</span>embed<span style="color:#f92672">-</span>large<span style="color:#f92672">-</span>v1
+</span></span><span style="display:flex;"><span>spring.<span style="color:#a6e22e">ai</span>.<span style="color:#a6e22e">ollama</span>.<span style="color:#a6e22e">init</span>.<span style="color:#a6e22e">pull</span><span style="color:#f92672">-</span>model<span style="color:#f92672">-</span>strategy<span style="color:#f92672">=</span>always
+</span></span></code></pre></div><ul>
+<li>spring.ai.ollama.embedding.options.model ：指定要使用的紧贴面部 GGUF 模型 。</li>
+<li>spring.ai.ollama.init.pull-model-strategy=always ：（可选）在启动时启用自动拉取模型。对于生产环境，您应该预先下载模型以避免延迟： ollama pull hf.co/mixedbread-ai/mxbai-embed-large-v1 .</li>
+</ul>
+<h2 id="样品控制器">
+  样品控制器
+  <a class="anchor" href="#%e6%a0%b7%e5%93%81%e6%8e%a7%e5%88%b6%e5%99%a8">#</a>
+</h2>
+<p>这将创建一个 <code>EmbeddingModel</code> 实现，您可以将其注入到您的类中。下面是一个使用 <code>EmbeddingModel</code> 实现的简单 <code>@Controller</code> 类的示例。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@RestController</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">EmbeddingController</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> EmbeddingModel embeddingModel;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Autowired</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">EmbeddingController</span>(EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">embeddingModel</span> <span style="color:#f92672">=</span> embeddingModel;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@GetMapping</span>(<span style="color:#e6db74">&#34;/ai/embedding&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Map <span style="color:#a6e22e">embed</span>(<span style="color:#a6e22e">@RequestParam</span>(value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;message&#34;</span>, defaultValue <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Tell me a joke&#34;</span>) String message) {
+</span></span><span style="display:flex;"><span>        EmbeddingResponse embeddingResponse <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">embeddingModel</span>.<span style="color:#a6e22e">embedForResponse</span>(List.<span style="color:#a6e22e">of</span>(message));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;embedding&#34;</span>, embeddingResponse);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="手动配置">
+  手动配置
+  <a class="anchor" href="#%e6%89%8b%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>如果您不使用 Spring Boot，则可以手动配置 <code>OllamaEmbeddingModel</code>。为此，将 spring-ai-ollama 依赖项添加到项目的 Maven pom.xml 或 Gradle <code>build.gradle</code> 构建文件中：
+接下来，创建一个 <code>OllamaEmbeddingModel</code> 实例，并使用它使用专用的 <code>chroma/all-minilm-l6-v2-f32</code> 嵌入模型计算两个输入文本的嵌入：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> ollamaApi <span style="color:#f92672">=</span> OllamaApi.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> embeddingModel <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> OllamaEmbeddingModel(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">ollamaApi</span>,
+</span></span><span style="display:flex;"><span>        OllamaOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>			.<span style="color:#a6e22e">model</span>(OllamaModel.<span style="color:#a6e22e">MISTRAL</span>.<span style="color:#a6e22e">id</span>())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>EmbeddingResponse embeddingResponse <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">embeddingModel</span>.<span style="color:#a6e22e">call</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> EmbeddingRequest(List.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;Hello World&#34;</span>, <span style="color:#e6db74">&#34;World is big and salvation is near&#34;</span>),
+</span></span><span style="display:flex;"><span>        OllamaOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;chroma/all-minilm-l6-v2-f32&#34;</span>))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">truncate</span>(<span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><p><code>OllamaOptions</code> 提供所有嵌入请求的配置信息。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#ollama-嵌入">Ollama 嵌入</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#基本属性">基本属性</a></li>
+        <li><a href="#嵌入属性">嵌入属性</a></li>
+        <li><a href="#运行时选项">运行时选项</a></li>
+        <li><a href="#自动拉取模型">自动拉取模型</a></li>
+        <li><a href="#huggingface-模特">HuggingFace 模特</a></li>
+        <li><a href="#样品控制器">样品控制器</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

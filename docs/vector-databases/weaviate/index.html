@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  维维亚特
+  #
+
+本节将引导您设置 Weaviate VectorStore 以存储文档嵌入并执行相似性搜索。
+[
+  Weaviate](
+  https://weaviate.io/) 是一个开源矢量数据库，允许您存储来自您最喜欢的 ML 模型的数据对象和矢量嵌入，并无缝扩展到数十亿个数据对象。它提供了用于存储文档嵌入、内容和元数据以及搜索这些嵌入（包括元数据筛选）的工具。
+
+  先决条件
+  #
+
+
+一个正在运行的 Weaviate 实例。以下选项可用：
+Weaviate Cloud Service（需要创建帐户和 API 密钥）
+Docker 容器
+如果需要，EmbeddingModel 的 API 密钥，用于生成由 WeaviateVectorStore 存储的嵌入。
+
+
+  依赖
+  #
+
+将 Weaviate Vector Store 依赖项添加到您的项目中：
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-weaviate-store&lt;/artifactId&gt;
+&lt;/dependency&gt;
+或您的 Gradle build.gradle 构建文件。
+dependencies {
+    implementation &#39;org.springframework.ai:spring-ai-weaviate-store&#39;
+}
+
+  配置
+  #
+
+要连接到 Weaviate 并使用 WeaviateVectorStore，您需要提供实例的访问详细信息。可以通过 Spring Boot 的 application.properties 提供配置：
+spring.ai.vectorstore.weaviate.host=&lt;host_of_your_weaviate_instance&gt;
+spring.ai.vectorstore.weaviate.scheme=&lt;http_or_https&gt;
+spring.ai.vectorstore.weaviate.api-key=&lt;your_api_key&gt;
+# API key if needed, e.g. OpenAI
+spring.ai.openai.api-key=&lt;api-key&gt;
+如果您更喜欢对 API 密钥等敏感信息使用环境变量，则有多种选择：">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/vector-databases/weaviate/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="维维亚特">
+  <meta property="og:description" content="维维亚特 # 本节将引导您设置 Weaviate VectorStore 以存储文档嵌入并执行相似性搜索。 [ Weaviate]( https://weaviate.io/) 是一个开源矢量数据库，允许您存储来自您最喜欢的 ML 模型的数据对象和矢量嵌入，并无缝扩展到数十亿个数据对象。它提供了用于存储文档嵌入、内容和元数据以及搜索这些嵌入（包括元数据筛选）的工具。
+先决条件 # 一个正在运行的 Weaviate 实例。以下选项可用： Weaviate Cloud Service（需要创建帐户和 API 密钥） Docker 容器 如果需要，EmbeddingModel 的 API 密钥，用于生成由 WeaviateVectorStore 存储的嵌入。 依赖 # 将 Weaviate Vector Store 依赖项添加到您的项目中：
+&lt;dependency&gt; &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt; &lt;artifactId&gt;spring-ai-weaviate-store&lt;/artifactId&gt; &lt;/dependency&gt; 或您的 Gradle build.gradle 构建文件。
+dependencies { implementation &#39;org.springframework.ai:spring-ai-weaviate-store&#39; } 配置 # 要连接到 Weaviate 并使用 WeaviateVectorStore，您需要提供实例的访问详细信息。可以通过 Spring Boot 的 application.properties 提供配置：
+spring.ai.vectorstore.weaviate.host=&lt;host_of_your_weaviate_instance&gt; spring.ai.vectorstore.weaviate.scheme=&lt;http_or_https&gt; spring.ai.vectorstore.weaviate.api-key=&lt;your_api_key&gt; # API key if needed, e.g. OpenAI spring.ai.openai.api-key=&lt;api-key&gt; 如果您更喜欢对 API 密钥等敏感信息使用环境变量，则有多种选择：">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>维维亚特 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../favicon.png" >
+<link rel="manifest" href="../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/vector-databases/weaviate/">
+<link rel="stylesheet" href="../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../fuse.min.js"></script>
+  <script defer src="../../../en.search.min.fc796ecb96a612ae39040eb9138814514c32a2e7d9265637e01d9c788994e3c8.js" integrity="sha256-/Hluy5amEq45BA65E4gUUUwyoufZJlY34B2ceImU48g=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e2fd78a721f271b7efc6437520b70692" class="toggle"  />
+    <label for="section-e2fd78a721f271b7efc6437520b70692" class="flex justify-between">
+      <a href="../../../docs/overview-%E6%A6%82%E8%BF%B0/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/overview-%E6%A6%82%E8%BF%B0/ai-concepts-ai-%E6%A6%82%E5%BF%B5/" class="">AI 概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/getting-started-%E5%BC%80%E5%A7%8B/" class="">开始</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-46da0dacd3edcb609eb3a30122f798c1" class="toggle"  />
+    <label for="section-46da0dacd3edcb609eb3a30122f798c1" class="flex justify-between">
+      <a href="../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/migrating-functioncallback-to-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-9cc275e26831a4c68f5f0626954bb051" class="toggle"  />
+    <label for="section-9cc275e26831a4c68f5f0626954bb051" class="flex justify-between">
+      <a href="../../../docs/chat-client-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/chat-client-api/advisors/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/prompts/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/structured-output/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/multimodality/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-dff98c888805ee5be8c49a91de636d7a" class="toggle"  />
+    <label for="section-dff98c888805ee5be8c49a91de636d7a" class="flex justify-between">
+      <a href="../../../docs/models/" class="">None</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a549f27d0c7522c5a488c8e70bc18d95" class="toggle"  />
+    <label for="section-a549f27d0c7522c5a488c8e70bc18d95" class="flex justify-between">
+      <a href="../../../docs/models/chat-models/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/chat-models-comparison/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/amazon-bedrock-converse/" class="">基岩版 Converse API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/anthropic-3/" class="">Anthropic 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/azure-openai/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/deepseek/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/docker-model-runner/" class="">Docker Model Runner 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-23643788106caecd71158902b516c092" class="toggle"  />
+    <label for="section-23643788106caecd71158902b516c092" class="flex justify-between">
+      <a href="../../../docs/models/chat-models/google-vertexai/" class="">谷歌 VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/google-vertexai/vertexai-gemini/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/groq/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/hugging-face/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/mistral-ai/" class="">Mistral AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/moonshot-ai/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/nvidia/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/ollama/" class="">Ollama 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/perplexity-ai/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/openai/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/qianfan/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/chat-models/zhipu-ai/" class="">智普 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-91d39169afbe390a9cfdcf43422a5f77" class="toggle"  />
+    <label for="section-91d39169afbe390a9cfdcf43422a5f77" class="flex justify-between">
+      <a href="../../../docs/models/audio-models/transcription-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/audio-models/transcription-api/azure-openai/" class="">Azure OpenAI 听录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/moderation-models/openai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c7747c1c4ca7e7f27485d3b4a2909173" class="toggle"  />
+    <label for="section-c7747c1c4ca7e7f27485d3b4a2909173" class="flex justify-between">
+      <a href="../../../docs/models/embedding-models/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3b5329a5faed8a311a538c92b457f6a" class="toggle"  />
+    <label for="section-f3b5329a5faed8a311a538c92b457f6a" class="flex justify-between">
+      <a href="../../../docs/models/embedding-models/amazon-bedrock/" class="">亚马逊基岩版</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/amazon-bedrock/cohere/" class="">Cohere 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/amazon-bedrock/titan/" class="">Titan 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/azure-openai/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/mistral-ai/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/oci-genai/" class="">Oracle Cloud Infrastructure （OCI） GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/ollama/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/onnx-transformers/" class="">变压器 （ONNX） 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/openai/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/postgresml/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/qianfan/" class="">QianFan 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/embedding-models/zhipu-ai/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-602ef13071faddbe2271a0f29c030c5f" class="toggle"  />
+    <label for="section-602ef13071faddbe2271a0f29c030c5f" class="flex justify-between">
+      <a href="../../../docs/models/audio-models/text-to-speech-tts-api/" class="">文本转语音 （TTS） API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/audio-models/text-to-speech-tts-api/openai/" class="">OpenAI 文本转语音 （TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/moderation-models/mistral-ai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4c392088dcec5ee943e5103c3c64745e" class="toggle"  />
+    <label for="section-4c392088dcec5ee943e5103c3c64745e" class="flex justify-between">
+      <a href="../../../docs/models/image-models/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/azure-openai/" class="">Azure OpenAI 映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/openai/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/stability/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/zhipuai/" class="">智普 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/models/image-models/qianfan/" class="">千帆镜像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/chat-memory/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/tool-calling/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="toggle"  />
+    <label for="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="flex justify-between">
+      <a href="../../../docs/model-context-protocol-mcp/" class="">模型上下文协议 （MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-context-protocol-mcp/mcp-client-boot-starters/" class="">MCP 客户端启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-context-protocol-mcp/mcp-server-boot-starters/" class="">MCP 服务器启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-context-protocol-mcp/mcp-utilities/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-14207920bac243191ad5fb9d8690ff76" class="toggle"  />
+    <label for="section-14207920bac243191ad5fb9d8690ff76" class="flex justify-between">
+      <a href="../../../docs/retrieval-augmented-generation-rag/" class="">检索增强一代</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/retrieval-augmented-generation-rag/etl-pipeline/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/model-evaluation/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="toggle" checked />
+    <label for="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="flex justify-between">
+      <a href="../../../docs/vector-databases/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/azure-ai-service/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/azure-cosmos-db/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/apache-cassandra-vector-store/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/chroma/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/couchbase/" class="">沙发基地</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/elasticsearch/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/gemfire/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/mariadb-vector-store/" class="">MariaDB 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/milvus/" class="">米尔沃斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/mongodb-atlas/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/neo4j/" class="">新 4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/opensearch/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/oracle/" class="">Oracle Database 23ai — AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/pgvector/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/pinecone/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/qdrant/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/redis/" class="">雷迪斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/sap-hana/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/typesense/" class="">Typesense 字体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/vector-databases/weaviate/" class="active">维维亚特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/observability/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/development-time-services/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/prompt-engineering-patterns/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/building-effective-agents/" class="">Building Effective Agents</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/deploying-to-the-cloud/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/testcontainers/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/cohere/" class="">OCI GenAI Cohere 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/text-embedding/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/multimodal-embedding/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>维维亚特</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#维维亚特">维维亚特</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#依赖">依赖</a></li>
+        <li><a href="#配置">配置</a></li>
+        <li><a href="#选项-1使用-spring-表达式语言-spel">选项 1：使用 Spring 表达式语言 （SpEL）</a></li>
+        <li><a href="#选项-2以编程方式访问环境变量">选项 2：以编程方式访问环境变量</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#元数据筛选">元数据筛选</a></li>
+        <li><a href="#在-docker-中运行-weaviate">在 Docker 中运行 Weaviate</a></li>
+        <li><a href="#weaviatevectorstore-属性">WeaviateVectorStore 属性</a></li>
+        <li><a href="#访问-native-client">访问 Native Client</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="维维亚特">
+  维维亚特
+  <a class="anchor" href="#%e7%bb%b4%e7%bb%b4%e4%ba%9a%e7%89%b9">#</a>
+</h1>
+<p>本节将引导您设置 Weaviate VectorStore 以存储文档嵌入并执行相似性搜索。
+[
+  <a href="https://weaviate.io/">Weaviate</a>](
+  <a href="https://weaviate.io/">https://weaviate.io/</a>) 是一个开源矢量数据库，允许您存储来自您最喜欢的 ML 模型的数据对象和矢量嵌入，并无缝扩展到数十亿个数据对象。它提供了用于存储文档嵌入、内容和元数据以及搜索这些嵌入（包括元数据筛选）的工具。</p>
+<h2 id="先决条件">
+  先决条件
+  <a class="anchor" href="#%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6">#</a>
+</h2>
+<ul>
+<li>一个正在运行的 Weaviate 实例。以下选项可用：</li>
+<li>Weaviate Cloud Service（需要创建帐户和 API 密钥）</li>
+<li>Docker 容器</li>
+<li>如果需要，EmbeddingModel 的 API 密钥，用于生成由 WeaviateVectorStore 存储的嵌入。</li>
+</ul>
+<h2 id="依赖">
+  依赖
+  <a class="anchor" href="#%e4%be%9d%e8%b5%96">#</a>
+</h2>
+<p>将 Weaviate Vector Store 依赖项添加到您的项目中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-weaviate-store<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或您的 Gradle <code>build.gradle</code> 构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-weaviate-store&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="配置">
+  配置
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>要连接到 Weaviate 并使用 <code>WeaviateVectorStore</code>，您需要提供实例的访问详细信息。可以通过 Spring Boot 的 application.properties 提供配置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.vectorstore.weaviate.host</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;host_of_your_weaviate_instance&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.vectorstore.weaviate.scheme</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;http_or_https&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.vectorstore.weaviate.api-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;your_api_key&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># API key if needed, e.g. OpenAI</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.api-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;api-key&gt;</span>
+</span></span></code></pre></div><p>如果您更喜欢对 API 密钥等敏感信息使用环境变量，则有多种选择：</p>
+<h2 id="选项-1使用-spring-表达式语言-spel">
+  选项 1：使用 Spring 表达式语言 （SpEL）
+  <a class="anchor" href="#%e9%80%89%e9%a1%b9-1%e4%bd%bf%e7%94%a8-spring-%e8%a1%a8%e8%be%be%e5%bc%8f%e8%af%ad%e8%a8%80-spel">#</a>
+</h2>
+<p>您可以使用自定义环境变量名称并在应用程序配置中引用它们：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># In application.yml</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">vectorstore</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">weaviate</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">host</span>: <span style="color:#ae81ff">${WEAVIATE_HOST}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">scheme</span>: <span style="color:#ae81ff">${WEAVIATE_SCHEME}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">api-key</span>: <span style="color:#ae81ff">${WEAVIATE_API_KEY}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">openai</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">api-key</span>: <span style="color:#ae81ff">${OPENAI_API_KEY}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># In your environment or .env file</span>
+</span></span><span style="display:flex;"><span>export WEAVIATE_HOST<span style="color:#f92672">=</span>&lt;host_of_your_weaviate_instance&gt;
+</span></span><span style="display:flex;"><span>export WEAVIATE_SCHEME<span style="color:#f92672">=</span>&lt;http_or_https&gt;
+</span></span><span style="display:flex;"><span>export WEAVIATE_API_KEY<span style="color:#f92672">=</span>&lt;your_api_key&gt;
+</span></span><span style="display:flex;"><span>export OPENAI_API_KEY<span style="color:#f92672">=</span>&lt;api-key&gt;
+</span></span></code></pre></div><h2 id="选项-2以编程方式访问环境变量">
+  选项 2：以编程方式访问环境变量
+  <a class="anchor" href="#%e9%80%89%e9%a1%b9-2%e4%bb%a5%e7%bc%96%e7%a8%8b%e6%96%b9%e5%bc%8f%e8%ae%bf%e9%97%ae%e7%8e%af%e5%a2%83%e5%8f%98%e9%87%8f">#</a>
+</h2>
+<p>或者，您可以在 Java 代码中访问环境变量：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String weaviateApiKey <span style="color:#f92672">=</span> System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;WEAVIATE_API_KEY&#34;</span>);
+</span></span><span style="display:flex;"><span>String openAiApiKey <span style="color:#f92672">=</span> System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>);
+</span></span></code></pre></div><h2 id="自动配置">
+  自动配置
+  <a class="anchor" href="#%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>Spring AI 为 Weaviate Vector Store 提供了 Spring Boot 自动配置。要启用它，请将以下依赖项添加到项目的 Maven <code>pom.xml</code> 文件中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-starter-vector-store-weaviate<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或您的 Gradle <code>build.gradle</code> 构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-starter-vector-store-weaviate&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>请查看 vector store 的[
+  <a href="../../../#_weaviatevectorstore_properties">配置参数</a>](#_weaviatevectorstore_properties)列表，了解默认值和配置选项。
+此外，您将需要一个已配置的 <code>[[EmbeddingModel](../embeddings.html#available-implementations)](../embeddings.html#available-implementations)</code> bean。请参阅 <code>[[EmbeddingModel](../embeddings.html#available-implementations)](../embeddings.html#available-implementations)</code> 部分以了解更多信息。
+以下是所需 bean 的示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> EmbeddingModel <span style="color:#a6e22e">embeddingModel</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Retrieve API key from a secure source or environment variable</span>
+</span></span><span style="display:flex;"><span>    String apiKey <span style="color:#f92672">=</span> System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Can be any other EmbeddingModel implementation</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> OpenAiEmbeddingModel(OpenAiApi.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">apiKey</span>(apiKey).<span style="color:#a6e22e">build</span>());
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>现在，您可以将 <code>WeaviateVectorStore</code> 自动连接为应用程序中的矢量存储。</p>
+<h2 id="手动配置">
+  手动配置
+  <a class="anchor" href="#%e6%89%8b%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>你可以使用构建器模式手动配置 <code>WeaviateVectorStore</code>，而不是使用 Spring Boot 自动配置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> WeaviateClient <span style="color:#a6e22e">weaviateClient</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> WeaviateClient(<span style="color:#66d9ef">new</span> Config(<span style="color:#e6db74">&#34;http&#34;</span>, <span style="color:#e6db74">&#34;localhost:8080&#34;</span>));
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> VectorStore <span style="color:#a6e22e">vectorStore</span>(WeaviateClient weaviateClient, EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> WeaviateVectorStore.<span style="color:#a6e22e">builder</span>(weaviateClient, embeddingModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">objectClass</span>(<span style="color:#e6db74">&#34;CustomClass&#34;</span>)                    <span style="color:#75715e">// Optional: defaults to &#34;SpringAiWeaviate&#34;</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">consistencyLevel</span>(ConsistentLevel.<span style="color:#a6e22e">QUORUM</span>)      <span style="color:#75715e">// Optional: defaults to ConsistentLevel.ONE</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">filterMetadataFields</span>(List.<span style="color:#a6e22e">of</span>(                 <span style="color:#75715e">// Optional: fields that can be used in filters</span>
+</span></span><span style="display:flex;"><span>            MetadataField.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;country&#34;</span>),
+</span></span><span style="display:flex;"><span>            MetadataField.<span style="color:#a6e22e">number</span>(<span style="color:#e6db74">&#34;year&#34;</span>)))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="元数据筛选">
+  元数据筛选
+  <a class="anchor" href="#%e5%85%83%e6%95%b0%e6%8d%ae%e7%ad%9b%e9%80%89">#</a>
+</h2>
+<p>您也可以在 Weaviate store 中使用通用的可移植[
+  <a href="../vectordbs.html#metadata-filters">元数据过滤器</a>](../vectordbs.html#metadata-filters) 。
+例如，您可以使用文本表达式语言：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">similaritySearch</span>(
+</span></span><span style="display:flex;"><span>    SearchRequest.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;The World&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">topK</span>(TOP_K)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">similarityThreshold</span>(SIMILARITY_THRESHOLD)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">filterExpression</span>(<span style="color:#e6db74">&#34;country in [&#39;UK&#39;, &#39;NL&#39;] &amp;&amp; year &gt;= 2020&#34;</span>).<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><p>或使用 <code>Filter.Expression</code> DSL 以编程方式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>FilterExpressionBuilder b <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FilterExpressionBuilder();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">similaritySearch</span>(SearchRequest.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">query</span>(<span style="color:#e6db74">&#34;The World&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">topK</span>(TOP_K)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">similarityThreshold</span>(SIMILARITY_THRESHOLD)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">filterExpression</span>(b.<span style="color:#a6e22e">and</span>(
+</span></span><span style="display:flex;"><span>        b.<span style="color:#a6e22e">in</span>(<span style="color:#e6db74">&#34;country&#34;</span>, <span style="color:#e6db74">&#34;UK&#34;</span>, <span style="color:#e6db74">&#34;NL&#34;</span>),
+</span></span><span style="display:flex;"><span>        b.<span style="color:#a6e22e">gte</span>(<span style="color:#e6db74">&#34;year&#34;</span>, 2020)).<span style="color:#a6e22e">build</span>()).<span style="color:#a6e22e">build</span>());
+</span></span></code></pre></div><p>例如，此可移植筛选条件表达式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span>country <span style="color:#66d9ef">in</span> [<span style="color:#e6db74">&#39;UK&#39;</span>, <span style="color:#e6db74">&#39;NL&#39;</span>] <span style="color:#f92672">&amp;&amp;</span> <span style="color:#66d9ef">year</span> <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">2020</span>
+</span></span></code></pre></div><p>转换为专有的 Weaviate GraphQL 过滤器格式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-graphql" data-lang="graphql"><span style="display:flex;"><span>operator: <span style="color:#a6e22e">And</span>
+</span></span><span style="display:flex;"><span>operands:
+</span></span><span style="display:flex;"><span>    [{
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">operator</span>: <span style="color:#a6e22e">Or</span>
+</span></span><span style="display:flex;"><span>        operands:
+</span></span><span style="display:flex;"><span>            [{
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">path</span>: [<span style="color:#e6db74">&#34;meta_country&#34;</span>]
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">operator</span>: <span style="color:#a6e22e">Equal</span>
+</span></span><span style="display:flex;"><span>                valueText: <span style="color:#e6db74">&#34;UK&#34;</span>
+</span></span><span style="display:flex;"><span>            },
+</span></span><span style="display:flex;"><span>            {
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">path</span>: [<span style="color:#e6db74">&#34;meta_country&#34;</span>]
+</span></span><span style="display:flex;"><span>                <span style="color:#a6e22e">operator</span>: <span style="color:#a6e22e">Equal</span>
+</span></span><span style="display:flex;"><span>                valueText: <span style="color:#e6db74">&#34;NL&#34;</span>
+</span></span><span style="display:flex;"><span>            }]
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">path</span>: [<span style="color:#e6db74">&#34;meta_year&#34;</span>]
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">operator</span>: <span style="color:#a6e22e">GreaterThanEqual</span>
+</span></span><span style="display:flex;"><span>        valueNumber: <span style="color:#a6e22e">2020</span>
+</span></span><span style="display:flex;"><span>    }]
+</span></span></code></pre></div><h2 id="在-docker-中运行-weaviate">
+  在 Docker 中运行 Weaviate
+  <a class="anchor" href="#%e5%9c%a8-docker-%e4%b8%ad%e8%bf%90%e8%a1%8c-weaviate">#</a>
+</h2>
+<p>要快速开始使用本地 Weaviate 实例，您可以在 Docker 中运行它：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>docker run -it --rm --name weaviate <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>    -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED<span style="color:#f92672">=</span>true <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>    -e PERSISTENCE_DATA_PATH<span style="color:#f92672">=</span>/var/lib/weaviate <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>    -e QUERY_DEFAULTS_LIMIT<span style="color:#f92672">=</span><span style="color:#ae81ff">25</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>    -e DEFAULT_VECTORIZER_MODULE<span style="color:#f92672">=</span>none <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>    -e CLUSTER_HOSTNAME<span style="color:#f92672">=</span>node1 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>    -p 8080:8080 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>    semitechnologies/weaviate:1.22.4
+</span></span></code></pre></div><p>这将启动一个可在 [
+  <a href="http://localhost:8080">localhost：8080</a>](http://localhost:8080) 访问的 Weaviate 实例。</p>
+<h2 id="weaviatevectorstore-属性">
+  WeaviateVectorStore 属性
+  <a class="anchor" href="#weaviatevectorstore-%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>您可以在 Spring Boot 配置中使用以下属性来自定义 Weaviate 矢量存储。</p>
+<h2 id="访问-native-client">
+  访问 Native Client
+  <a class="anchor" href="#%e8%ae%bf%e9%97%ae-native-client">#</a>
+</h2>
+<p>Weaviate Vector Store 实现通过 <code>getNativeClient（）</code> 方法提供对底层原生 Weaviate 客户端 （<code>WeaviateClient</code>） 的访问：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>WeaviateVectorStore vectorStore <span style="color:#f92672">=</span> context.<span style="color:#a6e22e">getBean</span>(WeaviateVectorStore.<span style="color:#a6e22e">class</span>);
+</span></span><span style="display:flex;"><span>Optional<span style="color:#f92672">&lt;</span>WeaviateClient<span style="color:#f92672">&gt;</span> nativeClient <span style="color:#f92672">=</span> vectorStore.<span style="color:#a6e22e">getNativeClient</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (nativeClient.<span style="color:#a6e22e">isPresent</span>()) {
+</span></span><span style="display:flex;"><span>    WeaviateClient client <span style="color:#f92672">=</span> nativeClient.<span style="color:#a6e22e">get</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Use the native client for Weaviate-specific operations</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>本机客户端允许您访问特定于 Weaviate 的功能和作，这些功能和作可能无法通过 <code>VectorStore</code> 接口公开。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#维维亚特">维维亚特</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#依赖">依赖</a></li>
+        <li><a href="#配置">配置</a></li>
+        <li><a href="#选项-1使用-spring-表达式语言-spel">选项 1：使用 Spring 表达式语言 （SpEL）</a></li>
+        <li><a href="#选项-2以编程方式访问环境变量">选项 2：以编程方式访问环境变量</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#元数据筛选">元数据筛选</a></li>
+        <li><a href="#在-docker-中运行-weaviate">在 Docker 中运行 Weaviate</a></li>
+        <li><a href="#weaviatevectorstore-属性">WeaviateVectorStore 属性</a></li>
+        <li><a href="#访问-native-client">访问 Native Client</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,2564 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  工具调用
+  #
+
+工具调用 （也称为函数调用 ）是 AI 应用程序中的一种常见模式，允许模型与一组 API 或工具进行交互，从而增强其功能。
+工具主要用于：
+尽管我们通常将工具调用称为模型功能，但实际上由客户端应用程序提供工具调用逻辑。模型只能请求工具调用并提供输入参数，而应用程序负责从输入参数执行工具调用并返回结果。该模型永远无法访问作为工具提供的任何 API，这是一个关键的安全考虑因素。
+Spring AI 提供了方便的 API 来定义工具、解决来自模型的工具调用请求以及执行工具调用。以下部分概述了 Spring AI 中的工具调用功能。
+
+  快速开始
+  #
+
+让我们看看如何在 Spring AI 中开始使用工具调用。我们将实现两个简单的工具：一个用于信息检索，一个用于采取行动。信息检索工具将用于获取用户所在时区的当前日期和时间。作工具将用于设置指定时间的闹钟。
+
+  信息检索
+  #
+
+AI 模型无法访问实时信息。模型无法回答任何假设了解信息（如当前日期或天气预报）的问题。但是，我们可以提供一个可以检索此信息的工具，并让模型在需要访问实时信息时调用此工具。
+让我们在 DateTimeTools 类中实现一个工具来获取用户时区的当前日期和时间。该工具将不接受任何参数。Spring Framework 的 LocaleContextHolder 可以提供用户的时区。该工具将被定义为带有 @Tool 注释的方法。为了帮助模型了解是否以及何时调用此工具，我们将提供这些工具的作用的详细说明。
+import java.time.LocalDateTime;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.context.i18n.LocaleContextHolder;
+
+class DateTimeTools {
+
+    @Tool(description = &#34;Get the current date and time in the user&#39;s timezone&#34;)
+    String getCurrentDateTime() {
+        return LocalDateTime.now().atZone(LocaleContextHolder.getTimeZone().toZoneId()).toString();
+    }
+
+}
+接下来，让我们使该工具可用于模型。在此示例中，我们将使用 ChatClient 与模型交互。我们将通过 tools（） 方法传递 DateTimeTools 的实例，从而为模型提供该工具。当模型需要知道当前日期和时间时，它将请求调用该工具。在内部，ChatClient 将调用该工具并将结果返回给模型，然后模型将使用工具调用结果生成对原始问题的最终响应。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/tool-calling/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="工具调用">
+  <meta property="og:description" content="工具调用 # 工具调用 （也称为函数调用 ）是 AI 应用程序中的一种常见模式，允许模型与一组 API 或工具进行交互，从而增强其功能。 工具主要用于： 尽管我们通常将工具调用称为模型功能，但实际上由客户端应用程序提供工具调用逻辑。模型只能请求工具调用并提供输入参数，而应用程序负责从输入参数执行工具调用并返回结果。该模型永远无法访问作为工具提供的任何 API，这是一个关键的安全考虑因素。 Spring AI 提供了方便的 API 来定义工具、解决来自模型的工具调用请求以及执行工具调用。以下部分概述了 Spring AI 中的工具调用功能。
+快速开始 # 让我们看看如何在 Spring AI 中开始使用工具调用。我们将实现两个简单的工具：一个用于信息检索，一个用于采取行动。信息检索工具将用于获取用户所在时区的当前日期和时间。作工具将用于设置指定时间的闹钟。
+信息检索 # AI 模型无法访问实时信息。模型无法回答任何假设了解信息（如当前日期或天气预报）的问题。但是，我们可以提供一个可以检索此信息的工具，并让模型在需要访问实时信息时调用此工具。 让我们在 DateTimeTools 类中实现一个工具来获取用户时区的当前日期和时间。该工具将不接受任何参数。Spring Framework 的 LocaleContextHolder 可以提供用户的时区。该工具将被定义为带有 @Tool 注释的方法。为了帮助模型了解是否以及何时调用此工具，我们将提供这些工具的作用的详细说明。
+import java.time.LocalDateTime; import org.springframework.ai.tool.annotation.Tool; import org.springframework.context.i18n.LocaleContextHolder; class DateTimeTools { @Tool(description = &#34;Get the current date and time in the user&#39;s timezone&#34;) String getCurrentDateTime() { return LocalDateTime.now().atZone(LocaleContextHolder.getTimeZone().toZoneId()).toString(); } } 接下来，让我们使该工具可用于模型。在此示例中，我们将使用 ChatClient 与模型交互。我们将通过 tools（） 方法传递 DateTimeTools 的实例，从而为模型提供该工具。当模型需要知道当前日期和时间时，它将请求调用该工具。在内部，ChatClient 将调用该工具并将结果返回给模型，然后模型将使用工具调用结果生成对原始问题的最终响应。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>工具调用 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../favicon.png" >
+<link rel="manifest" href="../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/tool-calling/">
+<link rel="stylesheet" href="../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../fuse.min.js"></script>
+  <script defer src="../../en.search.min.fc796ecb96a612ae39040eb9138814514c32a2e7d9265637e01d9c788994e3c8.js" integrity="sha256-/Hluy5amEq45BA65E4gUUUwyoufZJlY34B2ceImU48g=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e2fd78a721f271b7efc6437520b70692" class="toggle"  />
+    <label for="section-e2fd78a721f271b7efc6437520b70692" class="flex justify-between">
+      <a href="../../docs/overview-%E6%A6%82%E8%BF%B0/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/overview-%E6%A6%82%E8%BF%B0/ai-concepts-ai-%E6%A6%82%E5%BF%B5/" class="">AI 概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/getting-started-%E5%BC%80%E5%A7%8B/" class="">开始</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-46da0dacd3edcb609eb3a30122f798c1" class="toggle"  />
+    <label for="section-46da0dacd3edcb609eb3a30122f798c1" class="flex justify-between">
+      <a href="../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/migrating-functioncallback-to-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-9cc275e26831a4c68f5f0626954bb051" class="toggle"  />
+    <label for="section-9cc275e26831a4c68f5f0626954bb051" class="flex justify-between">
+      <a href="../../docs/chat-client-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/chat-client-api/advisors/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/prompts/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/structured-output/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/multimodality/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-dff98c888805ee5be8c49a91de636d7a" class="toggle"  />
+    <label for="section-dff98c888805ee5be8c49a91de636d7a" class="flex justify-between">
+      <a href="../../docs/models/" class="">None</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a549f27d0c7522c5a488c8e70bc18d95" class="toggle"  />
+    <label for="section-a549f27d0c7522c5a488c8e70bc18d95" class="flex justify-between">
+      <a href="../../docs/models/chat-models/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/chat-models-comparison/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/amazon-bedrock-converse/" class="">基岩版 Converse API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/anthropic-3/" class="">Anthropic 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/azure-openai/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/deepseek/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/docker-model-runner/" class="">Docker Model Runner 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-23643788106caecd71158902b516c092" class="toggle"  />
+    <label for="section-23643788106caecd71158902b516c092" class="flex justify-between">
+      <a href="../../docs/models/chat-models/google-vertexai/" class="">谷歌 VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/google-vertexai/vertexai-gemini/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/groq/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/hugging-face/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/mistral-ai/" class="">Mistral AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/moonshot-ai/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/nvidia/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/ollama/" class="">Ollama 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/perplexity-ai/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/openai/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/qianfan/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/zhipu-ai/" class="">智普 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-91d39169afbe390a9cfdcf43422a5f77" class="toggle"  />
+    <label for="section-91d39169afbe390a9cfdcf43422a5f77" class="flex justify-between">
+      <a href="../../docs/models/audio-models/transcription-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/audio-models/transcription-api/azure-openai/" class="">Azure OpenAI 听录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/moderation-models/openai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c7747c1c4ca7e7f27485d3b4a2909173" class="toggle"  />
+    <label for="section-c7747c1c4ca7e7f27485d3b4a2909173" class="flex justify-between">
+      <a href="../../docs/models/embedding-models/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3b5329a5faed8a311a538c92b457f6a" class="toggle"  />
+    <label for="section-f3b5329a5faed8a311a538c92b457f6a" class="flex justify-between">
+      <a href="../../docs/models/embedding-models/amazon-bedrock/" class="">亚马逊基岩版</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/amazon-bedrock/cohere/" class="">Cohere 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/amazon-bedrock/titan/" class="">Titan 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/azure-openai/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/mistral-ai/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/oci-genai/" class="">Oracle Cloud Infrastructure （OCI） GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/ollama/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/onnx-transformers/" class="">变压器 （ONNX） 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/openai/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/postgresml/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/qianfan/" class="">QianFan 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/zhipu-ai/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-602ef13071faddbe2271a0f29c030c5f" class="toggle"  />
+    <label for="section-602ef13071faddbe2271a0f29c030c5f" class="flex justify-between">
+      <a href="../../docs/models/audio-models/text-to-speech-tts-api/" class="">文本转语音 （TTS） API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/audio-models/text-to-speech-tts-api/openai/" class="">OpenAI 文本转语音 （TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/moderation-models/mistral-ai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4c392088dcec5ee943e5103c3c64745e" class="toggle"  />
+    <label for="section-4c392088dcec5ee943e5103c3c64745e" class="flex justify-between">
+      <a href="../../docs/models/image-models/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/azure-openai/" class="">Azure OpenAI 映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/openai/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/stability/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/zhipuai/" class="">智普 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/qianfan/" class="">千帆镜像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/chat-memory/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/tool-calling/" class="active">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="toggle"  />
+    <label for="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="flex justify-between">
+      <a href="../../docs/model-context-protocol-mcp/" class="">模型上下文协议 （MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-client-boot-starters/" class="">MCP 客户端启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-server-boot-starters/" class="">MCP 服务器启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-utilities/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-14207920bac243191ad5fb9d8690ff76" class="toggle"  />
+    <label for="section-14207920bac243191ad5fb9d8690ff76" class="flex justify-between">
+      <a href="../../docs/retrieval-augmented-generation-rag/" class="">检索增强一代</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/retrieval-augmented-generation-rag/etl-pipeline/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-evaluation/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="toggle"  />
+    <label for="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="flex justify-between">
+      <a href="../../docs/vector-databases/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/azure-ai-service/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/azure-cosmos-db/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/apache-cassandra-vector-store/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/chroma/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/couchbase/" class="">沙发基地</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/elasticsearch/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/gemfire/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/mariadb-vector-store/" class="">MariaDB 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/milvus/" class="">米尔沃斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/mongodb-atlas/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/neo4j/" class="">新 4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/opensearch/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/oracle/" class="">Oracle Database 23ai — AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/pgvector/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/pinecone/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/qdrant/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/redis/" class="">雷迪斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/sap-hana/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/typesense/" class="">Typesense 字体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/weaviate/" class="">维维亚特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/observability/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/development-time-services/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/prompt-engineering-patterns/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/building-effective-agents/" class="">Building Effective Agents</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/deploying-to-the-cloud/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/testcontainers/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/cohere/" class="">OCI GenAI Cohere 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/text-embedding/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/multimodal-embedding/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>工具调用</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#工具调用">工具调用</a>
+      <ul>
+        <li><a href="#快速开始">快速开始</a></li>
+        <li><a href="#信息检索">信息检索</a></li>
+        <li><a href="#采取行动">采取行动</a></li>
+        <li><a href="#概述">概述</a></li>
+        <li><a href="#方法即工具">方法即工具</a></li>
+        <li><a href="#声明性规范tool">声明性规范：@Tool</a></li>
+        <li><a href="#向-chatclient-添加工具">向 ChatClient 添加工具</a></li>
+        <li><a href="#向-chatclient-添加默认工具">向 ChatClient 添加默认工具</a></li>
+        <li><a href="#向-chatmodel-添加工具">向 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatmodel-添加默认工具">向 ChatModel 添加默认工具</a></li>
+        <li><a href="#编程规范methodtoolcallback">编程规范：MethodToolCallback</a></li>
+        <li><a href="#向-chatclient-和-chatmodel-添加工具">向 ChatClient 和 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatclient-添加默认工具-1">向 ChatClient 添加默认工具</a></li>
+        <li><a href="#向-chatmodel-添加工具-1">向 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatmodel-添加默认工具-1">向 ChatModel 添加默认工具</a></li>
+        <li><a href="#方法工具限制">方法工具限制</a></li>
+        <li><a href="#作为工具的功能">作为工具的功能</a></li>
+        <li><a href="#编程规范functiontoolcallback">编程规范：FunctionToolCallback</a></li>
+        <li><a href="#向-chatclient-添加工具-1">向 ChatClient 添加工具</a></li>
+        <li><a href="#向-chatclient-添加默认工具-2">向 ChatClient 添加默认工具</a></li>
+        <li><a href="#向-chatmodel-添加工具-2">向 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatmodel-添加默认工具-2">向 ChatModel 添加默认工具</a></li>
+        <li><a href="#动态规格bean">动态规格：@Bean</a></li>
+        <li><a href="#向-chatclient-添加工具-2">向 ChatClient 添加工具</a></li>
+        <li><a href="#向-chatclient-添加默认工具-3">向 ChatClient 添加默认工具</a></li>
+        <li><a href="#向-chatmodel-添加工具-3">向 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatmodel-添加默认工具-3">向 ChatModel 添加默认工具</a></li>
+        <li><a href="#函数工具限制">函数工具限制</a></li>
+        <li><a href="#工具规格">工具规格</a></li>
+        <li><a href="#工具回调">工具回调</a></li>
+        <li><a href="#工具定义">工具定义</a></li>
+        <li><a href="#方法工具定义">方法工具定义</a></li>
+        <li><a href="#功能工具定义">功能工具定义</a></li>
+        <li><a href="#json-架构">JSON 架构</a></li>
+        <li><a href="#描述">描述</a></li>
+        <li><a href="#必需可选">必需/可选</a></li>
+        <li><a href="#结果转换">结果转换</a></li>
+        <li><a href="#方法工具调用结果转换">方法工具调用结果转换</a></li>
+        <li><a href="#函数工具调用结果转换">函数工具调用结果转换</a></li>
+        <li><a href="#工具上下文">工具上下文</a></li>
+        <li><a href="#直接返回">直接返回</a></li>
+        <li><a href="#可观察性">可观察性</a></li>
+        <li><a href="#伐木">伐木</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="工具调用">
+  工具调用
+  <a class="anchor" href="#%e5%b7%a5%e5%85%b7%e8%b0%83%e7%94%a8">#</a>
+</h1>
+<p>工具调用 （也称为函数调用 ）是 AI 应用程序中的一种常见模式，允许模型与一组 API 或工具进行交互，从而增强其功能。
+工具主要用于：
+尽管我们通常将工具调用称为模型功能，但实际上由客户端应用程序提供工具调用逻辑。模型只能请求工具调用并提供输入参数，而应用程序负责从输入参数执行工具调用并返回结果。该模型永远无法访问作为工具提供的任何 API，这是一个关键的安全考虑因素。
+Spring AI 提供了方便的 API 来定义工具、解决来自模型的工具调用请求以及执行工具调用。以下部分概述了 Spring AI 中的工具调用功能。</p>
+<h2 id="快速开始">
+  快速开始
+  <a class="anchor" href="#%e5%bf%ab%e9%80%9f%e5%bc%80%e5%a7%8b">#</a>
+</h2>
+<p>让我们看看如何在 Spring AI 中开始使用工具调用。我们将实现两个简单的工具：一个用于信息检索，一个用于采取行动。信息检索工具将用于获取用户所在时区的当前日期和时间。作工具将用于设置指定时间的闹钟。</p>
+<h2 id="信息检索">
+  信息检索
+  <a class="anchor" href="#%e4%bf%a1%e6%81%af%e6%a3%80%e7%b4%a2">#</a>
+</h2>
+<p>AI 模型无法访问实时信息。模型无法回答任何假设了解信息（如当前日期或天气预报）的问题。但是，我们可以提供一个可以检索此信息的工具，并让模型在需要访问实时信息时调用此工具。
+让我们在 <code>DateTimeTools</code> 类中实现一个工具来获取用户时区的当前日期和时间。该工具将不接受任何参数。Spring Framework 的 <code>LocaleContextHolder</code> 可以提供用户的时区。该工具将被定义为带有 <code>@Tool</code> 注释的方法。为了帮助模型了解是否以及何时调用此工具，我们将提供这些工具的作用的详细说明。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import</span> java.time.LocalDateTime;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.ai.tool.annotation.Tool;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.context.i18n.LocaleContextHolder;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DateTimeTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Get the current date and time in the user&#39;s timezone&#34;</span>)
+</span></span><span style="display:flex;"><span>    String <span style="color:#a6e22e">getCurrentDateTime</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> LocalDateTime.<span style="color:#a6e22e">now</span>().<span style="color:#a6e22e">atZone</span>(LocaleContextHolder.<span style="color:#a6e22e">getTimeZone</span>().<span style="color:#a6e22e">toZoneId</span>()).<span style="color:#a6e22e">toString</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>接下来，让我们使该工具可用于模型。在此示例中，我们将使用 <code>ChatClient</code> 与模型交互。我们将通过 <code>tools（）</code> 方法传递 <code>DateTimeTools</code> 的实例，从而为模型提供该工具。当模型需要知道当前日期和时间时，它将请求调用该工具。在内部，<code>ChatClient</code> 将调用该工具并将结果返回给模型，然后模型将使用工具调用结果生成对原始问题的最终响应。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String response <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;What day is tomorrow?&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">tools</span>(<span style="color:#66d9ef">new</span> DateTimeTools())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(response);
+</span></span></code></pre></div><p>输出将如下所示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Tomorrow is 2015<span style="color:#f92672">-</span>10<span style="color:#f92672">-</span>21.
+</span></span></code></pre></div><p>您可以再次尝试询问相同的问题。这一次，不要向模型提供工具。输出将如下所示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>I am an AI and <span style="color:#66d9ef">do</span> not have access to real<span style="color:#f92672">-</span>time information. Please provide the current date so I can accurately determine what day tomorrow will be.
+</span></span></code></pre></div><p>如果没有该工具，模型就不知道如何回答问题，因为它无法确定当前日期和时间。</p>
+<h2 id="采取行动">
+  采取行动
+  <a class="anchor" href="#%e9%87%87%e5%8f%96%e8%a1%8c%e5%8a%a8">#</a>
+</h2>
+<p>AI 模型可用于生成实现某些目标的计划。例如，模型可以生成预订丹麦旅行的计划。但是，该模型无法执行该计划。这就是工具的用武之地：它们可用于执行模型生成的计划。
+在前面的示例中，我们使用了一个工具来确定当前日期和时间。在此示例中，我们将定义第二个工具，用于在特定时间设置闹钟。目标是从现在开始设置 10 分钟的闹钟，因此我们需要为模型提供这两种工具来完成此任务。
+我们将新工具添加到与以前相同的 <code>DateTimeTools</code> 类中。新工具将采用单个参数，即 ISO-8601 格式的时间。然后，该工具将向控制台打印一条消息，指示已为给定时间设置警报。与以前一样，该工具被定义为一个带有 <code>@Tool</code> 注释的方法，我们还使用它来提供详细的描述，以帮助模型了解何时以及如何使用该工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import</span> java.time.LocalDateTime;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.time.format.DateTimeFormatter;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.ai.tool.annotation.Tool;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.context.i18n.LocaleContextHolder;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DateTimeTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Get the current date and time in the user&#39;s timezone&#34;</span>)
+</span></span><span style="display:flex;"><span>    String <span style="color:#a6e22e">getCurrentDateTime</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> LocalDateTime.<span style="color:#a6e22e">now</span>().<span style="color:#a6e22e">atZone</span>(LocaleContextHolder.<span style="color:#a6e22e">getTimeZone</span>().<span style="color:#a6e22e">toZoneId</span>()).<span style="color:#a6e22e">toString</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Set a user alarm for the given time, provided in ISO-8601 format&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setAlarm</span>(String time) {
+</span></span><span style="display:flex;"><span>        LocalDateTime alarmTime <span style="color:#f92672">=</span> LocalDateTime.<span style="color:#a6e22e">parse</span>(time, DateTimeFormatter.<span style="color:#a6e22e">ISO_DATE_TIME</span>);
+</span></span><span style="display:flex;"><span>        System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Alarm set for &#34;</span> <span style="color:#f92672">+</span> alarmTime);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>接下来，让我们使这两个工具都可用于模型。我们将使用 <code>ChatClient</code> 与模型进行交互。我们将通过 <code>tools（）</code> 方法传递 <code>DateTimeTools</code> 的实例，从而为模型提供工具。当我们要求在从 10 分钟后设置闹钟时，模型首先需要知道当前日期和时间。然后，它将使用当前日期和时间来计算闹钟时间。最后，它将使用闹钟工具设置闹钟。在内部，<code>ChatClient</code> 将处理来自模型的任何工具调用请求，并将任何工具调用执行结果发送回给它，以便模型可以生成最终响应。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String response <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;Can you set an alarm 10 minutes from now?&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">tools</span>(<span style="color:#66d9ef">new</span> DateTimeTools())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(response);
+</span></span></code></pre></div><p>在应用程序日志中，您可以检查警报是否已在正确的时间设置。</p>
+<h2 id="概述">
+  概述
+  <a class="anchor" href="#%e6%a6%82%e8%bf%b0">#</a>
+</h2>
+<p>Spring AI 通过一组灵活的抽象支持工具调用，这些抽象允许您以一致的方式定义、解析和执行工具。本节概述了 Spring AI 中工具调用的主要概念和组件。
+
+  <img src="../../images/tools/tool-calling-01.jpg" alt="" />
+工具是工具调用的构建块，它们由 <code>ToolCallback</code> 接口建模。Spring AI 为从方法和函数指定 <code>ToolCallback</code> 提供了内置支持，但您始终可以定义自己的 <code>ToolCallback</code> 实现以支持更多用例。
+<code>ChatModel</code> 实现以透明方式将工具调用请求分派给相应的 <code>ToolCallback</code> 实现，并将工具调用结果发送回模型，最终生成最终响应。他们使用 <code>ToolCallingManager</code> 接口执行此作，该接口负责管理工具执行生命周期。
+<code>ChatClient</code> 和 <code>ChatModel</code> 都接受 <code>ToolCallback</code> 对象列表，以使工具可用于模型和最终将执行它们的 <code>ToolCallingManager</code>。
+除了直接传递 <code>ToolCallback</code> 对象外，您还可以传递工具名称列表，这些名称将使用 <code>ToolCallback</code>Resolver 接口动态解析。
+以下部分将详细介绍所有这些概念和 API，包括如何自定义和扩展它们以支持更多用例。</p>
+<h2 id="方法即工具">
+  方法即工具
+  <a class="anchor" href="#%e6%96%b9%e6%b3%95%e5%8d%b3%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>Spring AI 以两种方式为从方法指定工具（即 <code>ToolCallback</code>）提供了内置支持：</p>
+<ul>
+<li>以声明方式使用 @Tool 注解</li>
+<li>以编程方式，使用低级 MethodToolCallback 实现。</li>
+</ul>
+<h2 id="声明性规范tool">
+  声明性规范：@Tool
+  <a class="anchor" href="#%e5%a3%b0%e6%98%8e%e6%80%a7%e8%a7%84%e8%8c%83tool">#</a>
+</h2>
+<p>您可以通过使用 <code>@Tool</code> 注释方法将方法转换为工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DateTimeTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Get the current date and time in the user&#39;s timezone&#34;</span>)
+</span></span><span style="display:flex;"><span>    String <span style="color:#a6e22e">getCurrentDateTime</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> LocalDateTime.<span style="color:#a6e22e">now</span>().<span style="color:#a6e22e">atZone</span>(LocaleContextHolder.<span style="color:#a6e22e">getTimeZone</span>().<span style="color:#a6e22e">toZoneId</span>()).<span style="color:#a6e22e">toString</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>@Tool</code> 注释允许您提供有关该工具的关键信息：</p>
+<ul>
+<li>name：工具的名称。如果未提供，则将使用方法名称。AI 模型在调用工具时使用此名称来识别工具。因此，不允许在同一个类中有两个同名的工具。该名称在模型可用于特定聊天请求的所有工具中必须是唯一的。</li>
+<li>description：工具的描述，模型可以使用它来了解何时以及如何调用工具。如果未提供，则方法名称将用作工具描述。但是，强烈建议提供详细的描述，因为这对于模型了解工具的用途以及如何使用它至关重要。未能提供良好的描述可能会导致模型在应该使用该工具时未使用该工具或错误地使用该工具。</li>
+<li>returnDirect：工具结果应直接返回给客户端还是传递回模型。有关更多详细信息，请参阅直接返回 。</li>
+<li>resultConverter：用于将工具调用的结果转换为 String 对象以发送回 AI 模型的 ToolCallResultConverter 实现。有关更多详细信息，请参阅 Result Conversion。
+该方法可以是 static 或 instance，并且可以具有任何可见性（public、protected、package-private 或 private）。包含该方法的类可以是顶级类或嵌套类，并且还可以具有任何可见性（只要它位于您计划实例化的位置可访问）。
+您可以为大多数类型（基元、POJO、枚举、列表、数组、映射等）的方法定义任意数量的参数（包括无参数）。同样，该方法可以返回大多数类型，包括 <code>void</code>。如果该方法返回一个值，则返回类型必须是可序列化类型，因为结果将被序列化并发送回模型。
+Spring AI 将自动为 <code>@Tool</code> 注释方法的 input 参数生成 JSON 模式。模型使用架构来了解如何调用工具和准备工具请求。<code>@Tool</code>Param 注释可用于提供有关输入参数的其他信息，例如描述或参数是必需的还是可选的。默认情况下，所有输入参数都被视为必需参数。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import</span> java.time.LocalDateTime;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.time.format.DateTimeFormatter;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.ai.tool.annotation.Tool;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.ai.tool.annotation.ToolParam;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DateTimeTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Set a user alarm for the given time&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setAlarm</span>(<span style="color:#a6e22e">@ToolParam</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Time in ISO-8601 format&#34;</span>) String time) {
+</span></span><span style="display:flex;"><span>        LocalDateTime alarmTime <span style="color:#f92672">=</span> LocalDateTime.<span style="color:#a6e22e">parse</span>(time, DateTimeFormatter.<span style="color:#a6e22e">ISO_DATE_TIME</span>);
+</span></span><span style="display:flex;"><span>        System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Alarm set for &#34;</span> <span style="color:#f92672">+</span> alarmTime);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>@ToolParam</code> 注记允许您提供有关工具参数的关键信息：</p>
+<ul>
+<li>description：参数的描述，模型可以使用该参数来更好地了解如何使用它。例如，参数应采用什么格式、允许哪些值等。</li>
+<li>required：参数是 required 还是 optional。默认情况下，所有参数都被视为必需参数。
+如果参数被注释为 <code>@Nullable</code>，则除非使用 <code>@ToolParam</code> 注释明确标记为必需，否则该参数将被视为可选参数。
+除了 <code>@ToolParam</code> 注释之外，您还可以使用 Swagger 的 <code>@Schema</code> 注释或 Jackson 的 <code>@JsonProperty</code>。有关更多详细信息，请参阅 [
+  <a href="../../#_json_schema">JSON 架构</a>](#_json_schema) 。</li>
+</ul>
+<h2 id="向-chatclient-添加工具">
+  向 ChatClient 添加工具
+  <a class="anchor" href="#%e5%90%91-chatclient-%e6%b7%bb%e5%8a%a0%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>使用声明性规范方法时，可以在调用 <code>ChatClient</code> 时将 tool 类实例传递给 <code>tools（）</code> 方法。此类工具仅适用于它们被添加到的特定聊天请求。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatClient.<span style="color:#a6e22e">create</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;What day is tomorrow?&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">tools</span>(<span style="color:#66d9ef">new</span> DateTimeTools())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p>在后台，<code>ChatClient</code> 将从工具类实例中的每个 <code>@Tool</code> 注释方法生成一个 <code>ToolCallback</code>，并将它们传递给模型。如果您希望自己生成 <code>ToolCallback</code>，则可以使用 <code>ToolCallback</code>s 实用程序类。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolCallback<span style="color:#f92672">[]</span> dateTimeTools <span style="color:#f92672">=</span> ToolCallbacks.<span style="color:#a6e22e">from</span>(<span style="color:#66d9ef">new</span> DateTimeTools());
+</span></span></code></pre></div><h2 id="向-chatclient-添加默认工具">
+  向 ChatClient 添加默认工具
+  <a class="anchor" href="#%e5%90%91-chatclient-%e6%b7%bb%e5%8a%a0%e9%bb%98%e8%ae%a4%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>使用声明性规范方法时，您可以通过将工具类实例传递给 <code>defaultTools（）</code> 方法，将默认工具添加到 <code>ChatClient.Builder</code>。如果同时提供了 default 和 runtime 工具，则 runtime 工具将完全覆盖 default 工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatClient chatClient <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultTools</span>(<span style="color:#66d9ef">new</span> DateTimeTools())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="向-chatmodel-添加工具">
+  向 ChatModel 添加工具
+  <a class="anchor" href="#%e5%90%91-chatmodel-%e6%b7%bb%e5%8a%a0%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>使用声明性规范方法时，您可以将工具类实例传递给用于调用 <code>ChatModel</code> 的 <code>ToolCallingChatOptions</code> 的 <code>toolCallbacks（）</code> 方法。此类工具仅适用于它们被添加到的特定聊天请求。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ToolCallback<span style="color:#f92672">[]</span> dateTimeTools <span style="color:#f92672">=</span> ToolCallbacks.<span style="color:#a6e22e">from</span>(<span style="color:#66d9ef">new</span> DateTimeTools());
+</span></span><span style="display:flex;"><span>ChatOptions chatOptions <span style="color:#f92672">=</span> ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolCallbacks</span>(dateTimeTools)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(<span style="color:#e6db74">&#34;What day is tomorrow?&#34;</span>, chatOptions);
+</span></span><span style="display:flex;"><span>chatModel.<span style="color:#a6e22e">call</span>(prompt);
+</span></span></code></pre></div><h2 id="向-chatmodel-添加默认工具">
+  向 ChatModel 添加默认工具
+  <a class="anchor" href="#%e5%90%91-chatmodel-%e6%b7%bb%e5%8a%a0%e9%bb%98%e8%ae%a4%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>使用声明式规范方法时，您可以通过将工具类实例传递给用于创建 <code>ChatModel</code> 的 <code>ToolCallingChatOptions</code> 实例的 <code>toolCallbacks（）</code> 方法，在构造时将默认工具添加到 <code>ChatModel</code>。如果同时提供了 default 和 runtime 工具，则 runtime 工具将完全覆盖 default 工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolCallback<span style="color:#f92672">[]</span> dateTimeTools <span style="color:#f92672">=</span> ToolCallbacks.<span style="color:#a6e22e">from</span>(<span style="color:#66d9ef">new</span> DateTimeTools());
+</span></span><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> OllamaChatModel.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">ollamaApi</span>(OllamaApi.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultOptions</span>(ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">toolCallbacks</span>(dateTimeTools)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="编程规范methodtoolcallback">
+  编程规范：MethodToolCallback
+  <a class="anchor" href="#%e7%bc%96%e7%a8%8b%e8%a7%84%e8%8c%83methodtoolcallback">#</a>
+</h2>
+<p>您可以通过以编程方式构建 <code>MethodToolCallback</code> 将方法转换为工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DateTimeTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    String <span style="color:#a6e22e">getCurrentDateTime</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> LocalDateTime.<span style="color:#a6e22e">now</span>().<span style="color:#a6e22e">atZone</span>(LocaleContextHolder.<span style="color:#a6e22e">getTimeZone</span>().<span style="color:#a6e22e">toZoneId</span>()).<span style="color:#a6e22e">toString</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>```MethodToolCallback<code>.Builder` 允许您构建 </code>MethodToolCallback`` 实例并提供有关该工具的关键信息：</p>
+<ul>
+<li>toolDefinition：定义工具名称、描述和输入架构的 ToolDefinition 实例。您可以使用 ToolDefinition.Builder 类构建它。必需。</li>
+<li>toolMetadata：ToolMetadata 实例，用于定义其他设置，例如是否应将结果直接返回给客户端，以及要使用的结果转换器。您可以使用 ToolMetadata.Builder 类构建它。</li>
+<li>toolMethod：表示工具方法的 Method 实例。必填。</li>
+<li>toolObject：包含工具方法的对象实例。如果 method 是 static，则可以省略该参数。</li>
+<li>toolCallResultConverter：用于将工具调用的结果转换为 String 对象以发送回 AI 模型的 ToolCallResultConverter 实例。如果未提供，将使用默认转换器 （ DefaultToolCallResultConverter ）。
+```ToolDefinition<code>.Builder` 允许您构建 </code>ToolDefinition`` 实例并定义工具名称、描述和输入架构：</li>
+<li>name：工具的名称。如果未提供，则将使用方法名称。AI 模型在调用工具时使用此名称来识别工具。因此，不允许在同一个类中有两个同名的工具。该名称在模型可用于特定聊天请求的所有工具中必须是唯一的。</li>
+<li>description：工具的描述，模型可以使用它来了解何时以及如何调用工具。如果未提供，则方法名称将用作工具描述。但是，强烈建议提供详细的描述，因为这对于模型了解工具的用途以及如何使用它至关重要。未能提供良好的描述可能会导致模型在应该使用该工具时未使用该工具或错误地使用该工具。</li>
+<li>inputSchema：工具输入参数的 JSON 架构。如果未提供，将根据方法参数自动生成 schema。您可以使用 @ToolParam 注释提供有关输入参数的其他信息，例如描述或参数是必需的还是可选的。默认情况下，所有输入参数都被视为必需参数。有关更多详细信息，请参阅 JSON 架构 。
+```ToolMetadata<code>.Builder` 允许您构建 </code>ToolMetadata`` 实例并为该工具定义其他设置：</li>
+<li>returnDirect：工具结果应直接返回给客户端还是传递回模型。有关更多详细信息，请参阅直接返回 。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Method method <span style="color:#f92672">=</span> ReflectionUtils.<span style="color:#a6e22e">findMethod</span>(DateTimeTools.<span style="color:#a6e22e">class</span>, <span style="color:#e6db74">&#34;getCurrentDateTime&#34;</span>);
+</span></span><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> MethodToolCallback.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolDefinition</span>(ToolDefinition.<span style="color:#a6e22e">builder</span>(method)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">description</span>(<span style="color:#e6db74">&#34;Get the current date and time in the user&#39;s timezone&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolMethod</span>(method)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolObject</span>(<span style="color:#66d9ef">new</span> DateTimeTools())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><p>该方法可以是 static 或 instance，并且可以具有任何可见性（public、protected、package-private 或 private）。包含该方法的类可以是顶级类或嵌套类，并且还可以具有任何可见性（只要它位于您计划实例化的位置可访问）。
+您可以为大多数类型（基元、POJO、枚举、列表、数组、映射等）的方法定义任意数量的参数（包括无参数）。同样，该方法可以返回大多数类型，包括 <code>void</code>。如果该方法返回一个值，则返回类型必须是可序列化类型，因为结果将被序列化并发送回模型。
+如果方法是静态的，则可以省略 <code>toolObject（）</code> 方法，因为它不是必需的。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DateTimeTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> String <span style="color:#a6e22e">getCurrentDateTime</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> LocalDateTime.<span style="color:#a6e22e">now</span>().<span style="color:#a6e22e">atZone</span>(LocaleContextHolder.<span style="color:#a6e22e">getTimeZone</span>().<span style="color:#a6e22e">toZoneId</span>()).<span style="color:#a6e22e">toString</span>();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Method method <span style="color:#f92672">=</span> ReflectionUtils.<span style="color:#a6e22e">findMethod</span>(DateTimeTools.<span style="color:#a6e22e">class</span>, <span style="color:#e6db74">&#34;getCurrentDateTime&#34;</span>);
+</span></span><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> MethodToolCallback.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolDefinition</span>(ToolDefinition.<span style="color:#a6e22e">builder</span>(method)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">description</span>(<span style="color:#e6db74">&#34;Get the current date and time in the user&#39;s timezone&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolMethod</span>(method)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><p>Spring AI 将自动为方法的输入参数生成 JSON 模式。模型使用架构来了解如何调用工具和准备工具请求。<code>@ToolParam</code> 注释可用于提供有关输入参数的其他信息，例如描述或参数是必需的还是可选的。默认情况下，所有输入参数都被视为必需参数。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import</span> java.time.LocalDateTime;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.time.format.DateTimeFormatter;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.ai.tool.annotation.ToolParam;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DateTimeTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setAlarm</span>(<span style="color:#a6e22e">@ToolParam</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Time in ISO-8601 format&#34;</span>) String time) {
+</span></span><span style="display:flex;"><span>        LocalDateTime alarmTime <span style="color:#f92672">=</span> LocalDateTime.<span style="color:#a6e22e">parse</span>(time, DateTimeFormatter.<span style="color:#a6e22e">ISO_DATE_TIME</span>);
+</span></span><span style="display:flex;"><span>        System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Alarm set for &#34;</span> <span style="color:#f92672">+</span> alarmTime);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>@ToolParam</code> 注记允许您提供有关工具参数的关键信息：</p>
+<ul>
+<li>description：参数的描述，模型可以使用该参数来更好地了解如何使用它。例如，参数应采用什么格式、允许哪些值等。</li>
+<li>required：参数是 required 还是 optional。默认情况下，所有参数都被视为必需参数。
+如果参数被注释为 <code>@Nullable</code>，则除非使用 <code>@ToolParam</code> 注释明确标记为必需，否则该参数将被视为可选参数。
+除了 <code>@ToolParam</code> 注释之外，您还可以使用 Swagger 的 <code>@Schema</code> 注释或 Jackson 的 <code>@JsonProperty</code>。有关更多详细信息，请参阅 [
+  <a href="../../#_json_schema">JSON 架构</a>](#_json_schema) 。</li>
+</ul>
+<h2 id="向-chatclient-和-chatmodel-添加工具">
+  向 ChatClient 和 ChatModel 添加工具
+  <a class="anchor" href="#%e5%90%91-chatclient-%e5%92%8c-chatmodel-%e6%b7%bb%e5%8a%a0%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>使用编程规范方法时，您可以将 <code>MethodToolCallback</code> 实例传递给 <code>ChatClient</code> 的 <code>tools（）</code> 方法。该工具仅适用于它所添加到的特定聊天请求。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatClient.<span style="color:#a6e22e">create</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;What day is tomorrow?&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">tools</span>(toolCallback)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><h2 id="向-chatclient-添加默认工具-1">
+  向 ChatClient 添加默认工具
+  <a class="anchor" href="#%e5%90%91-chatclient-%e6%b7%bb%e5%8a%a0%e9%bb%98%e8%ae%a4%e5%b7%a5%e5%85%b7-1">#</a>
+</h2>
+<p>使用编程规范方法时，您可以通过将 <code>MethodToolCallback</code> 实例传递给 <code>defaultTools（）</code> 方法，将默认工具添加到 <code>ChatClient.Builder</code>。如果同时提供了 default 和 runtime 工具，则 runtime 工具将完全覆盖 default 工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatClient chatClient <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultTools</span>(toolCallback)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="向-chatmodel-添加工具-1">
+  向 ChatModel 添加工具
+  <a class="anchor" href="#%e5%90%91-chatmodel-%e6%b7%bb%e5%8a%a0%e5%b7%a5%e5%85%b7-1">#</a>
+</h2>
+<p>使用编程规范方法时，可以将 <code>MethodToolCallback</code> 实例传递给用于调用 <code>ChatModel</code> 的 <code>ToolCallingChatOptions</code> 的 <code>toolCallbacks（）</code> 方法。该工具仅适用于它所添加到的特定聊天请求。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatOptions chatOptions <span style="color:#f92672">=</span> ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolCallbacks</span>(toolCallback)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>():
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(<span style="color:#e6db74">&#34;What day is tomorrow?&#34;</span>, chatOptions);
+</span></span><span style="display:flex;"><span>chatModel.<span style="color:#a6e22e">call</span>(prompt);
+</span></span></code></pre></div><h2 id="向-chatmodel-添加默认工具-1">
+  向 ChatModel 添加默认工具
+  <a class="anchor" href="#%e5%90%91-chatmodel-%e6%b7%bb%e5%8a%a0%e9%bb%98%e8%ae%a4%e5%b7%a5%e5%85%b7-1">#</a>
+</h2>
+<p>使用编程规范方法时，您可以通过将 <code>MethodToolCallback</code> 实例传递给用于创建 <code>ChatModel</code> 的 <code>ToolCallingChatOptions</code> 实例的 <code>toolCallbacks（）</code> 方法，在构造时向 <code>ChatModel</code> 添加默认工具。如果同时提供了 default 和 runtime 工具，则 runtime 工具将完全覆盖 default 工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> OllamaChatModel.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">ollamaApi</span>(OllamaApi.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultOptions</span>(ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">toolCallbacks</span>(toolCallback)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="方法工具限制">
+  方法工具限制
+  <a class="anchor" href="#%e6%96%b9%e6%b3%95%e5%b7%a5%e5%85%b7%e9%99%90%e5%88%b6">#</a>
+</h2>
+<p>目前不支持将以下类型用作工具的方法的参数或返回类型：</p>
+<ul>
+<li>异步类型（例如 CompletableFuture、Future）</li>
+<li>反应类型（例如 Flow、Mono、Flux）</li>
+<li>功能类型（例如 Function、Supplier、Consumer）。
+使用基于函数的工具规范方法支持函数类型。有关更多详细信息，请参阅[
+  <a href="../../#_functions_as_tools">函数即工具</a>](#_functions_as_tools) 。</li>
+</ul>
+<h2 id="作为工具的功能">
+  作为工具的功能
+  <a class="anchor" href="#%e4%bd%9c%e4%b8%ba%e5%b7%a5%e5%85%b7%e7%9a%84%e5%8a%9f%e8%83%bd">#</a>
+</h2>
+<p>Spring AI 为从函数指定工具提供了内置支持，既可以使用低级 <code>FunctionToolCallback</code> 实现以编程方式指定工具，也可以动态地作为运行时解析 <code>@Bean</code>。</p>
+<h2 id="编程规范functiontoolcallback">
+  编程规范：FunctionToolCallback
+  <a class="anchor" href="#%e7%bc%96%e7%a8%8b%e8%a7%84%e8%8c%83functiontoolcallback">#</a>
+</h2>
+<p>您可以通过以编程方式构建 <code>Function</code>ToolCallback，将函数类型（<code>Function</code>、<code>Supplier</code>、<code>Consumer</code> 或 Bi<code>Function</code>）转换为工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">WeatherService</span> <span style="color:#66d9ef">implements</span> Function<span style="color:#f92672">&lt;</span>WeatherRequest, WeatherResponse<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> WeatherResponse <span style="color:#a6e22e">apply</span>(WeatherRequest request) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> WeatherResponse(30.<span style="color:#a6e22e">0</span>, Unit.<span style="color:#a6e22e">C</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">enum</span> Unit { C, F }
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">record</span> <span style="color:#a6e22e">WeatherRequest</span>(String location, Unit unit) {}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">record</span> <span style="color:#a6e22e">WeatherResponse</span>(<span style="color:#66d9ef">double</span> temp, Unit unit) {}
+</span></span></code></pre></div><p>```FunctionToolCallback<code>.Builder` 允许您构建 </code>FunctionToolCallback`` 实例并提供有关该工具的关键信息：</p>
+<ul>
+<li>name：工具的名称。AI 模型在调用工具时使用此名称来识别工具。因此，不允许在同一上下文中有两个同名的工具。该名称在模型可用于特定聊天请求的所有工具中必须是唯一的。必填。</li>
+<li>toolFunction：表示工具方法（Function、Supplier、Consumer 或 BiFunction）的函数对象。必填。</li>
+<li>description：工具的描述，模型可以使用它来了解何时以及如何调用工具。如果未提供，则方法名称将用作工具描述。但是，强烈建议提供详细的描述，因为这对于模型了解工具的用途以及如何使用它至关重要。未能提供良好的描述可能会导致模型在应该使用该工具时未使用该工具或错误地使用该工具。</li>
+<li>inputType：函数 input 的类型。必填。</li>
+<li>inputSchema：工具输入参数的 JSON 架构。如果未提供，将根据 inputType 自动生成架构。您可以使用 @ToolParam 注释提供有关输入参数的其他信息，例如描述或参数是必需的还是可选的。默认情况下，所有输入参数都被视为必需参数。有关更多详细信息，请参阅 JSON 架构 。</li>
+<li>toolMetadata：ToolMetadata 实例，用于定义其他设置，例如是否应将结果直接返回给客户端，以及要使用的结果转换器。您可以使用 ToolMetadata.Builder 类构建它。</li>
+<li>toolCallResultConverter：用于将工具调用的结果转换为 String 对象以发送回 AI 模型的 ToolCallResultConverter 实例。如果未提供，将使用默认转换器 （ DefaultToolCallResultConverter ）。
+```ToolMetadata<code>.Builder` 允许您构建 </code>ToolMetadata`` 实例并为该工具定义其他设置：</li>
+<li>returnDirect：工具结果应直接返回给客户端还是传递回模型。有关更多详细信息，请参阅直接返回 。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> FunctionToolCallback
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">builder</span>(<span style="color:#e6db74">&#34;currentWeather&#34;</span>, <span style="color:#66d9ef">new</span> WeatherService())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">description</span>(<span style="color:#e6db74">&#34;Get the weather in location&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">inputType</span>(WeatherRequest.<span style="color:#a6e22e">class</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><p>函数输入和输出可以是 <code>Void</code> 或 POJO。输入和输出 POJO 必须是可序列化的，因为结果将被序列化并发送回模型。函数以及输入和输出类型必须是 public。</p>
+<h2 id="向-chatclient-添加工具-1">
+  向 ChatClient 添加工具
+  <a class="anchor" href="#%e5%90%91-chatclient-%e6%b7%bb%e5%8a%a0%e5%b7%a5%e5%85%b7-1">#</a>
+</h2>
+<p>使用编程规范方法时，您可以将 <code>FunctionToolCallback</code> 实例传递给 <code>ChatClient</code> 的 <code>tools（）</code> 方法。该工具仅适用于它所添加到的特定聊天请求。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatClient.<span style="color:#a6e22e">create</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;What&#39;s the weather like in Copenhagen?&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">tools</span>(toolCallback)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><h2 id="向-chatclient-添加默认工具-2">
+  向 ChatClient 添加默认工具
+  <a class="anchor" href="#%e5%90%91-chatclient-%e6%b7%bb%e5%8a%a0%e9%bb%98%e8%ae%a4%e5%b7%a5%e5%85%b7-2">#</a>
+</h2>
+<p>使用编程规范方法时，您可以通过将 <code>FunctionToolCallback</code> 实例传递给 <code>defaultTools（）</code> 方法，将默认工具添加到 <code>ChatClient.Builder</code>。如果同时提供了 default 和 runtime 工具，则 runtime 工具将完全覆盖 default 工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatClient chatClient <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultTools</span>(toolCallback)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="向-chatmodel-添加工具-2">
+  向 ChatModel 添加工具
+  <a class="anchor" href="#%e5%90%91-chatmodel-%e6%b7%bb%e5%8a%a0%e5%b7%a5%e5%85%b7-2">#</a>
+</h2>
+<p>使用编程规范方法时，您可以将 <code>FunctionToolCallback</code> 实例传递给 <code>ToolCallingChatOptions</code> 的 <code>toolCallbacks（）</code> 方法。该工具仅适用于它所添加到的特定聊天请求。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatOptions chatOptions <span style="color:#f92672">=</span> ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolCallbacks</span>(toolCallback)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>():
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(<span style="color:#e6db74">&#34;What&#39;s the weather like in Copenhagen?&#34;</span>, chatOptions);
+</span></span><span style="display:flex;"><span>chatModel.<span style="color:#a6e22e">call</span>(prompt);
+</span></span></code></pre></div><h2 id="向-chatmodel-添加默认工具-2">
+  向 ChatModel 添加默认工具
+  <a class="anchor" href="#%e5%90%91-chatmodel-%e6%b7%bb%e5%8a%a0%e9%bb%98%e8%ae%a4%e5%b7%a5%e5%85%b7-2">#</a>
+</h2>
+<p>使用编程规范方法时，您可以通过将 <code>FunctionToolCallback</code> 实例传递给用于创建 <code>ChatModel</code> 的 <code>ToolCallingChatOptions</code> 实例的 <code>toolCallbacks（）</code> 方法，在构造时将默认工具添加到 <code>ChatModel</code>。如果同时提供了 default 和 runtime 工具，则 runtime 工具将完全覆盖 default 工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolCallback toolCallback <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> OllamaChatModel.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">ollamaApi</span>(OllamaApi.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultOptions</span>(ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">toolCallbacks</span>(toolCallback)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="动态规格bean">
+  动态规格：@Bean
+  <a class="anchor" href="#%e5%8a%a8%e6%80%81%e8%a7%84%e6%a0%bcbean">#</a>
+</h2>
+<p>您可以将工具定义为 Spring bean，并让 Spring AI 在运行时使用 <code>ToolCallbackResolver</code> 接口（通过实现） SpringBean<code>ToolCallbackResolver</code> 动态解析它们，而不是以编程方式指定工具。此选项使您可以使用任何 <code>Function</code>、<code>Supplier</code>、<code>Consumer</code> 或 Bi<code>Function</code> bean 作为工具。bean 名称将用作工具名称，Spring Framework 中的 <code>@Description</code> 注释可用于提供工具的描述，模型使用它来了解何时以及如何调用该工具。如果您未提供描述，则方法名称将用作工具描述。但是，强烈建议提供详细的描述，因为这对于模型了解工具的用途以及如何使用它至关重要。未能提供良好的描述可能会导致模型在应该使用该工具时未使用该工具或错误地使用该工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Configuration</span>(proxyBeanMethods <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">WeatherTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    WeatherService weatherService <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> WeatherService();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Description</span>(<span style="color:#e6db74">&#34;Get the weather in location&#34;</span>)
+</span></span><span style="display:flex;"><span>	Function<span style="color:#f92672">&lt;</span>WeatherRequest, WeatherResponse<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">currentWeather</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> weatherService;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>将自动生成工具输入参数的 JSON 方案。您可以使用 <code>@ToolParam</code> 注释提供有关输入参数的其他信息，例如描述或参数是必需的还是可选的。默认情况下，所有输入参数都被视为必需参数。有关更多详细信息，请参阅 [
+  <a href="../../#_json_schema">JSON 架构</a>](#_json_schema) 。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">record</span> <span style="color:#a6e22e">WeatherRequest</span>(<span style="color:#a6e22e">@ToolParam</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The name of a city or a country&#34;</span>) String location, Unit unit) {}
+</span></span></code></pre></div><p>这种工具规范方法的缺点是不能保证类型安全，因为工具解析是在运行时完成的。要缓解这种情况，您可以使用 <code>@Bean</code> 注释显式指定工具名称，并将值存储在常量中，以便您可以在聊天请求中使用它，而不是对工具名称进行硬编码。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Configuration</span>(proxyBeanMethods <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">WeatherTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> String CURRENT_WEATHER_TOOL <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;currentWeather&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Bean</span>(CURRENT_WEATHER_TOOL)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Description</span>(<span style="color:#e6db74">&#34;Get the weather in location&#34;</span>)
+</span></span><span style="display:flex;"><span>	Function<span style="color:#f92672">&lt;</span>WeatherRequest, WeatherResponse<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">currentWeather</span>() {
+</span></span><span style="display:flex;"><span>		...
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="向-chatclient-添加工具-2">
+  向 ChatClient 添加工具
+  <a class="anchor" href="#%e5%90%91-chatclient-%e6%b7%bb%e5%8a%a0%e5%b7%a5%e5%85%b7-2">#</a>
+</h2>
+<p>当使用动态规范方法时，你可以将工具名称（即函数 Bean 名称）传递给 <code>ChatClient</code> 的 <code>tools（）</code> 方法。该工具仅适用于它所添加到的特定聊天请求。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatClient.<span style="color:#a6e22e">create</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;What&#39;s the weather like in Copenhagen?&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">tools</span>(<span style="color:#e6db74">&#34;currentWeather&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><h2 id="向-chatclient-添加默认工具-3">
+  向 ChatClient 添加默认工具
+  <a class="anchor" href="#%e5%90%91-chatclient-%e6%b7%bb%e5%8a%a0%e9%bb%98%e8%ae%a4%e5%b7%a5%e5%85%b7-3">#</a>
+</h2>
+<p>使用动态规范方法时，您可以通过将工具名称传递给 <code>defaultTools（）</code> 方法，将默认工具添加到 <code>ChatClient.Builder</code>。如果同时提供了 default 和 runtime 工具，则 runtime 工具将完全覆盖 default 工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatClient chatClient <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultTools</span>(<span style="color:#e6db74">&#34;currentWeather&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="向-chatmodel-添加工具-3">
+  向 ChatModel 添加工具
+  <a class="anchor" href="#%e5%90%91-chatmodel-%e6%b7%bb%e5%8a%a0%e5%b7%a5%e5%85%b7-3">#</a>
+</h2>
+<p>使用动态规范方法时，可以将工具名称传递给用于调用 <code>ChatModel</code> 的 <code>ToolCallingChatOptions</code> 的 <code>toolNames（）</code> 方法。该工具仅适用于它所添加到的特定聊天请求。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ChatOptions chatOptions <span style="color:#f92672">=</span> ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolNames</span>(<span style="color:#e6db74">&#34;currentWeather&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>():
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(<span style="color:#e6db74">&#34;What&#39;s the weather like in Copenhagen?&#34;</span>, chatOptions);
+</span></span><span style="display:flex;"><span>chatModel.<span style="color:#a6e22e">call</span>(prompt);
+</span></span></code></pre></div><h2 id="向-chatmodel-添加默认工具-3">
+  向 ChatModel 添加默认工具
+  <a class="anchor" href="#%e5%90%91-chatmodel-%e6%b7%bb%e5%8a%a0%e9%bb%98%e8%ae%a4%e5%b7%a5%e5%85%b7-3">#</a>
+</h2>
+<p>使用动态规范方法时，您可以通过将工具名称传递给用于创建 <code>ChatModel</code> 的 <code>ToolCallingChatOptions</code> 实例的 <code>toolNames（）</code> 方法，在构造时将默认工具添加到 <code>ChatModel</code>。如果同时提供了 default 和 runtime 工具，则 runtime 工具将完全覆盖 default 工具。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> OllamaChatModel.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">ollamaApi</span>(OllamaApi.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultOptions</span>(ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">toolNames</span>(<span style="color:#e6db74">&#34;currentWeather&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="函数工具限制">
+  函数工具限制
+  <a class="anchor" href="#%e5%87%bd%e6%95%b0%e5%b7%a5%e5%85%b7%e9%99%90%e5%88%b6">#</a>
+</h2>
+<p>当前不支持将以下类型用作用作工具的函数的输入或输出类型：</p>
+<ul>
+<li>基元类型</li>
+<li>集合类型（例如 List、Map、Array、Set）</li>
+<li>异步类型（例如 CompletableFuture、Future）</li>
+<li>反应类型（例如 Flow、Mono、Flux）。
+使用基于方法的工具规范方法支持基元类型和集合。有关更多详细信息，请参阅[
+  <a href="../../#_methods_as_tools">方法作为工具</a>](#_methods_as_tools) 。</li>
+</ul>
+<h2 id="工具规格">
+  工具规格
+  <a class="anchor" href="#%e5%b7%a5%e5%85%b7%e8%a7%84%e6%a0%bc">#</a>
+</h2>
+<p>在 Spring AI 中，工具是通过 <code>ToolCallback</code> 接口建模的。在前面的部分中，我们已经看到了如何使用 Spring AI 提供的内置支持从方法和函数定义工具（参见[
+  <a href="../../#_methods_as_tools">作为工具和</a>](#_methods_as_tools)[
+  <a href="../../#_functions_as_tools">作为工具的函数</a>](#_functions_as_tools) ）。本节将深入探讨工具规范以及如何自定义和扩展它以支持更多用例。</p>
+<h2 id="工具回调">
+  工具回调
+  <a class="anchor" href="#%e5%b7%a5%e5%85%b7%e5%9b%9e%e8%b0%83">#</a>
+</h2>
+<p><code>ToolCallback</code> 接口提供了一种定义可由 AI 模型调用的工具的方法，包括定义和执行逻辑。当您想从头开始定义一个工具时，它是要实现的主界面。例如，您可以从 MCP Client（使用模型上下文协议）或 <code>ChatClient</code>（以构建模块化代理应用程序）定义 <code>ToolCallback</code>。
+该接口提供如下方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">ToolCallback</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Definition used by the AI model to determine when and how to call the tool.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	ToolDefinition <span style="color:#a6e22e">getToolDefinition</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Metadata providing additional information on how to handle the tool.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	ToolMetadata <span style="color:#a6e22e">getToolMetadata</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Execute tool with the given input and return the result to send back to the AI model.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">call</span>(String toolInput);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Execute tool with the given input and context, and return the result to send back to the AI model.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">call</span>(String toolInput, ToolContext tooContext);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Spring AI 为工具方法（<code>MethodToolCallback</code>）和工具函数（<code>FunctionToolCallback</code>）提供了内置实现。</p>
+<h2 id="工具定义">
+  工具定义
+  <a class="anchor" href="#%e5%b7%a5%e5%85%b7%e5%ae%9a%e4%b9%89">#</a>
+</h2>
+<p><code>ToolDefinition</code> 接口为 AI 模型提供了解工具可用性所需的信息，包括工具名称、描述和输入架构。每个 <code>ToolCallback</code> 实现都必须提供一个 <code>ToolDefinition</code> 实例来定义工具。
+该接口提供如下方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">ToolDefinition</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * The tool name. Unique within the tool set provided to a model.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">name</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * The tool description, used by the AI model to determine what the tool does.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">description</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * The schema of the parameters used to call the tool.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">inputSchema</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>```ToolDefinition<code>.Builder` 允许您使用默认实现 （Default</code>ToolDefinition<code>） 构建 </code>ToolDefinition`` 实例。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolDefinition toolDefinition <span style="color:#f92672">=</span> ToolDefinition.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">name</span>(<span style="color:#e6db74">&#34;currentWeather&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">description</span>(<span style="color:#e6db74">&#34;Get the weather in location&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">inputSchema</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;type&#34;: &#34;object&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;properties&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;location&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;type&#34;: &#34;string&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;unit&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;type&#34;: &#34;string&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;enum&#34;: [&#34;C&#34;, &#34;F&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;required&#34;: [&#34;location&#34;, &#34;unit&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="方法工具定义">
+  方法工具定义
+  <a class="anchor" href="#%e6%96%b9%e6%b3%95%e5%b7%a5%e5%85%b7%e5%ae%9a%e4%b9%89">#</a>
+</h2>
+<p>从方法构建工具时，将为您自动生成 <code>ToolDefinition</code>。如果您更喜欢自己生成 <code>ToolDefinition</code>，则可以使用这个方便的构建器。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Method method <span style="color:#f92672">=</span> ReflectionUtils.<span style="color:#a6e22e">findMethod</span>(DateTimeTools.<span style="color:#a6e22e">class</span>, <span style="color:#e6db74">&#34;getCurrentDateTime&#34;</span>);
+</span></span><span style="display:flex;"><span>ToolDefinition toolDefinition <span style="color:#f92672">=</span> ToolDefinition.<span style="color:#a6e22e">from</span>(method);
+</span></span></code></pre></div><p>从方法生成的 <code>ToolDefinition</code> 包括作为工具名称的方法名称、作为工具描述的方法名称以及方法输入参数的 JSON 架构。如果方法使用 <code>@Tool</code> 进行注释，则工具名称和描述将从注释 （如果已设置） 中获取。
+如果您希望显式提供部分或全部属性，则可以使用 ```ToolDefinition<code>.Builder` 构建自定义 </code>ToolDefinition`` 实例。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Method method <span style="color:#f92672">=</span> ReflectionUtils.<span style="color:#a6e22e">findMethod</span>(DateTimeTools.<span style="color:#a6e22e">class</span>, <span style="color:#e6db74">&#34;getCurrentDateTime&#34;</span>);
+</span></span><span style="display:flex;"><span>ToolDefinition toolDefinition <span style="color:#f92672">=</span> ToolDefinition.<span style="color:#a6e22e">builder</span>(method)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">name</span>(<span style="color:#e6db74">&#34;currentDateTime&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">description</span>(<span style="color:#e6db74">&#34;Get the current date and time in the user&#39;s timezone&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">inputSchema</span>(JsonSchemaGenerator.<span style="color:#a6e22e">generateForMethodInput</span>(method))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="功能工具定义">
+  功能工具定义
+  <a class="anchor" href="#%e5%8a%9f%e8%83%bd%e5%b7%a5%e5%85%b7%e5%ae%9a%e4%b9%89">#</a>
+</h2>
+<p>从函数构建工具时，将为您自动生成 <code>ToolDefinition</code>。当您使用 ```FunctionToolCallback<code>.Builder` 构建 </code>FunctionToolCallback`` 实例时，您可以提供将用于生成 <code>ToolDefinition</code> 的工具名称、描述和输入架构。有关更多详细信息，请参阅[
+  <a href="../../#_functions_as_tools">函数即工具</a>](#_functions_as_tools) 。</p>
+<h2 id="json-架构">
+  JSON 架构
+  <a class="anchor" href="#json-%e6%9e%b6%e6%9e%84">#</a>
+</h2>
+<p>向 AI 模型提供工具时，模型需要知道用于调用该工具的输入类型的架构。架构用于了解如何调用工具和准备工具请求。Spring AI 提供了内置支持，用于通过 <code>JsonSchemaGenerator</code> 类为工具生成 input 类型的 JSON Schema。该架构作为 <code>ToolDefinition</code> 的一部分提供。
+<code>JsonSchemaGenerator</code> 类在后台用于为方法或函数的输入参数生成 JSON 架构，使用[
+  <a href="../../#_methods_as_tools">方法作为工具和</a>](#_methods_as_tools)[
+  <a href="../../#_functions_as_tools">函数作为工具</a>](#_functions_as_tools)中描述的任何策略。JSON 架构生成逻辑支持一系列注释，您可以在方法和函数的输入参数上使用这些注释来自定义生成的架构。
+本节介绍在为工具的输入参数生成 JSON 架构时可以自定义的两个主要选项：description 和 required status。</p>
+<h2 id="描述">
+  描述
+  <a class="anchor" href="#%e6%8f%8f%e8%bf%b0">#</a>
+</h2>
+<p>除了提供工具本身的描述外，您还可以提供工具输入参数的描述。描述可用于提供有关输入参数的关键信息，例如参数应采用的格式、允许的值等。这有助于模型了解输入架构以及如何使用它。Spring AI 提供了内置支持，以使用以下注释之一为 Importing 参数生成描述：</p>
+<ul>
+<li>@ToolParam(description = &ldquo;…​&rdquo;) 来自 Spring AI</li>
+<li>@JsonClassDescription(description = &ldquo;…​&rdquo;) 与 Jackson 相比</li>
+<li>@JsonPropertyDescription(description = &ldquo;…​&rdquo;) 与 Jackson 相比</li>
+<li>@Schema（description = “&hellip;“）。
+此方法适用于方法和函数，您可以递归地将其用于嵌套类型。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import</span> java.time.LocalDateTime;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> java.time.format.DateTimeFormatter;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.ai.tool.annotation.Tool;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.ai.tool.annotation.ToolParam;
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.context.i18n.LocaleContextHolder;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DateTimeTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Set a user alarm for the given time&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setAlarm</span>(<span style="color:#a6e22e">@ToolParam</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Time in ISO-8601 format&#34;</span>) String time) {
+</span></span><span style="display:flex;"><span>        LocalDateTime alarmTime <span style="color:#f92672">=</span> LocalDateTime.<span style="color:#a6e22e">parse</span>(time, DateTimeFormatter.<span style="color:#a6e22e">ISO_DATE_TIME</span>);
+</span></span><span style="display:flex;"><span>        System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Alarm set for &#34;</span> <span style="color:#f92672">+</span> alarmTime);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="必需可选">
+  必需/可选
+  <a class="anchor" href="#%e5%bf%85%e9%9c%80%e5%8f%af%e9%80%89">#</a>
+</h2>
+<p>默认情况下，每个输入参数都被视为必需参数，这会强制 AI 模型在调用工具时为其提供值。但是，您可以使用以下注释之一将 input 参数设置为可选，按以下优先顺序：</p>
+<ul>
+<li>来自 Spring AI 的 @ToolParam（必需 = false）</li>
+<li>@JsonProperty(required = false) 与 Jackson 相比</li>
+<li>@Schema（必需 = false） 来自 Swagger</li>
+<li>@Nullable Spring Framework 中。
+此方法适用于方法和函数，您可以递归地将其用于嵌套类型。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CustomerTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Update customer information&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">updateCustomerInfo</span>(Long id, String name, <span style="color:#a6e22e">@ToolParam</span>(required <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>) String email) {
+</span></span><span style="display:flex;"><span>        System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Updated info for customer with id: &#34;</span> <span style="color:#f92672">+</span> id);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="结果转换">
+  结果转换
+  <a class="anchor" href="#%e7%bb%93%e6%9e%9c%e8%bd%ac%e6%8d%a2">#</a>
+</h2>
+<p>工具调用的结果使用 <code>ToolCallResultConverter</code> 进行序列化，然后发送回 AI 模型。<code>ToolCallResultConverter</code> 接口提供了一种将工具调用的结果转换为 <code>String</code> 对象的方法。
+该接口提供如下方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@FunctionalInterface</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">ToolCallResultConverter</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Given an Object returned by a tool, convert it to a String compatible with the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * given class type.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">convert</span>(<span style="color:#a6e22e">@Nullable</span> Object result, <span style="color:#a6e22e">@Nullable</span> Type returnType);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>结果必须是可序列化类型。默认情况下，结果使用 Jackson （） 序列化为 JSON `Default<code>ToolCallResultConverter``` ，但您可以通过提供自己的 </code>ToolCallResultConverter<code>实现来自定义序列化过程。 Spring AI 在方法和函数工具中都依赖于</code>ToolCallResultConverter``。</p>
+<h2 id="方法工具调用结果转换">
+  方法工具调用结果转换
+  <a class="anchor" href="#%e6%96%b9%e6%b3%95%e5%b7%a5%e5%85%b7%e8%b0%83%e7%94%a8%e7%bb%93%e6%9e%9c%e8%bd%ac%e6%8d%a2">#</a>
+</h2>
+<p>当使用声明性方法从方法构建工具时，您可以通过设置 <code>@Tool</code> 注解的 <code>resultConverter（）</code> 属性来提供用于该工具的自定义 <code>ToolCallResultConverter</code>。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CustomerTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Retrieve customer information&#34;</span>, resultConverter <span style="color:#f92672">=</span> CustomToolCallResultConverter.<span style="color:#a6e22e">class</span>)
+</span></span><span style="display:flex;"><span>    Customer <span style="color:#a6e22e">getCustomerInfo</span>(Long id) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> customerRepository.<span style="color:#a6e22e">findById</span>(id);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>如果使用编程方法，则可以通过设置 <code>MethodToolCallback.Builder</code> 的 <code>resultConverter（）</code> 属性来提供用于该工具的自定义 <code>ToolCallResultConverter</code>。
+有关更多详细信息，请参阅[
+  <a href="../../#_methods_as_tools">方法作为工具</a>](#_methods_as_tools) 。</p>
+<h2 id="函数工具调用结果转换">
+  函数工具调用结果转换
+  <a class="anchor" href="#%e5%87%bd%e6%95%b0%e5%b7%a5%e5%85%b7%e8%b0%83%e7%94%a8%e7%bb%93%e6%9e%9c%e8%bd%ac%e6%8d%a2">#</a>
+</h2>
+<p>使用编程方法从函数构建工具时，您可以通过设置 <code>FunctionToolCallback.Builder</code> 的 <code>resultConverter（）</code> 属性来提供用于该工具的自定义 <code>ToolCallResultConverter</code>。
+有关更多详细信息，请参阅[
+  <a href="../../#_functions_as_tools">函数即工具</a>](#_functions_as_tools) 。</p>
+<h2 id="工具上下文">
+  工具上下文
+  <a class="anchor" href="#%e5%b7%a5%e5%85%b7%e4%b8%8a%e4%b8%8b%e6%96%87">#</a>
+</h2>
+<p>Spring AI 支持通过 <code>ToolContext</code> API 将额外的上下文信息传递给工具。此功能允许您提供额外的用户提供的数据，这些数据可与 AI 模型传递的工具参数一起在工具执行中使用。
+
+  <img src="../../images/tools/tool-context.jpg" alt="" /></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CustomerTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Retrieve customer information&#34;</span>)
+</span></span><span style="display:flex;"><span>    Customer <span style="color:#a6e22e">getCustomerInfo</span>(Long id, ToolContext toolContext) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> customerRepository.<span style="color:#a6e22e">findById</span>(id, toolContext.<span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#34;tenantId&#34;</span>));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>ToolContext</code> 使用用户在调用 <code>ChatClient</code> 时提供的数据进行填充。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String response <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">create</span>(chatModel)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;Tell me more about the customer with ID 42&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">tools</span>(<span style="color:#66d9ef">new</span> CustomerTools())
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">toolContext</span>(Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;tenantId&#34;</span>, <span style="color:#e6db74">&#34;acme&#34;</span>))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(response);
+</span></span></code></pre></div><p>同样，您可以在直接调用 <code>ChatModel</code> 时定义工具上下文数据。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ToolCallback<span style="color:#f92672">[]</span> customerTools <span style="color:#f92672">=</span> ToolCallbacks.<span style="color:#a6e22e">from</span>(<span style="color:#66d9ef">new</span> CustomerTools());
+</span></span><span style="display:flex;"><span>ChatOptions chatOptions <span style="color:#f92672">=</span> ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolCallbacks</span>(customerTools)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolContext</span>(Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;tenantId&#34;</span>, <span style="color:#e6db74">&#34;acme&#34;</span>))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(<span style="color:#e6db74">&#34;Tell me more about the customer with ID 42&#34;</span>, chatOptions);
+</span></span><span style="display:flex;"><span>chatModel.<span style="color:#a6e22e">call</span>(prompt);
+</span></span></code></pre></div><p>如果在默认选项和运行时选项中都设置了 <code>toolContext</code> 选项，则生成的 <code>ToolContext</code> 将是两者的合并，其中运行时选项优先于默认选项。</p>
+<h2 id="直接返回">
+  直接返回
+  <a class="anchor" href="#%e7%9b%b4%e6%8e%a5%e8%bf%94%e5%9b%9e">#</a>
+</h2>
+<p>默认情况下，工具调用的结果将作为响应发送回模型。然后，模型可以使用结果继续对话。
+在某些情况下，您宁愿将结果直接返回给调用方，而不是将其发送回模型。例如，如果您构建了一个依赖于 RAG 工具的代理，您可能希望将结果直接返回给调用方，而不是将其发送回模型进行不必要的后处理。或者，也许您有一些工具可以结束代理的推理循环。
+每个 <code>ToolCallback</code> 实现都可以定义是应将工具调用的结果直接返回给调用方还是发送回模型。默认情况下，结果将发送回模型。但是，您可以按工具更改此行为。
+负责管理工具执行生命周期的 <code>ToolCallingManager</code> 负责处理与工具关联的 <code>returnDirect</code> 属性。如果该属性设置为 <code>true</code>，则工具调用的结果将直接返回给调用方。否则，结果将发送回模型。
+
+  <img src="../../images/tools/return-direct.jpg" alt="" /></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">CustomerTools</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Retrieve customer information&#34;</span>, returnDirect <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>)
+</span></span><span style="display:flex;"><span>    Customer <span style="color:#a6e22e">getCustomerInfo</span>(Long id) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> customerRepository.<span style="color:#a6e22e">findById</span>(id);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolMetadata toolMetadata <span style="color:#f92672">=</span> ToolMetadata.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">returnDirect</span>(<span style="color:#66d9ef">true</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolMetadata toolMetadata <span style="color:#f92672">=</span> ToolMetadata.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">returnDirect</span>(<span style="color:#66d9ef">true</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">ToolCallingManager</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Resolve the tool definitions from the model&#39;s tool calling options.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	List<span style="color:#f92672">&lt;</span>ToolDefinition<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">resolveToolDefinitions</span>(ToolCallingChatOptions chatOptions);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Execute the tool calls requested by the model.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	ToolExecutionResult <span style="color:#a6e22e">executeToolCalls</span>(Prompt prompt, ChatResponse chatResponse);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>ToolCallingManager <span style="color:#a6e22e">toolCallingManager</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> ToolCallingManager.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>
+  <img src="../../images/tools/framework-manager.jpg" alt="" /></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">DefaultToolExecutionEligibilityPredicate</span> <span style="color:#66d9ef">implements</span> ToolExecutionEligibilityPredicate {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">test</span>(ChatOptions promptOptions, ChatResponse chatResponse) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> ToolCallingChatOptions.<span style="color:#a6e22e">isInternalToolExecutionEnabled</span>(promptOptions) <span style="color:#f92672">&amp;&amp;</span> chatResponse <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>				<span style="color:#f92672">&amp;&amp;</span> chatResponse.<span style="color:#a6e22e">hasToolCalls</span>();
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatModel chatModel <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>ToolCallingManager toolCallingManager <span style="color:#f92672">=</span> ToolCallingManager.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatOptions chatOptions <span style="color:#f92672">=</span> ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolCallbacks</span>(<span style="color:#66d9ef">new</span> CustomerTools())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">internalToolExecutionEnabled</span>(<span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(<span style="color:#e6db74">&#34;Tell me more about the customer with ID 42&#34;</span>, chatOptions);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatResponse chatResponse <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(prompt);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">while</span> (chatResponse.<span style="color:#a6e22e">hasToolCalls</span>()) {
+</span></span><span style="display:flex;"><span>    ToolExecutionResult toolExecutionResult <span style="color:#f92672">=</span> toolCallingManager.<span style="color:#a6e22e">executeToolCalls</span>(prompt, chatResponse);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(toolExecutionResult.<span style="color:#a6e22e">conversationHistory</span>(), chatOptions);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    chatResponse <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(prompt);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(chatResponse.<span style="color:#a6e22e">getResult</span>().<span style="color:#a6e22e">getOutput</span>().<span style="color:#a6e22e">getText</span>());
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ToolCallingManager toolCallingManager <span style="color:#f92672">=</span> DefaultToolCallingManager.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>ChatMemory chatMemory <span style="color:#f92672">=</span> MessageWindowChatMemory.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>String conversationId <span style="color:#f92672">=</span> UUID.<span style="color:#a6e22e">randomUUID</span>().<span style="color:#a6e22e">toString</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatOptions chatOptions <span style="color:#f92672">=</span> ToolCallingChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolCallbacks</span>(ToolCallbacks.<span style="color:#a6e22e">from</span>(<span style="color:#66d9ef">new</span> MathTools()))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">internalToolExecutionEnabled</span>(<span style="color:#66d9ef">false</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(
+</span></span><span style="display:flex;"><span>        List.<span style="color:#a6e22e">of</span>(<span style="color:#66d9ef">new</span> SystemMessage(<span style="color:#e6db74">&#34;You are a helpful assistant.&#34;</span>), <span style="color:#66d9ef">new</span> UserMessage(<span style="color:#e6db74">&#34;What is 6 * 8?&#34;</span>)),
+</span></span><span style="display:flex;"><span>        chatOptions);
+</span></span><span style="display:flex;"><span>chatMemory.<span style="color:#a6e22e">add</span>(conversationId, prompt.<span style="color:#a6e22e">getInstructions</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Prompt promptWithMemory <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(chatMemory.<span style="color:#a6e22e">get</span>(conversationId), chatOptions);
+</span></span><span style="display:flex;"><span>ChatResponse chatResponse <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(promptWithMemory);
+</span></span><span style="display:flex;"><span>chatMemory.<span style="color:#a6e22e">add</span>(conversationId, chatResponse.<span style="color:#a6e22e">getResult</span>().<span style="color:#a6e22e">getOutput</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">while</span> (chatResponse.<span style="color:#a6e22e">hasToolCalls</span>()) {
+</span></span><span style="display:flex;"><span>    ToolExecutionResult toolExecutionResult <span style="color:#f92672">=</span> toolCallingManager.<span style="color:#a6e22e">executeToolCalls</span>(promptWithMemory,
+</span></span><span style="display:flex;"><span>            chatResponse);
+</span></span><span style="display:flex;"><span>    chatMemory.<span style="color:#a6e22e">add</span>(conversationId, toolExecutionResult.<span style="color:#a6e22e">conversationHistory</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">get</span>(toolExecutionResult.<span style="color:#a6e22e">conversationHistory</span>().<span style="color:#a6e22e">size</span>() <span style="color:#f92672">-</span> 1));
+</span></span><span style="display:flex;"><span>    promptWithMemory <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(chatMemory.<span style="color:#a6e22e">get</span>(conversationId), chatOptions);
+</span></span><span style="display:flex;"><span>    chatResponse <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(promptWithMemory);
+</span></span><span style="display:flex;"><span>    chatMemory.<span style="color:#a6e22e">add</span>(conversationId, chatResponse.<span style="color:#a6e22e">getResult</span>().<span style="color:#a6e22e">getOutput</span>());
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>UserMessage newUserMessage <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> UserMessage(<span style="color:#e6db74">&#34;What did I ask you earlier?&#34;</span>);
+</span></span><span style="display:flex;"><span>chatMemory.<span style="color:#a6e22e">add</span>(conversationId, newUserMessage);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatResponse newResponse <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(<span style="color:#66d9ef">new</span> Prompt(chatMemory.<span style="color:#a6e22e">get</span>(conversationId)));
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@FunctionalInterface</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">ToolExecutionExceptionProcessor</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Convert an exception thrown by a tool to a String that can be sent back to the AI
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * model or throw an exception to be handled by the caller.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">process</span>(ToolExecutionException exception);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>ToolExecutionExceptionProcessor <span style="color:#a6e22e">toolExecutionExceptionProcessor</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> DefaultToolExecutionExceptionProcessor(<span style="color:#66d9ef">true</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">ToolCallbackResolver</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Resolve the {@link ToolCallback} for the given tool name.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Nullable</span>
+</span></span><span style="display:flex;"><span>	ToolCallback <span style="color:#a6e22e">resolve</span>(String toolName);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>ToolCallbackResolver <span style="color:#a6e22e">toolCallbackResolver</span>(List<span style="color:#f92672">&lt;</span>FunctionCallback<span style="color:#f92672">&gt;</span> toolCallbacks) {
+</span></span><span style="display:flex;"><span>    StaticToolCallbackResolver staticToolCallbackResolver <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> StaticToolCallbackResolver(toolCallbacks);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> DelegatingToolCallbackResolver(List.<span style="color:#a6e22e">of</span>(staticToolCallbackResolver));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>ToolCallingManager</code> 在内部使用 <code>ToolCallingManager</code> 在运行时动态解析工具，同时支持[
+  <a href="../../#_framework_controlled_tool_execution">框架控制的工具执行</a>](#_framework_controlled_tool_execution)和[
+  <a href="../../#_user_controlled_tool_execution">用户控制的工具执行</a>](#_user_controlled_tool_execution) 。</p>
+<h2 id="可观察性">
+  可观察性
+  <a class="anchor" href="#%e5%8f%af%e8%a7%82%e5%af%9f%e6%80%a7">#</a>
+</h2>
+<p>工具调用包括对 spring.ai.tool 观察的可观察性支持，这些观察可以测量完成时间并传播跟踪信息。请参阅[
+  <a href="../observability/index.html#_tool_calling">工具调用可观测性</a>](../observability/index.html#_tool_calling) 。
+或者，Spring AI 可以将工具调用参数和结果导出为 span 属性，出于敏感原因，默认情况下处于禁用状态。详细信息： [
+  <a href="../observability/index.html#_tool_call_arguments_and_result_data">工具调用参数和结果数据</a>](../observability/index.html#_tool_call_arguments_and_result_data) 。</p>
+<h2 id="伐木">
+  伐木
+  <a class="anchor" href="#%e4%bc%90%e6%9c%a8">#</a>
+</h2>
+<p>工具调用功能的所有主要作都记录在 <code>DEBUG</code> 级别。您可以通过将 <code>org.springframework.ai</code> 包的日志级别设置为 <code>DEBUG</code> 来启用日志记录。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#工具调用">工具调用</a>
+      <ul>
+        <li><a href="#快速开始">快速开始</a></li>
+        <li><a href="#信息检索">信息检索</a></li>
+        <li><a href="#采取行动">采取行动</a></li>
+        <li><a href="#概述">概述</a></li>
+        <li><a href="#方法即工具">方法即工具</a></li>
+        <li><a href="#声明性规范tool">声明性规范：@Tool</a></li>
+        <li><a href="#向-chatclient-添加工具">向 ChatClient 添加工具</a></li>
+        <li><a href="#向-chatclient-添加默认工具">向 ChatClient 添加默认工具</a></li>
+        <li><a href="#向-chatmodel-添加工具">向 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatmodel-添加默认工具">向 ChatModel 添加默认工具</a></li>
+        <li><a href="#编程规范methodtoolcallback">编程规范：MethodToolCallback</a></li>
+        <li><a href="#向-chatclient-和-chatmodel-添加工具">向 ChatClient 和 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatclient-添加默认工具-1">向 ChatClient 添加默认工具</a></li>
+        <li><a href="#向-chatmodel-添加工具-1">向 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatmodel-添加默认工具-1">向 ChatModel 添加默认工具</a></li>
+        <li><a href="#方法工具限制">方法工具限制</a></li>
+        <li><a href="#作为工具的功能">作为工具的功能</a></li>
+        <li><a href="#编程规范functiontoolcallback">编程规范：FunctionToolCallback</a></li>
+        <li><a href="#向-chatclient-添加工具-1">向 ChatClient 添加工具</a></li>
+        <li><a href="#向-chatclient-添加默认工具-2">向 ChatClient 添加默认工具</a></li>
+        <li><a href="#向-chatmodel-添加工具-2">向 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatmodel-添加默认工具-2">向 ChatModel 添加默认工具</a></li>
+        <li><a href="#动态规格bean">动态规格：@Bean</a></li>
+        <li><a href="#向-chatclient-添加工具-2">向 ChatClient 添加工具</a></li>
+        <li><a href="#向-chatclient-添加默认工具-3">向 ChatClient 添加默认工具</a></li>
+        <li><a href="#向-chatmodel-添加工具-3">向 ChatModel 添加工具</a></li>
+        <li><a href="#向-chatmodel-添加默认工具-3">向 ChatModel 添加默认工具</a></li>
+        <li><a href="#函数工具限制">函数工具限制</a></li>
+        <li><a href="#工具规格">工具规格</a></li>
+        <li><a href="#工具回调">工具回调</a></li>
+        <li><a href="#工具定义">工具定义</a></li>
+        <li><a href="#方法工具定义">方法工具定义</a></li>
+        <li><a href="#功能工具定义">功能工具定义</a></li>
+        <li><a href="#json-架构">JSON 架构</a></li>
+        <li><a href="#描述">描述</a></li>
+        <li><a href="#必需可选">必需/可选</a></li>
+        <li><a href="#结果转换">结果转换</a></li>
+        <li><a href="#方法工具调用结果转换">方法工具调用结果转换</a></li>
+        <li><a href="#函数工具调用结果转换">函数工具调用结果转换</a></li>
+        <li><a href="#工具上下文">工具上下文</a></li>
+        <li><a href="#直接返回">直接返回</a></li>
+        <li><a href="#可观察性">可观察性</a></li>
+        <li><a href="#伐木">伐木</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

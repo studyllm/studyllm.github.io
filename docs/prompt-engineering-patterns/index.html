@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  提示工程模式
+  #
+
+基于全面的 [
+  Prompt Engineering Guide](
+  https://www.kaggle.com/whitepaper-prompt-engineering) 的 Prompt Engineering 技术的实际实施。该指南涵盖了有效提示工程的理论、原则和模式，而在这里，我们演示了如何使用 Spring AI 的 Fluent [
+  ChatClient API](../chatclient.html) 将这些概念转换为有效的 Java 代码。本文中使用的演示源代码可在以下网址获得：[
+  Prompt Engineering Patterns Examples](
+  https://github.com/spring-projects/spring-ai-examples/tree/main/prompt-engineering/prompt-engineering-patterns)。
+
+  1. 配置
+  #
+
+配置部分概述了如何使用 Spring AI 设置和调整大型语言模型 （LLM）。它涵盖了为您的使用案例选择合适的 LLM 提供程序，以及配置控制模型输出的质量、样式和格式的重要生成参数。
+
+  LLM 提供商选择
+  #
+
+对于快速工程，您将首先选择一个模型。Spring AI 支持[
+  多个 LLM 提供程序](comparison.html) （例如 OpenAI、Anthropic、Google Vertex AI、AWS Bedrock、Ollama 等），让您无需更改应用程序代码即可切换提供程序 - 只需更新配置即可。只需添加选定的 starter dependency spring-ai-starter-model-&lt;MODEL-PROVIDER-NAME&gt; .例如，以下是启用 Anthropic Claude API 的方法：
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-starter-model-anthropic&lt;/artifactId&gt;
+&lt;/dependency&gt;
+您可以指定 LLM 模型名称，如下所示：
+.options(ChatOptions.builder()
+        .model(&#34;claude-3-7-sonnet-latest&#34;)  // Use Anthropic&#39;s Claude model
+        .build())
+在[
+  参考文档中](../chatmodel.html)查找有关启用每个模型的详细信息。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/prompt-engineering-patterns/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="提示工程模式">
+  <meta property="og:description" content="提示工程模式 # 基于全面的 [ Prompt Engineering Guide]( https://www.kaggle.com/whitepaper-prompt-engineering) 的 Prompt Engineering 技术的实际实施。该指南涵盖了有效提示工程的理论、原则和模式，而在这里，我们演示了如何使用 Spring AI 的 Fluent [ ChatClient API](../chatclient.html) 将这些概念转换为有效的 Java 代码。本文中使用的演示源代码可在以下网址获得：[ Prompt Engineering Patterns Examples]( https://github.com/spring-projects/spring-ai-examples/tree/main/prompt-engineering/prompt-engineering-patterns)。
+1. 配置 # 配置部分概述了如何使用 Spring AI 设置和调整大型语言模型 （LLM）。它涵盖了为您的使用案例选择合适的 LLM 提供程序，以及配置控制模型输出的质量、样式和格式的重要生成参数。
+LLM 提供商选择 # 对于快速工程，您将首先选择一个模型。Spring AI 支持[ 多个 LLM 提供程序](comparison.html) （例如 OpenAI、Anthropic、Google Vertex AI、AWS Bedrock、Ollama 等），让您无需更改应用程序代码即可切换提供程序 - 只需更新配置即可。只需添加选定的 starter dependency spring-ai-starter-model-&lt;MODEL-PROVIDER-NAME&gt; .例如，以下是启用 Anthropic Claude API 的方法：
+&lt;dependency&gt; &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt; &lt;artifactId&gt;spring-ai-starter-model-anthropic&lt;/artifactId&gt; &lt;/dependency&gt; 您可以指定 LLM 模型名称，如下所示：
+.options(ChatOptions.builder() .model(&#34;claude-3-7-sonnet-latest&#34;) // Use Anthropic&#39;s Claude model .build()) 在[ 参考文档中](../chatmodel.html)查找有关启用每个模型的详细信息。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>提示工程模式 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../favicon.png" >
+<link rel="manifest" href="../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/prompt-engineering-patterns/">
+<link rel="stylesheet" href="../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../fuse.min.js"></script>
+  <script defer src="../../en.search.min.fc796ecb96a612ae39040eb9138814514c32a2e7d9265637e01d9c788994e3c8.js" integrity="sha256-/Hluy5amEq45BA65E4gUUUwyoufZJlY34B2ceImU48g=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-e2fd78a721f271b7efc6437520b70692" class="toggle"  />
+    <label for="section-e2fd78a721f271b7efc6437520b70692" class="flex justify-between">
+      <a href="../../docs/overview-%E6%A6%82%E8%BF%B0/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/overview-%E6%A6%82%E8%BF%B0/ai-concepts-ai-%E6%A6%82%E5%BF%B5/" class="">AI 概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/getting-started-%E5%BC%80%E5%A7%8B/" class="">开始</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-46da0dacd3edcb609eb3a30122f798c1" class="toggle"  />
+    <label for="section-46da0dacd3edcb609eb3a30122f798c1" class="flex justify-between">
+      <a href="../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/upgrade-notes-%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/migrating-functioncallback-to-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-9cc275e26831a4c68f5f0626954bb051" class="toggle"  />
+    <label for="section-9cc275e26831a4c68f5f0626954bb051" class="flex justify-between">
+      <a href="../../docs/chat-client-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/chat-client-api/advisors/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/prompts/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/structured-output/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/multimodality/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-dff98c888805ee5be8c49a91de636d7a" class="toggle"  />
+    <label for="section-dff98c888805ee5be8c49a91de636d7a" class="flex justify-between">
+      <a href="../../docs/models/" class="">None</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-a549f27d0c7522c5a488c8e70bc18d95" class="toggle"  />
+    <label for="section-a549f27d0c7522c5a488c8e70bc18d95" class="flex justify-between">
+      <a href="../../docs/models/chat-models/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/chat-models-comparison/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/amazon-bedrock-converse/" class="">基岩版 Converse API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/anthropic-3/" class="">Anthropic 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/azure-openai/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/deepseek/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/docker-model-runner/" class="">Docker Model Runner 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-23643788106caecd71158902b516c092" class="toggle"  />
+    <label for="section-23643788106caecd71158902b516c092" class="flex justify-between">
+      <a href="../../docs/models/chat-models/google-vertexai/" class="">谷歌 VertexAI API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/google-vertexai/vertexai-gemini/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/groq/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/hugging-face/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/mistral-ai/" class="">Mistral AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/moonshot-ai/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/nvidia/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/ollama/" class="">Ollama 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/perplexity-ai/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/openai/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/qianfan/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/chat-models/zhipu-ai/" class="">智普 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-91d39169afbe390a9cfdcf43422a5f77" class="toggle"  />
+    <label for="section-91d39169afbe390a9cfdcf43422a5f77" class="flex justify-between">
+      <a href="../../docs/models/audio-models/transcription-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/audio-models/transcription-api/azure-openai/" class="">Azure OpenAI 听录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/moderation-models/openai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c7747c1c4ca7e7f27485d3b4a2909173" class="toggle"  />
+    <label for="section-c7747c1c4ca7e7f27485d3b4a2909173" class="flex justify-between">
+      <a href="../../docs/models/embedding-models/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f3b5329a5faed8a311a538c92b457f6a" class="toggle"  />
+    <label for="section-f3b5329a5faed8a311a538c92b457f6a" class="flex justify-between">
+      <a href="../../docs/models/embedding-models/amazon-bedrock/" class="">亚马逊基岩版</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/amazon-bedrock/cohere/" class="">Cohere 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/amazon-bedrock/titan/" class="">Titan 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/azure-openai/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/mistral-ai/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/minimax/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/oci-genai/" class="">Oracle Cloud Infrastructure （OCI） GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/ollama/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/onnx-transformers/" class="">变压器 （ONNX） 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/openai/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/postgresml/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/qianfan/" class="">QianFan 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/embedding-models/zhipu-ai/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-602ef13071faddbe2271a0f29c030c5f" class="toggle"  />
+    <label for="section-602ef13071faddbe2271a0f29c030c5f" class="flex justify-between">
+      <a href="../../docs/models/audio-models/text-to-speech-tts-api/" class="">文本转语音 （TTS） API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/audio-models/text-to-speech-tts-api/openai/" class="">OpenAI 文本转语音 （TTS）</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/moderation-models/mistral-ai/" class="">适度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4c392088dcec5ee943e5103c3c64745e" class="toggle"  />
+    <label for="section-4c392088dcec5ee943e5103c3c64745e" class="flex justify-between">
+      <a href="../../docs/models/image-models/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/azure-openai/" class="">Azure OpenAI 映像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/openai/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/stability/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/zhipuai/" class="">智普 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/models/image-models/qianfan/" class="">千帆镜像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/chat-memory/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/tool-calling/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="toggle"  />
+    <label for="section-4a6f2545b8eeaf1b0914baa05363c5d4" class="flex justify-between">
+      <a href="../../docs/model-context-protocol-mcp/" class="">模型上下文协议 （MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-client-boot-starters/" class="">MCP 客户端启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-server-boot-starters/" class="">MCP 服务器启动启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-context-protocol-mcp/mcp-utilities/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-14207920bac243191ad5fb9d8690ff76" class="toggle"  />
+    <label for="section-14207920bac243191ad5fb9d8690ff76" class="flex justify-between">
+      <a href="../../docs/retrieval-augmented-generation-rag/" class="">检索增强一代</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/retrieval-augmented-generation-rag/etl-pipeline/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/model-evaluation/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="toggle"  />
+    <label for="section-d4ad5a918cc2c26e8c350fe5d4f82af2" class="flex justify-between">
+      <a href="../../docs/vector-databases/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/azure-ai-service/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/azure-cosmos-db/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/apache-cassandra-vector-store/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/chroma/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/couchbase/" class="">沙发基地</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/elasticsearch/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/gemfire/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/mariadb-vector-store/" class="">MariaDB 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/milvus/" class="">米尔沃斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/mongodb-atlas/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/neo4j/" class="">新 4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/opensearch/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/oracle/" class="">Oracle Database 23ai — AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/pgvector/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/pinecone/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/qdrant/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/redis/" class="">雷迪斯</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/sap-hana/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/typesense/" class="">Typesense 字体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/vector-databases/weaviate/" class="">维维亚特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/observability/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/development-time-services/" class="">None</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/prompt-engineering-patterns/" class="active">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/building-effective-agents/" class="">Building Effective Agents</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/deploying-to-the-cloud/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/testcontainers/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/cohere/" class="">OCI GenAI Cohere 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/text-embedding/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/multimodal-embedding/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>提示工程模式</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#提示工程模式">提示工程模式</a>
+      <ul>
+        <li><a href="#1-配置">1. 配置</a></li>
+        <li><a href="#llm-提供商选择">LLM 提供商选择</a></li>
+        <li><a href="#llm-输出配置">LLM 输出配置</a></li>
+        <li><a href="#温度">温度</a></li>
+        <li><a href="#输出长度-maxtokens">输出长度 （MaxTokens）</a></li>
+        <li><a href="#采样控制top-k-和-top-p">采样控制（Top-K 和 Top-P）</a></li>
+        <li><a href="#结构化响应格式">结构化响应格式</a></li>
+        <li><a href="#特定于模型的选项">特定于模型的选项</a></li>
+        <li><a href="#2-提示工程技术">2. 提示工程技术</a></li>
+        <li><a href="#21-零次提示">2.1 零次提示</a></li>
+        <li><a href="#22-一次性和几次提示">2.2 一次性和几次提示</a></li>
+        <li><a href="#23-系统上下文和角色提示">2.3 系统、上下文和角色提示</a></li>
+        <li><a href="#系统提示">系统提示</a></li>
+        <li><a href="#角色提示">角色提示</a></li>
+        <li><a href="#上下文提示">上下文提示</a></li>
+        <li><a href="#24-后退提示">2.4 后退提示</a></li>
+        <li><a href="#25-思维链-cot">2.5 思维链 （CoT）</a></li>
+        <li><a href="#26-自洽">2.6 自洽</a></li>
+        <li><a href="#27-思想tot之树">2.7 思想(ToT)之树</a></li>
+        <li><a href="#28-自动提示工程">2.8 自动提示工程</a></li>
+        <li><a href="#29-代码提示">2.9 代码提示</a></li>
+        <li><a href="#结论">结论</a></li>
+        <li><a href="#引用">引用</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="提示工程模式">
+  提示工程模式
+  <a class="anchor" href="#%e6%8f%90%e7%a4%ba%e5%b7%a5%e7%a8%8b%e6%a8%a1%e5%bc%8f">#</a>
+</h1>
+<p>基于全面的 [
+  <a href="https://www.kaggle.com/whitepaper-prompt-engineering">Prompt Engineering Guide</a>](
+  <a href="https://www.kaggle.com/whitepaper-prompt-engineering">https://www.kaggle.com/whitepaper-prompt-engineering</a>) 的 Prompt Engineering 技术的实际实施。该指南涵盖了有效提示工程的理论、原则和模式，而在这里，我们演示了如何使用 Spring AI 的 Fluent [
+  <a href="../chatclient.html">ChatClient API</a>](../chatclient.html) 将这些概念转换为有效的 Java 代码。本文中使用的演示源代码可在以下网址获得：[
+  <a href="https://github.com/spring-projects/spring-ai-examples/tree/main/prompt-engineering/prompt-engineering-patterns">Prompt Engineering Patterns Examples</a>](
+  <a href="https://github.com/spring-projects/spring-ai-examples/tree/main/prompt-engineering/prompt-engineering-patterns">https://github.com/spring-projects/spring-ai-examples/tree/main/prompt-engineering/prompt-engineering-patterns</a>)。</p>
+<h2 id="1-配置">
+  1. 配置
+  <a class="anchor" href="#1-%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>配置部分概述了如何使用 Spring AI 设置和调整大型语言模型 （LLM）。它涵盖了为您的使用案例选择合适的 LLM 提供程序，以及配置控制模型输出的质量、样式和格式的重要生成参数。</p>
+<h2 id="llm-提供商选择">
+  LLM 提供商选择
+  <a class="anchor" href="#llm-%e6%8f%90%e4%be%9b%e5%95%86%e9%80%89%e6%8b%a9">#</a>
+</h2>
+<p>对于快速工程，您将首先选择一个模型。Spring AI 支持[
+  <a href="comparison.html">多个 LLM 提供程序</a>](comparison.html) （例如 OpenAI、Anthropic、Google Vertex AI、AWS Bedrock、Ollama 等），让您无需更改应用程序代码即可切换提供程序 - 只需更新配置即可。只需添加选定的 starter dependency <code>spring-ai-starter-model-&lt;MODEL-PROVIDER-NAME&gt;</code> .例如，以下是启用 Anthropic Claude API 的方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-starter-model-anthropic<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>您可以指定 LLM 模型名称，如下所示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>.<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;claude-3-7-sonnet-latest&#34;</span>)  <span style="color:#75715e">// Use Anthropic&#39;s Claude model</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>())
+</span></span></code></pre></div><p>在[
+  <a href="../chatmodel.html">参考文档中</a>](../chatmodel.html)查找有关启用每个模型的详细信息。</p>
+<h2 id="llm-输出配置">
+  LLM 输出配置
+  <a class="anchor" href="#llm-%e8%be%93%e5%87%ba%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>
+  <img src="../../images/chat-options-flow.jpg" alt="" />
+在我们深入研究提示工程技术之前，必须了解如何配置 LLM 的输出行为。Spring AI 提供了几个配置选项，允许您通过 [
+  <a href="../chatmodel.html#_chat_options">ChatOptions</a>](../chatmodel.html#_chat_options) 构建器控制生成的各个方面。
+所有配置都可以以编程方式应用，如以下示例所示，或者在开始时通过 Spring 应用程序属性应用。</p>
+<h2 id="温度">
+  温度
+  <a class="anchor" href="#%e6%b8%a9%e5%ba%a6">#</a>
+</h2>
+<p>温度控制模型响应的随机性或“创造力”。</p>
+<ul>
+<li>下限值 （0.0-0.3）： 更具确定性、更集中的响应。更适合于一致性至关重要的事实性问题、分类或任务。</li>
+<li>中等值 （0.4-0.7）： 在确定性和创造力之间取得平衡。适用于一般用例。</li>
+<li>较高的值 （0.8-1.0）： 更具创意、变化多端且可能令人惊讶的回答。更适合创意写作、头脑风暴或生成多种选择。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>.<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">1</span>)  <span style="color:#75715e">// Very deterministic output</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>())
+</span></span></code></pre></div><p>了解温度对于快速工程设计至关重要，因为不同的技术受益于不同的温度设置。</p>
+<h2 id="输出长度-maxtokens">
+  输出长度 （MaxTokens）
+  <a class="anchor" href="#%e8%be%93%e5%87%ba%e9%95%bf%e5%ba%a6-maxtokens">#</a>
+</h2>
+<p><code>maxTokens</code> 参数限制模型可以在其响应中生成的标记（单词片段）数量。</p>
+<ul>
+<li>低值 （5-25）： 适用于单个单词、短语或分类标签。</li>
+<li>中等值 （50-500）： 用于段落或简短说明。</li>
+<li>高值 （1000+）： 用于长篇内容、故事或复杂的解释。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>.<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">maxTokens</span>(250)  <span style="color:#75715e">// Medium-length response</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>())
+</span></span></code></pre></div><p>设置适当的输出长度对于确保您获得完整的响应而没有不必要的冗长非常重要。</p>
+<h2 id="采样控制top-k-和-top-p">
+  采样控制（Top-K 和 Top-P）
+  <a class="anchor" href="#%e9%87%87%e6%a0%b7%e6%8e%a7%e5%88%b6top-k-%e5%92%8c-top-p">#</a>
+</h2>
+<p>这些参数使您可以在生成过程中对令牌选择过程进行精细控制。</p>
+<ul>
+<li>Top-K：将 Token 选择限制为 K 个最有可能的下一个 Token。较高的值（例如，40-50）会引入更多的多样性。</li>
+<li>Top-P （nucleus sampling）： 从累积概率超过 P 的最小标记集中动态选择。0.8-0.95 等值很常见。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>.<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">topK</span>(40)      <span style="color:#75715e">// Consider only the top 40 tokens</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">topP</span>(0.<span style="color:#a6e22e">8</span>)     <span style="color:#75715e">// Sample from tokens that cover 80% of probability mass</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>())
+</span></span></code></pre></div><p>这些采样控制与温度结合使用，以塑造响应特性。</p>
+<h2 id="结构化响应格式">
+  结构化响应格式
+  <a class="anchor" href="#%e7%bb%93%e6%9e%84%e5%8c%96%e5%93%8d%e5%ba%94%e6%a0%bc%e5%bc%8f">#</a>
+</h2>
+<p>除了纯文本响应（使用 <code>.content（））</code> 之外，Spring AI 还可以轻松地使用 <code>.entity（）</code> 方法将 LLM 响应直接映射到 Java 对象。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">enum</span> Sentiment {
+</span></span><span style="display:flex;"><span>    POSITIVE, NEUTRAL, NEGATIVE
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Sentiment result <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;...&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">entity</span>(Sentiment.<span style="color:#a6e22e">class</span>);
+</span></span></code></pre></div><p>当与指示模型返回结构化数据的系统提示结合使用时，此功能尤其强大。</p>
+<h2 id="特定于模型的选项">
+  特定于模型的选项
+  <a class="anchor" href="#%e7%89%b9%e5%ae%9a%e4%ba%8e%e6%a8%a1%e5%9e%8b%e7%9a%84%e9%80%89%e9%a1%b9">#</a>
+</h2>
+<p>虽然可移植的 <code>ChatOptions</code> 在不同的 LLM 提供程序之间提供了一致的接口，但 Spring AI 还提供了特定于模型的选项类，这些类公开了特定于提供程序的功能和配置。这些特定于模型的选项允许您利用每个 LLM 提供商的独特功能。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Using OpenAI-specific options</span>
+</span></span><span style="display:flex;"><span>OpenAiChatOptions openAiOptions <span style="color:#f92672">=</span> OpenAiChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;gpt-4o&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">2</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">frequencyPenalty</span>(0.<span style="color:#a6e22e">5</span>)      <span style="color:#75715e">// OpenAI-specific parameter</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">presencePenalty</span>(0.<span style="color:#a6e22e">3</span>)       <span style="color:#75715e">// OpenAI-specific parameter</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">responseFormat</span>(<span style="color:#66d9ef">new</span> ResponseFormat(<span style="color:#e6db74">&#34;json_object&#34;</span>))  <span style="color:#75715e">// OpenAI-specific JSON mode</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">seed</span>(42)                   <span style="color:#75715e">// OpenAI-specific deterministic generation</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String result <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;...&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">options</span>(openAiOptions)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Using Anthropic-specific options</span>
+</span></span><span style="display:flex;"><span>AnthropicChatOptions anthropicOptions <span style="color:#f92672">=</span> AnthropicChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;claude-3-7-sonnet-latest&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">2</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">topK</span>(40)                   <span style="color:#75715e">// Anthropic-specific parameter</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">thinking</span>(AnthropicApi.<span style="color:#a6e22e">ThinkingType</span>.<span style="color:#a6e22e">ENABLED</span>, 1000)  <span style="color:#75715e">// Anthropic-specific thinking configuration</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String result <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;...&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">options</span>(anthropicOptions)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p>每个模型提供商都有自己的聊天选项实现（例如，<code>OpenAiChatOptions</code>、<code>AnthropicChatOptions</code>、<code>MistralAiChatOptions</code>），这些选项公开特定于提供商的参数，同时仍实现通用接口。这种方法使您可以灵活地使用可移植选项来实现跨提供商兼容性，或者在需要访问特定提供商的独特功能时使用特定于模型的选项。
+请注意，当使用特定于模型的选项时，您的代码会绑定到该特定提供程序，从而降低可移植性。这是在访问特定于提供程序的高级功能与在应用程序中保持提供程序独立性之间的权衡。</p>
+<h2 id="2-提示工程技术">
+  2. 提示工程技术
+  <a class="anchor" href="#2-%e6%8f%90%e7%a4%ba%e5%b7%a5%e7%a8%8b%e6%8a%80%e6%9c%af">#</a>
+</h2>
+<p>以下每个部分都实现了指南中的特定提示工程技术。通过遵循 “Prompt Engineering” 指南和这些实现，您不仅会全面了解可用的提示工程技术，还会了解如何在生产 Java 应用程序中有效地实现它们。</p>
+<h2 id="21-零次提示">
+  2.1 零次提示
+  <a class="anchor" href="#21-%e9%9b%b6%e6%ac%a1%e6%8f%90%e7%a4%ba">#</a>
+</h2>
+<p>零镜头提示涉及要求 AI 执行任务而不提供任何示例。这种方法测试模型从头开始理解和执行指令的能力。大型语言模型在大量文本语料库上进行训练，使它们能够理解 “翻译”、“摘要” 或 “分类” 等任务，而无需明确的演示。
+Zero-shot 非常适合模型在训练期间可能看到类似示例的简单任务，以及您希望最小化提示长度时。但是，性能可能会因任务复杂性和说明的制定程度而异。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.1: General prompting / zero shot (page 15)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_zero_shot</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">enum</span> Sentiment {
+</span></span><span style="display:flex;"><span>        POSITIVE, NEUTRAL, NEGATIVE
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    Sentiment reviewSentiment <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Classify movie reviews as POSITIVE, NEUTRAL or NEGATIVE.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Review: &#34;Her&#34; is a disturbing study revealing the direction
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            humanity is headed if AI is allowed to keep evolving,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            unchecked. I wish there were more movies like this masterpiece.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Sentiment:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;claude-3-7-sonnet-latest&#34;</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">1</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">maxTokens</span>(5)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">entity</span>(Sentiment.<span style="color:#a6e22e">class</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Output: &#34;</span> <span style="color:#f92672">+</span> reviewSentiment);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>此示例说明如何在不提供示例的情况下对电影评论情绪进行分类。请注意低温 （0.1） 以获得更确定的结果，以及直接映射到 Java 枚举的 <code>.entity（Sentiment.class）。</code>
+参考：Brown， TB， et al. （2020 年）。“语言模型是少数机会的学习者。”arXiv：2005.14165。[
+  <a href="https://arxiv.org/abs/2005.14165">https://arxiv.org/abs/2005.14165</a>](
+  <a href="https://arxiv.org/abs/2005.14165">https://arxiv.org/abs/2005.14165</a>)</p>
+<h2 id="22-一次性和几次提示">
+  2.2 一次性和几次提示
+  <a class="anchor" href="#22-%e4%b8%80%e6%ac%a1%e6%80%a7%e5%92%8c%e5%87%a0%e6%ac%a1%e6%8f%90%e7%a4%ba">#</a>
+</h2>
+<p>Few-shot 提示为模型提供了一个或多个示例，以帮助指导其响应，这对于需要特定输出格式的任务特别有用。通过显示所需 input-output 对的模型示例，它可以学习模式并将其应用于新 inputs，而无需显式更新参数。
+One-shot 提供单个示例，当示例成本高昂或模式相对简单时，这非常有用。Few-shot 使用多个示例（通常为 3-5 个）来帮助模型更好地理解更复杂任务中的模式或说明正确输出的不同变化。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.2: One-shot &amp; few-shot (page 16)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_one_shot_few_shots</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String pizzaOrder <span style="color:#f92672">=</span> chatClient.<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Parse a customer&#39;s pizza order into valid JSON
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            EXAMPLE 1:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            I want a small pizza with cheese, tomato sauce, and pepperoni.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            JSON Response:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            ```
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;size&#34;: &#34;small&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;type&#34;: &#34;normal&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;ingredients&#34;: [&#34;cheese&#34;, &#34;tomato sauce&#34;, &#34;pepperoni&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            ```
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            EXAMPLE 2:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Can I get a large pizza with tomato sauce, basil and mozzarella.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            JSON Response:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            ```
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;size&#34;: &#34;large&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;type&#34;: &#34;normal&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;ingredients&#34;: [&#34;tomato sauce&#34;, &#34;basil&#34;, &#34;mozzarella&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            ```
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Now, I would like a large pizza, with the first half cheese and mozzarella.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            And the other tomato sauce, ham and pineapple.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;claude-3-7-sonnet-latest&#34;</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">1</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">maxTokens</span>(250)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>对于需要特定格式设置、处理边缘情况的任务，或者当任务定义可能不明确而没有示例时，Few-shot 提示特别有效。示例的质量和多样性会显著影响性能。
+参考：Brown， TB， et al. （2020 年）。“语言模型是少数机会的学习者。”arXiv：2005.14165。[
+  <a href="https://arxiv.org/abs/2005.14165">https://arxiv.org/abs/2005.14165</a>](
+  <a href="https://arxiv.org/abs/2005.14165">https://arxiv.org/abs/2005.14165</a>)</p>
+<h2 id="23-系统上下文和角色提示">
+  2.3 系统、上下文和角色提示
+  <a class="anchor" href="#23-%e7%b3%bb%e7%bb%9f%e4%b8%8a%e4%b8%8b%e6%96%87%e5%92%8c%e8%a7%92%e8%89%b2%e6%8f%90%e7%a4%ba">#</a>
+</h2>
+<h2 id="系统提示">
+  系统提示
+  <a class="anchor" href="#%e7%b3%bb%e7%bb%9f%e6%8f%90%e7%a4%ba">#</a>
+</h2>
+<p>系统提示为语言模型设置整体上下文和目的，定义模型应该做什么的 “大局”。它为模型的响应建立了行为框架、约束和高级目标，与特定的用户查询分开。
+系统提示在整个对话中充当持续的“使命宣言”，允许您设置全局参数，如输出格式、语气、道德界限或角色定义。与侧重于特定任务的用户提示不同，系统提示规定了应如何解释所有用户提示。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.3.1: System prompting</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_system_prompting_1</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String movieReview <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">system</span>(<span style="color:#e6db74">&#34;Classify movie reviews as positive, neutral or negative. Only return the label in uppercase.&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Review: &#34;Her&#34; is a disturbing study revealing the direction
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    humanity is headed if AI is allowed to keep evolving,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    unchecked. It&#39;s so disturbing I couldn&#39;t watch it.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Sentiment:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;claude-3-7-sonnet-latest&#34;</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">temperature</span>(1.<span style="color:#a6e22e">0</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">topK</span>(40)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">topP</span>(0.<span style="color:#a6e22e">8</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">maxTokens</span>(5)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>当与 Spring AI 的实体映射功能结合使用时，系统提示功能特别强大：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.3.1: System prompting with JSON output</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">record</span> <span style="color:#a6e22e">MovieReviews</span>(Movie<span style="color:#f92672">[]</span> movie_reviews) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">enum</span> Sentiment {
+</span></span><span style="display:flex;"><span>        POSITIVE, NEUTRAL, NEGATIVE
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">record</span> <span style="color:#a6e22e">Movie</span>(Sentiment sentiment, String name) {
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>MovieReviews movieReviews <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">system</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                Classify movie reviews as positive, neutral or negative. Return
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                valid JSON.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                Review: &#34;Her&#34; is a disturbing study revealing the direction
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                humanity is headed if AI is allowed to keep evolving,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                unchecked. It&#39;s so disturbing I couldn&#39;t watch it.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                JSON Response:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">entity</span>(MovieReviews.<span style="color:#a6e22e">class</span>);
+</span></span></code></pre></div><p>系统提示对于多轮次对话特别有价值，可确保多个查询之间的行为一致，以及建立应应用于所有响应的格式约束（如 JSON 输出）。
+参考： 打开人工智能。（2022）. “系统消息。”[
+  <a href="https://platform.openai.com/docs/guides/chat/introduction">https://platform.openai.com/docs/guides/chat/introduction</a>](
+  <a href="https://platform.openai.com/docs/guides/chat/introduction">https://platform.openai.com/docs/guides/chat/introduction</a>)</p>
+<h2 id="角色提示">
+  角色提示
+  <a class="anchor" href="#%e8%a7%92%e8%89%b2%e6%8f%90%e7%a4%ba">#</a>
+</h2>
+<p>角色提示指示模型采用特定角色或角色，这会影响它生成内容的方式。通过为模型分配特定的身份、专业知识或视角，您可以影响其响应的风格、语气、深度和框架。
+角色提示利用模型的能力来模拟不同的专业领域和沟通方式。常见角色包括专家（例如，“您是一位经验丰富的数据科学家”）、专业人士（例如，“充当旅行指南”）或风格角色（例如，“像莎士比亚一样解释”）。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.3.2: Role prompting</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_role_prompting_1</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String travelSuggestions <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">system</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    I want you to act as a travel guide. I will write to you
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    about my location and you will suggest 3 places to visit near
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    me. In some cases, I will also give you the type of places I
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    will visit.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    My suggestion: &#34;I am in Amsterdam and I want to visit only museums.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Travel Suggestions:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>可以通过样式说明来增强角色提示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.3.2: Role prompting with style instructions</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_role_prompting_2</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String humorousTravelSuggestions <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">system</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    I want you to act as a travel guide. I will write to you about
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    my location and you will suggest 3 places to visit near me in
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    a humorous style.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    My suggestion: &#34;I am in Amsterdam and I want to visit only museums.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Travel Suggestions:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>此技术对于专门的领域知识特别有效，可在响应之间实现一致的语气，并与用户创建更具吸引力的个性化交互。
+参考：Shanahan， M. 等人（2023 年）。“使用大型语言模型进行角色扮演。”arXiv：2305.16367。[
+  <a href="https://arxiv.org/abs/2305.16367">https://arxiv.org/abs/2305.16367</a>](
+  <a href="https://arxiv.org/abs/2305.16367">https://arxiv.org/abs/2305.16367</a>)</p>
+<h2 id="上下文提示">
+  上下文提示
+  <a class="anchor" href="#%e4%b8%8a%e4%b8%8b%e6%96%87%e6%8f%90%e7%a4%ba">#</a>
+</h2>
+<p>上下文提示通过传递上下文参数为模型提供额外的背景信息。这种技术丰富了模型对特定情况的理解，从而能够实现更相关和量身定制的响应，而不会使主要指令变得混乱。
+通过提供上下文信息，您可以帮助模型了解与当前查询相关的特定域、受众、约束或背景事实。这导致了更准确、相关和适当构建的响应。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.3.3: Contextual prompting</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_contextual_prompting</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String articleSuggestions <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Suggest 3 topics to write an article about with a few lines of
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    description of what this article should contain.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Context: {context}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;context&#34;</span>, <span style="color:#e6db74">&#34;You are writing for a blog about retro 80&#39;s arcade video games.&#34;</span>))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Spring AI 使用 param（） 方法注入上下文变量，使上下文提示变得干净。当模型需要特定的领域知识时，当根据特定受众或场景调整响应时，以及确保响应与特定约束或要求保持一致时，此技术特别有价值。
+参考：Liu， P. 等人（2021 年）。“什么才是 GPT-3 的好上下文示例？” arXiv：2101.06804。[
+  <a href="https://arxiv.org/abs/2101.06804">https://arxiv.org/abs/2101.06804</a>](
+  <a href="https://arxiv.org/abs/2101.06804">https://arxiv.org/abs/2101.06804</a>)</p>
+<h2 id="24-后退提示">
+  2.4 后退提示
+  <a class="anchor" href="#24-%e5%90%8e%e9%80%80%e6%8f%90%e7%a4%ba">#</a>
+</h2>
+<p>后退提示首先通过获取背景知识，将复杂的请求分解为更简单的步骤。这种技术鼓励模型首先从直接问题中“退后一步”，以考虑更广泛的上下文、基本原则或与问题相关的一般知识，然后再解决特定查询。
+通过将复杂问题分解为更易于管理的组件并首先建立基础知识，该模型可以更准确地回答困难的问题。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.4: Step-back prompting</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_step_back_prompting</span>(ChatClient.<span style="color:#a6e22e">Builder</span> chatClientBuilder) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Set common options for the chat client</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> chatClient <span style="color:#f92672">=</span> chatClientBuilder
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">defaultOptions</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;claude-3-7-sonnet-latest&#34;</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">temperature</span>(1.<span style="color:#a6e22e">0</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">topK</span>(40)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">topP</span>(0.<span style="color:#a6e22e">8</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">maxTokens</span>(1024)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// First get high-level concepts</span>
+</span></span><span style="display:flex;"><span>    String stepBack <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Based on popular first-person shooter action games, what are
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    5 fictional key settings that contribute to a challenging and
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    engaging level storyline in a first-person shooter video game?
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Then use those concepts in the main task</span>
+</span></span><span style="display:flex;"><span>    String story <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Write a one paragraph storyline for a new level of a first-
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    person shooter video game that is challenging and engaging.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Context: {step-back}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;step-back&#34;</span>, stepBack))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>后退提示对于复杂的推理任务、需要专业领域知识的问题以及您想要更全面、更周到的响应而不是立即的答案时特别有效。
+参考：Zheng， Z. 等人（2023 年）。“退后一步：在大型语言模型中通过抽象唤起推理。”arXiv：2310.06117。[
+  <a href="https://arxiv.org/abs/2310.06117">https://arxiv.org/abs/2310.06117</a>](
+  <a href="https://arxiv.org/abs/2310.06117">https://arxiv.org/abs/2310.06117</a>)</p>
+<h2 id="25-思维链-cot">
+  2.5 思维链 （CoT）
+  <a class="anchor" href="#25-%e6%80%9d%e7%bb%b4%e9%93%be-cot">#</a>
+</h2>
+<p>Chain of Thought 提示鼓励模型逐步推理问题，从而提高复杂推理任务的准确性。通过明确要求模型展示其工作或以逻辑步骤思考问题，您可以显著提高需要多步骤推理的任务的性能。
+CoT 的工作原理是鼓励模型在产生最终答案之前生成中间推理步骤，类似于人类解决复杂问题的方式。这使得模型的思维过程清晰，并有助于它得出更准确的结论。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.5: Chain of Thought (CoT) - Zero-shot approach</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_chain_of_thought_zero_shot</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String output <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    When I was 3 years old, my partner was 3 times my age. Now,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    I am 20 years old. How old is my partner?
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Let&#39;s think step by step.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.5: Chain of Thought (CoT) - Few-shot approach</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_chain_of_thought_singleshot_fewshots</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String output <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Q: When my brother was 2 years old, I was double his age. Now
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    I am 40 years old. How old is my brother? Let&#39;s think step
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    by step.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    A: When my brother was 2 years, I was 2 * 2 = 4 years old.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    That&#39;s an age difference of 2 years and I am older. Now I am 40
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    years old, so my brother is 40 - 2 = 38 years old. The answer
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    is 38.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Q: When I was 3 years old, my partner was 3 times my age. Now,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    I am 20 years old. How old is my partner? Let&#39;s think step
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    by step.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    A:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>关键词 “Let&rsquo;s think step by step” 触发模型展示其推理过程。CoT 对于数学问题、逻辑推理任务和任何需要多步骤推理的问题特别有价值。它通过明确中间推理来帮助减少错误。
+参考：Wei， J. 等人（2022 年）。“在大型语言模型中提示引发推理的思维链。”arXiv：2201.11903。[
+  <a href="https://arxiv.org/abs/2201.11903">https://arxiv.org/abs/2201.11903</a>](
+  <a href="https://arxiv.org/abs/2201.11903">https://arxiv.org/abs/2201.11903</a>)</p>
+<h2 id="26-自洽">
+  2.6 自洽
+  <a class="anchor" href="#26-%e8%87%aa%e6%b4%bd">#</a>
+</h2>
+<p>自洽性涉及多次运行模型并聚合结果以获得更可靠的答案。该技术通过对同一问题的不同推理路径进行采样并通过多数投票选择最一致的答案来解决 LLM 输出的可变性。
+通过生成具有不同温度或采样设置的多个推理路径，然后聚合最终答案，自洽性可以提高复杂推理任务的准确性。它本质上是 LLM 输出的 ensemble 方法。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.6: Self-consistency</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_self_consistency</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String email <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Hi,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            I have seen you use Wordpress for your website. A great open
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            source content management system. I have used it in the past
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            too. It comes with lots of great user plugins. And it&#39;s pretty
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            easy to set up.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            I did notice a bug in the contact form, which happens when
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            you select the name field. See the attached screenshot of me
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            entering text in the name field. Notice the JavaScript alert
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            box that I inv0k3d.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            But for the rest it&#39;s a great website. I enjoy reading it. Feel
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            free to leave the bug in the website, because it gives me more
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            interesting things to read.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Cheers,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Harry the Hacker.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">record</span> <span style="color:#a6e22e">EmailClassification</span>(Classification classification, String reasoning) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">enum</span> Classification {
+</span></span><span style="display:flex;"><span>            IMPORTANT, NOT_IMPORTANT
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> importantCount <span style="color:#f92672">=</span> 0;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> notImportantCount <span style="color:#f92672">=</span> 0;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Run the model 5 times with the same input</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> 0; i <span style="color:#f92672">&lt;</span> 5; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>        EmailClassification output <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        Email: {email}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        Classify the above email as IMPORTANT or NOT IMPORTANT. Let&#39;s
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        think step by step and explain why.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>                        .<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;email&#34;</span>, email))
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                        .<span style="color:#a6e22e">temperature</span>(1.<span style="color:#a6e22e">0</span>)  <span style="color:#75715e">// Higher temperature for more variation</span>
+</span></span><span style="display:flex;"><span>                        .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">entity</span>(EmailClassification.<span style="color:#a6e22e">class</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Count results</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (output.<span style="color:#a6e22e">classification</span>() <span style="color:#f92672">==</span> EmailClassification.<span style="color:#a6e22e">Classification</span>.<span style="color:#a6e22e">IMPORTANT</span>) {
+</span></span><span style="display:flex;"><span>            importantCount<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            notImportantCount<span style="color:#f92672">++</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Determine the final classification by majority vote</span>
+</span></span><span style="display:flex;"><span>    String finalClassification <span style="color:#f92672">=</span> importantCount <span style="color:#f92672">&gt;</span> notImportantCount <span style="color:#f92672">?</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;IMPORTANT&#34;</span> : <span style="color:#e6db74">&#34;NOT IMPORTANT&#34;</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>自洽对于高风险决策、复杂的推理任务以及当您需要比单个回答更自信的答案时特别有价值。权衡是由于多次 API 调用而增加计算成本和延迟。
+参考：Wang， X. 等人（2022 年）。“自洽性改善了语言模型中的思维链推理。”arXiv：2203.11171。[
+  <a href="https://arxiv.org/abs/2203.11171">https://arxiv.org/abs/2203.11171</a>](
+  <a href="https://arxiv.org/abs/2203.11171">https://arxiv.org/abs/2203.11171</a>)</p>
+<h2 id="27-思想tot之树">
+  2.7 思想(ToT)之树
+  <a class="anchor" href="#27-%e6%80%9d%e6%83%b3tot%e4%b9%8b%e6%a0%91">#</a>
+</h2>
+<p>Tree of Thoughts (ToT) 是一个高级推理框架，它通过同时探索多个推理路径来扩展 Chain of Thought。它将问题解决视为一个搜索过程，在该过程中，模型生成不同的中间步骤，评估它们的承诺，并探索最有前途的路径。
+对于具有多种可能方法的复杂问题，或者当解决方案需要在找到最佳路径之前探索各种替代方案时，此技术特别强大。
+游戏解决 ToT 示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.7: Tree of Thoughts (ToT) - Game solving example</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_tree_of_thoughts_game</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Step 1: Generate multiple initial moves</span>
+</span></span><span style="display:flex;"><span>    String initialMoves <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    You are playing a game of chess. The board is in the starting position.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Generate 3 different possible opening moves. For each move:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    1. Describe the move in algebraic notation
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    2. Explain the strategic thinking behind this move
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    3. Rate the move&#39;s strength from 1-10
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">7</span>)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Step 2: Evaluate and select the most promising move</span>
+</span></span><span style="display:flex;"><span>    String bestMove <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Analyze these opening moves and select the strongest one:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    {moves}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Explain your reasoning step by step, considering:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    1. Position control
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    2. Development potential
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    3. Long-term strategic advantage
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Then select the single best move.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>).<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;moves&#34;</span>, initialMoves))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Step 3: Explore future game states from the best move</span>
+</span></span><span style="display:flex;"><span>    String gameProjection <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Based on this selected opening move:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    {best_move}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Project the next 3 moves for both players. For each potential branch:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    1. Describe the move and counter-move
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    2. Evaluate the resulting position
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    3. Identify the most promising continuation
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Finally, determine the most advantageous sequence of moves.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>).<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;best_move&#34;</span>, bestMove))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>参考：Yao， S. 等人（2023 年）。“思想之树：使用大型语言模型进行刻意解决问题。”arXiv：2305.10601。[
+  <a href="https://arxiv.org/abs/2305.10601">https://arxiv.org/abs/2305.10601</a>](
+  <a href="https://arxiv.org/abs/2305.10601">https://arxiv.org/abs/2305.10601</a>)</p>
+<h2 id="28-自动提示工程">
+  2.8 自动提示工程
+  <a class="anchor" href="#28-%e8%87%aa%e5%8a%a8%e6%8f%90%e7%a4%ba%e5%b7%a5%e7%a8%8b">#</a>
+</h2>
+<p>Automatic Prompt Engineering 使用 AI 生成和评估替代提示。这种元技术利用语言模型本身来创建、优化和基准测试不同的提示变体，以找到特定任务的最佳公式。
+通过系统地生成和评估提示变化，APE 可以找到比手动工程更有效的提示，尤其是对于复杂的任务。这是一种使用 AI 来提高自身性能的方式。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.8: Automatic Prompt Engineering</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_automatic_prompt_engineering</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Generate variants of the same request</span>
+</span></span><span style="display:flex;"><span>    String orderVariants <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    We have a band merchandise t-shirt webshop, and to train a
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    chatbot we need various ways to order: &#34;One Metallica t-shirt
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    size S&#34;. Generate 10 variants, with the same semantics but keep
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    the same meaning.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">temperature</span>(1.<span style="color:#a6e22e">0</span>)  <span style="color:#75715e">// High temperature for creativity</span>
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Evaluate and select the best variant</span>
+</span></span><span style="display:flex;"><span>    String output <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Please perform BLEU (Bilingual Evaluation Understudy) evaluation on the following variants:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    ----
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    {variants}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    ----
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Select the instruction candidate with the highest evaluation score.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>).<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;variants&#34;</span>, orderVariants))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>APE 对于优化生产系统的提示、解决手动提示工程已达到极限的具有挑战性的任务以及系统地大规模提高提示质量特别有价值。
+参考： 周， Y.， et al. （2022）.“大型语言模型是人类水平的提示工程师。”arXiv：2211.01910.[
+  <a href="https://arxiv.org/abs/2211.01910">https://arxiv.org/abs/2211.01910</a>](
+  <a href="https://arxiv.org/abs/2211.01910">https://arxiv.org/abs/2211.01910</a>)</p>
+<h2 id="29-代码提示">
+  2.9 代码提示
+  <a class="anchor" href="#29-%e4%bb%a3%e7%a0%81%e6%8f%90%e7%a4%ba">#</a>
+</h2>
+<p>代码提示是指用于代码相关任务的专用技术。这些技术利用 LLM 理解和生成编程语言的能力，使它们能够编写新代码、解释现有代码、调试问题以及在语言之间进行翻译。
+有效的代码提示通常涉及明确的规范、适当的上下文（库、框架、样式指南），有时还包括类似代码的示例。温度设置往往较低 （0.1-0.3） 以获得更具确定性的输出。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.9.1: Prompts for writing code</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_code_prompting_writing_code</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String bashScript <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Write a code snippet in Bash, which asks for a folder name.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Then it takes the contents of the folder and renames all the
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    files inside by prepending the name draft to the file name.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">options</span>(ChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">1</span>)  <span style="color:#75715e">// Low temperature for deterministic code</span>
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.9.2: Prompts for explaining code</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_code_prompting_explaining_code</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String code <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            #!/bin/bash
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            echo &#34;Enter the folder name: &#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            read folder_name
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            if [ ! -d &#34;$folder_name&#34; ]; then
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            echo &#34;Folder does not exist.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            exit 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            fi
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            files=( &#34;$folder_name&#34;/* )
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            for file in &#34;${files[@]}&#34;; do
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            new_file_name=&#34;draft_$(basename &#34;$file&#34;)&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            mv &#34;$file&#34; &#34;$new_file_name&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            done
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            echo &#34;Files renamed successfully.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    String explanation <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Explain to me the below Bash code:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    ```
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    {code}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    ```
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>).<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;code&#34;</span>, code))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Implementation of Section 2.9.3: Prompts for translating code</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">pt_code_prompting_translating_code</span>(ChatClient chatClient) {
+</span></span><span style="display:flex;"><span>    String bashCode <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            #!/bin/bash
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            echo &#34;Enter the folder name: &#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            read folder_name
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            if [ ! -d &#34;$folder_name&#34; ]; then
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            echo &#34;Folder does not exist.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            exit 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            fi
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            files=( &#34;$folder_name&#34;/* )
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            for file in &#34;${files[@]}&#34;; do
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            new_file_name=&#34;draft_$(basename &#34;$file&#34;)&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            mv &#34;$file&#34; &#34;$new_file_name&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            done
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            echo &#34;Files renamed successfully.&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    String pythonCode <span style="color:#f92672">=</span> chatClient
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">user</span>(u <span style="color:#f92672">-&gt;</span> u.<span style="color:#a6e22e">text</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    Translate the below Bash code to a Python snippet:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    {code}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;&#34;&#34;</span>).<span style="color:#a6e22e">param</span>(<span style="color:#e6db74">&#34;code&#34;</span>, bashCode))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">content</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>代码提示对于自动化代码文档、原型设计、学习编程概念以及编程语言之间的翻译特别有价值。通过将其与小镜头提示或思维链等技术相结合，可以进一步提高有效性。
+参考：Chen， M. 等人（2021 年）。“评估在代码上训练的大型语言模型。”arXiv：2107.03374。[
+  <a href="https://arxiv.org/abs/2107.03374">https://arxiv.org/abs/2107.03374</a>](
+  <a href="https://arxiv.org/abs/2107.03374">https://arxiv.org/abs/2107.03374</a>)</p>
+<h2 id="结论">
+  结论
+  <a class="anchor" href="#%e7%bb%93%e8%ae%ba">#</a>
+</h2>
+<p>Spring AI 提供了一个优雅的 Java API，用于实现所有主要的提示工程技术。通过将这些技术与 Spring 强大的实体映射和 Fluent API 相结合，开发人员可以使用干净、可维护的代码构建复杂的 AI 驱动的应用程序。
+最有效的方法通常涉及组合多种技术 - 例如，使用带有少数镜头示例的系统提示，或将思路链与角色提示一起使用。Spring AI 的灵活 API 使这些组合易于实现。
+借助这些技术和 Spring AI 强大的抽象，您可以创建强大的 AI 驱动的应用程序，以提供一致、高质量的结果。</p>
+<h2 id="引用">
+  引用
+  <a class="anchor" href="#%e5%bc%95%e7%94%a8">#</a>
+</h2>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#提示工程模式">提示工程模式</a>
+      <ul>
+        <li><a href="#1-配置">1. 配置</a></li>
+        <li><a href="#llm-提供商选择">LLM 提供商选择</a></li>
+        <li><a href="#llm-输出配置">LLM 输出配置</a></li>
+        <li><a href="#温度">温度</a></li>
+        <li><a href="#输出长度-maxtokens">输出长度 （MaxTokens）</a></li>
+        <li><a href="#采样控制top-k-和-top-p">采样控制（Top-K 和 Top-P）</a></li>
+        <li><a href="#结构化响应格式">结构化响应格式</a></li>
+        <li><a href="#特定于模型的选项">特定于模型的选项</a></li>
+        <li><a href="#2-提示工程技术">2. 提示工程技术</a></li>
+        <li><a href="#21-零次提示">2.1 零次提示</a></li>
+        <li><a href="#22-一次性和几次提示">2.2 一次性和几次提示</a></li>
+        <li><a href="#23-系统上下文和角色提示">2.3 系统、上下文和角色提示</a></li>
+        <li><a href="#系统提示">系统提示</a></li>
+        <li><a href="#角色提示">角色提示</a></li>
+        <li><a href="#上下文提示">上下文提示</a></li>
+        <li><a href="#24-后退提示">2.4 后退提示</a></li>
+        <li><a href="#25-思维链-cot">2.5 思维链 （CoT）</a></li>
+        <li><a href="#26-自洽">2.6 自洽</a></li>
+        <li><a href="#27-思想tot之树">2.7 思想(ToT)之树</a></li>
+        <li><a href="#28-自动提示工程">2.8 自动提示工程</a></li>
+        <li><a href="#29-代码提示">2.9 代码提示</a></li>
+        <li><a href="#结论">结论</a></li>
+        <li><a href="#引用">引用</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
