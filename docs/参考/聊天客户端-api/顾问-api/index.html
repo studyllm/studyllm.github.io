@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  顾问 API
+  #
+
+Spring AI Advisors API 提供了一种灵活而强大的方法来拦截、修改和增强 Spring 应用程序中的 AI 驱动交互。通过利用 Advisors API，开发人员可以创建更复杂、可重用且更易于维护的 AI 组件。
+主要优势包括封装重复的生成式 AI 模式、转换发送到和来自大型语言模型 (LLM) 的数据，以及提供跨各种模型和用例的可移植性。
+您可以使用 [
+  ChatClient API](chatclient.html#_advisor_configuration_in_chatclient) 配置现有的顾问，如以下示例所示：
+var chatClient = ChatClient.builder(chatModel)
+    .defaultAdvisors(
+        MessageChatMemoryAdvisor.builder(chatMemory).build(), // chat-memory advisor
+        QuestionAnswerAdvisor.builder((vectorStore).builder() // RAG advisor
+    )
+    .build();
+
+var conversationId = &#34;678&#34;;
+
+String response = this.chatClient.prompt()
+    // Set advisor parameters at runtime
+    .advisors(advisor -&gt; advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
+    .user(userText)
+    .call()
+	.content();
+建议在构建时使用构建器的 defaultAdvisors() 方法注册顾问。
+顾问也参与可观察性堆栈，因此您可以查看与其执行相关的指标和跟踪。
+
+了解问答顾问
+了解聊天记忆顾问
+
+
+  核心组件
+  #
+
+该 API 包含用于非流式场景的 CallAroundAdvisor 和 CallAroundAdvisorChain ，以及用于流式场景的 StreamAroundAdvisor 和 StreamAroundAdvisorChain 。此外，它还包含用于表示未密封 Prompt 请求的 AdvisedRequest 和用于表示聊天完成响应的 AdvisedResponse 。两者都包含一个 advise-context 用于在顾问链之间共享状态。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/%E9%A1%BE%E9%97%AE-api/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="顾问 API">
+  <meta property="og:description" content="顾问 API # Spring AI Advisors API 提供了一种灵活而强大的方法来拦截、修改和增强 Spring 应用程序中的 AI 驱动交互。通过利用 Advisors API，开发人员可以创建更复杂、可重用且更易于维护的 AI 组件。
+主要优势包括封装重复的生成式 AI 模式、转换发送到和来自大型语言模型 (LLM) 的数据，以及提供跨各种模型和用例的可移植性。
+您可以使用 [ ChatClient API](chatclient.html#_advisor_configuration_in_chatclient) 配置现有的顾问，如以下示例所示：
+var chatClient = ChatClient.builder(chatModel) .defaultAdvisors( MessageChatMemoryAdvisor.builder(chatMemory).build(), // chat-memory advisor QuestionAnswerAdvisor.builder((vectorStore).builder() // RAG advisor ) .build(); var conversationId = &#34;678&#34;; String response = this.chatClient.prompt() // Set advisor parameters at runtime .advisors(advisor -&gt; advisor.param(ChatMemory.CONVERSATION_ID, conversationId)) .user(userText) .call() .content(); 建议在构建时使用构建器的 defaultAdvisors() 方法注册顾问。
+顾问也参与可观察性堆栈，因此您可以查看与其执行相关的指标和跟踪。
+了解问答顾问 了解聊天记忆顾问 核心组件 # 该 API 包含用于非流式场景的 CallAroundAdvisor 和 CallAroundAdvisorChain ，以及用于流式场景的 StreamAroundAdvisor 和 StreamAroundAdvisorChain 。此外，它还包含用于表示未密封 Prompt 请求的 AdvisedRequest 和用于表示聊天完成响应的 AdvisedResponse 。两者都包含一个 advise-context 用于在顾问链之间共享状态。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>顾问 API | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../../favicon.png" >
+<link rel="manifest" href="../../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/%E9%A1%BE%E9%97%AE-api/">
+<link rel="stylesheet" href="../../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../../fuse.min.js"></script>
+  <script defer src="../../../../en.search.min.71e7e6c2939a8c322f56321bb68fc2082c0a37b8656d9a9617fd1c6ebfbb4f37.js" integrity="sha256-cefmwpOajDIvVjIbto/CCCwKN7hlbZqWF/0cbr&#43;7Tzc=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ab79ee7c06b73ed1cac487be78704b1a" class="toggle"  />
+    <label for="section-ab79ee7c06b73ed1cac487be78704b1a" class="flex justify-between">
+      <a href="../../../../docs/%E4%BB%8B%E7%BB%8D/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E4%BB%8B%E7%BB%8D/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="toggle" checked />
+    <label for="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/" class="">参考</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-861f1f33bc8d3da259fc08a7bd3778e9" class="toggle" checked />
+    <label for="section-861f1f33bc8d3da259fc08a7bd3778e9" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/%E9%A1%BE%E9%97%AE-api/" class="active">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%8F%90%E7%A4%BA/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA%E8%BD%AC%E6%8D%A2%E5%99%A8/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E5%A4%9A%E6%A8%A1%E6%80%81-api/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f78b15e57dfff314304a2bb1e9884f4a" class="toggle"  />
+    <label for="section-f78b15e57dfff314304a2bb1e9884f4a" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/" class="">模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f01f599500243d0a36d315cf18df347c" class="toggle"  />
+    <label for="section-f01f599500243d0a36d315cf18df347c" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9-converse/" class="">亚马逊基岩 Converse</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%BA%E7%B1%BB%E5%AD%A6-3-%E8%81%8A%E5%A4%A9/" class="">人类学 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/azure-openai-%E8%81%8A%E5%A4%A9/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/deepseek-%E8%81%8A%E5%A4%A9/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/docker-%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E8%80%85%E8%81%8A%E5%A4%A9/" class="">Docker 模型运行者聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-810d79b9e4561cb82f174a0a980239af" class="toggle"  />
+    <label for="section-810d79b9e4561cb82f174a0a980239af" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/vertexai-gemini-%E8%81%8A%E5%A4%A9/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/groq-%E8%81%8A%E5%A4%A9/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%8B%A5%E6%8A%B1%E8%84%B8%E8%81%8A%E5%A4%A9/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/mistral-%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E8%81%8A%E5%A4%A9/" class="">Mistral 人工智能聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/moonshot-ai-%E8%81%8A%E5%A4%A9/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/nvidia-%E8%81%8A%E5%A4%A9/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9/" class="">聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%9B%B0%E6%83%91%E8%81%8A%E5%A4%A9/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99bf04ea1225435ee3d3aac878598d1b" class="toggle"  />
+    <label for="section-99bf04ea1225435ee3d3aac878598d1b" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/" class="">OCI 生成式 AI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/oci-genai-%E5%8D%8F%E5%90%8C%E8%81%8A%E5%A4%A9/" class="">OCI GenAI 协同聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/openai-%E8%81%8A%E5%A4%A9/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E8%81%8A%E5%A4%A9/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%99%BA%E6%B5%A6-ai-%E8%81%8A%E5%A4%A9/" class="">智浦 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-402a989be78a917606348d6ff6652ff7" class="toggle"  />
+    <label for="section-402a989be78a917606348d6ff6652ff7" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-56d4fbd63aba9093164f2784fdd04677" class="toggle"  />
+    <label for="section-56d4fbd63aba9093164f2784fdd04677" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2%E5%B5%8C%E5%85%A5/" class="">相干嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6%E5%B5%8C%E5%85%A5/" class="">泰坦嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%B5%8C%E5%85%A5/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/mistral-ai-%E5%B5%8C%E5%85%A5/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/oracle-%E4%BA%91%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD-oci-genai-%E5%B5%8C%E5%85%A5/" class="">Oracle 云基础设施 (OCI) GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/ollama-%E5%B5%8C%E5%85%A5/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/transformersonnx%E5%B5%8C%E5%85%A5/" class="">Transformers（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/openai-%E5%B5%8C%E5%85%A5/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/postgresml-%E5%B5%8C%E5%85%A5/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%B5%8C%E5%85%A5/" class="">千帆嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6ef09998ce281d0b28a33f495c099c64" class="toggle"  />
+    <label for="section-6ef09998ce281d0b28a33f495c099c64" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%B5%8C%E5%85%A5/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-76b7909527d5ee378c9b7db9a7915572" class="toggle"  />
+    <label for="section-76b7909527d5ee378c9b7db9a7915572" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">Azure OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E7%A8%B3%E5%AE%9A%E6%80%A7-ai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">ZhiPuAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%BD%B1%E5%83%8F/" class="">千帆影像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="toggle"  />
+    <label for="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/" class="">音频模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7819d6457dfee9d52c1df4ade06e9929" class="toggle"  />
+    <label for="section-7819d6457dfee9d52c1df4ade06e9929" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/azure-openai-%E8%BD%AC%E5%BD%95/" class="">Azure OpenAI 转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4d35c258b8bf725a4f8fe541655ffeee" class="toggle"  />
+    <label for="section-4d35c258b8bf725a4f8fe541655ffeee" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/" class="">文本转语音 (TTS) API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/openai-%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts/" class="">OpenAI 文本转语音 (TTS)</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f10d18dff0bfc099fff60511d3eb1388" class="toggle"  />
+    <label for="section-f10d18dff0bfc099fff60511d3eb1388" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/" class="">适度</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/%E9%80%82%E5%BA%A6/" class="">适度</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E8%AE%B0%E5%BF%86/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-137a5cc62c39eb40ab9f360dd7a4089e" class="toggle"  />
+    <label for="section-137a5cc62c39eb40ab9f360dd7a4089e" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 客户端启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 服务器启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-fe0a04b7ec0575e520d9c454f1ab8388" class="toggle"  />
+    <label for="section-fe0a04b7ec0575e520d9c454f1ab8388" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/" class="">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/etl-%E7%AE%A1%E9%81%93/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E8%AF%84%E4%BC%B0%E6%B5%8B%E8%AF%95/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c22b15d029e06bc3f36d75f90efdc60f" class="toggle"  />
+    <label for="section-c22b15d029e06bc3f36d75f90efdc60f" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai-%E6%9C%8D%E5%8A%A1/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos-db/" class="">Azure Cosmos DB</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra-%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/couchbase/" class="">Couchbase</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/elasticsearch/" class="">Elasticsearch</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire-%E7%9F%A2%E9%87%8F%E5%95%86%E5%BA%97/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb-%E5%90%91%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB 向量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/milvus/" class="">Milvus</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb-atlas/" class="">MongoDB Atlas</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j/" class="">Neo4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%80%E6%94%BE%E6%90%9C%E7%B4%A2/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/oracle-database-23ai---ai-%E5%90%91%E9%87%8F%E6%90%9C%E7%B4%A2/" class="">Oracle Database 23ai - AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg-%E8%BD%BD%E4%BD%93/" class="">PG 载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%8D%A1%E5%BE%B7%E5%85%B0%E7%89%B9/" class="">卡德兰特</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" class="">Redis</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap-hana-%E4%BA%91/" class="">SAP HANA 云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/typesense/" class="">Typesense</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%A8%81%E7%BB%B4%E7%89%B9/" class="">威维特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E5%BC%80%E5%8F%91%E6%97%B6%E6%9C%8D%E5%8A%A1/" class="">开发时服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-13f6ed8395cc1d209c839158e47f69af" class="toggle"  />
+    <label for="section-13f6ed8395cc1d209c839158e47f69af" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/" class="">测试</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-eb04feb0bc33d1a0586638a4be3d86d6" class="toggle"  />
+    <label for="section-eb04feb0bc33d1a0586638a4be3d86d6" class="flex justify-between">
+      <a href="../../../../docs/%E6%8C%87%E5%8D%97/" class="">指南</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E6%8C%87%E5%8D%97/%E6%8F%90%E7%A4%BA%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E6%8C%87%E5%8D%97/%E6%9E%84%E5%BB%BA%E6%9C%89%E6%95%88%E4%BB%A3%E7%90%86/" class="">构建有效代理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E6%8C%87%E5%8D%97/%E4%BA%91%E7%BB%91%E5%AE%9A/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-21dbdbec9c50b4c816faee9156087e37" class="toggle"  />
+    <label for="section-21dbdbec9c50b4c816faee9156087e37" class="flex justify-between">
+      <a href="../../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/%E4%BB%8E-functioncallback-%E8%BF%81%E7%A7%BB%E5%88%B0-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>顾问 API</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#顾问-api">顾问 API</a>
+      <ul>
+        <li><a href="#核心组件">核心组件</a></li>
+        <li><a href="#顾问订单">顾问订单</a></li>
+        <li><a href="#api-概述">API 概述</a></li>
+        <li><a href="#实现顾问">实现顾问</a></li>
+        <li><a href="#示例">示例</a></li>
+        <li><a href="#日志顾问">日志顾问</a></li>
+        <li><a href="#重读re2顾问">重读（Re2）顾问</a></li>
+        <li><a href="#spring-ai-内置顾问">Spring AI 内置顾问</a></li>
+        <li><a href="#聊天记忆顾问">聊天记忆顾问</a></li>
+        <li><a href="#问答顾问">问答顾问</a></li>
+        <li><a href="#内容安全顾问">内容安全顾问</a></li>
+        <li><a href="#流式传输-vs-非流式传输">流式传输 vs. 非流式传输</a></li>
+        <li><a href="#最佳实践">最佳实践</a></li>
+        <li><a href="#向后兼容性">向后兼容性</a></li>
+        <li><a href="#重大-api-变更">重大 API 变更</a></li>
+        <li><a href="#顾问界面">顾问界面</a></li>
+        <li><a href="#上下文映射处理">上下文映射处理</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="顾问-api">
+  顾问 API
+  <a class="anchor" href="#%e9%a1%be%e9%97%ae-api">#</a>
+</h1>
+<p>Spring AI Advisors API 提供了一种灵活而强大的方法来拦截、修改和增强 Spring 应用程序中的 AI 驱动交互。通过利用 Advisors API，开发人员可以创建更复杂、可重用且更易于维护的 AI 组件。</p>
+<p>主要优势包括封装重复的生成式 AI 模式、转换发送到和来自大型语言模型 (LLM) 的数据，以及提供跨各种模型和用例的可移植性。</p>
+<p>您可以使用 [
+  <a href="chatclient.html#_advisor_configuration_in_chatclient">ChatClient API</a>](chatclient.html#_advisor_configuration_in_chatclient) 配置现有的顾问，如以下示例所示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> chatClient <span style="color:#f92672">=</span> ChatClient.<span style="color:#a6e22e">builder</span>(chatModel)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">defaultAdvisors</span>(
+</span></span><span style="display:flex;"><span>        MessageChatMemoryAdvisor.<span style="color:#a6e22e">builder</span>(chatMemory).<span style="color:#a6e22e">build</span>(), <span style="color:#75715e">// chat-memory advisor</span>
+</span></span><span style="display:flex;"><span>        QuestionAnswerAdvisor.<span style="color:#a6e22e">builder</span>((vectorStore).<span style="color:#a6e22e">builder</span>() <span style="color:#75715e">// RAG advisor</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> conversationId <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;678&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String response <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatClient</span>.<span style="color:#a6e22e">prompt</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Set advisor parameters at runtime</span>
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">advisors</span>(advisor <span style="color:#f92672">-&gt;</span> advisor.<span style="color:#a6e22e">param</span>(ChatMemory.<span style="color:#a6e22e">CONVERSATION_ID</span>, conversationId))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">user</span>(userText)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">call</span>()
+</span></span><span style="display:flex;"><span>	.<span style="color:#a6e22e">content</span>();
+</span></span></code></pre></div><p>建议在构建时使用构建器的 <code>defaultAdvisors()</code> 方法注册顾问。</p>
+<p>顾问也参与可观察性堆栈，因此您可以查看与其执行相关的指标和跟踪。</p>
+<ul>
+<li>了解问答顾问</li>
+<li>了解聊天记忆顾问</li>
+</ul>
+<h2 id="核心组件">
+  核心组件
+  <a class="anchor" href="#%e6%a0%b8%e5%bf%83%e7%bb%84%e4%bb%b6">#</a>
+</h2>
+<p>该 API 包含用于非流式场景的 <code>CallAroundAdvisor</code> 和 <code>CallAroundAdvisor</code>Chain ，以及用于流式场景的 <code>StreamAroundAdvisor</code> 和 <code>StreamAroundAdvisor</code>Chain 。此外，它还包含用于表示未密封 Prompt 请求的 <code>AdvisedRequest</code> 和用于表示聊天完成响应的 <code>AdvisedResponse</code> 。两者都包含一个 <code>advise-context</code> 用于在顾问链之间共享状态。</p>
+<p>
+  <img src="../../../../images/advisors-api-classes.jpg" alt="" /></p>
+<p><code>nextAroundCall()</code> 和 <code>nextAroundStream()</code> 是关键的顾问方法，通常执行的操作包括检查未密封的提示数据、自定义和扩充提示数据、调用顾问链中的下一个实体、可选地阻止请求、检查聊天完成响应以及抛出异常以指示处理错误。</p>
+<p>此外， <code>getOrder()</code> 方法确定链中的顾问顺序，而 <code>getName()</code> 提供唯一的顾问名称。</p>
+<p>Spring AI 框架创建的 Advisor Chain 允许按 <code>getOrder()</code> 值的顺序调用多个 Advisor。值较低的 Advisor 优先执行。最后一个 Advisor 会自动添加，并将请求发送到 LLM。</p>
+<p>以下流程图说明了顾问链和聊天模型之间的交互：</p>
+<p>
+  <img src="../../../../images/advisors-flow.jpg" alt="" /></p>
+<h2 id="顾问订单">
+  顾问订单
+  <a class="anchor" href="#%e9%a1%be%e9%97%ae%e8%ae%a2%e5%8d%95">#</a>
+</h2>
+<p>链中 advisor 的执行顺序由 <code>getOrder()</code> 方法决定。需要理解的关键点：</p>
+<ul>
+<li>具有较低顺序值的顾问将首先执行。</li>
+<li>顾问链以堆栈的形式运行：
+<ul>
+<li>链中的第一位顾问是第一个处理请求的。</li>
+<li>它也是最后处理响应的。</li>
+</ul>
+</li>
+<li>链中的第一位顾问是第一个处理请求的。</li>
+<li>它也是最后处理响应的。</li>
+<li>控制执行顺序：
+<ul>
+<li>将顺序设置为接近 Ordered.HIGHEST_PRECEDENCE 以确保顾问在链中首先执行（首先执行请求处理，最后执行响应处理）。</li>
+<li>将顺序设置为接近 Ordered.LOWEST_PRECEDENCE 以确保顾问在链中最后执行（请求处理最后执行，响应处理首先执行）。</li>
+</ul>
+</li>
+<li>将顺序设置为接近 Ordered.HIGHEST_PRECEDENCE 以确保顾问在链中首先执行（首先执行请求处理，最后执行响应处理）。</li>
+<li>将顺序设置为接近 Ordered.LOWEST_PRECEDENCE 以确保顾问在链中最后执行（请求处理最后执行，响应处理首先执行）。</li>
+<li>值越高，优先级越低。</li>
+<li>如果多个顾问具有相同的订单值，则无法保证它们的执行顺序。</li>
+</ul>
+<p>提醒一下，以下是 Spring <code>Ordered</code> 接口的语义：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Ordered</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * Constant for the highest precedence value.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @see java.lang.Integer#MIN_VALUE
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> HIGHEST_PRECEDENCE <span style="color:#f92672">=</span> Integer.<span style="color:#a6e22e">MIN_VALUE</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * Constant for the lowest precedence value.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @see java.lang.Integer#MAX_VALUE
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> LOWEST_PRECEDENCE <span style="color:#f92672">=</span> Integer.<span style="color:#a6e22e">MAX_VALUE</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * Get the order value of this object.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * &lt;p&gt;Higher values are interpreted as lower priority. As a consequence,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * the object with the lowest value has the highest priority (somewhat
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * analogous to Servlet {@code load-on-startup} values).
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * &lt;p&gt;Same order values will result in arbitrary sort positions for the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * affected objects.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @return the order value
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @see #HIGHEST_PRECEDENCE
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     * @see #LOWEST_PRECEDENCE
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">     */</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">getOrder</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="api-概述">
+  API 概述
+  <a class="anchor" href="#api-%e6%a6%82%e8%bf%b0">#</a>
+</h2>
+<p>主要的 Advisor 接口位于包 <code>org.springframework.ai.chat.client.advisor.api</code> 中。以下是您在创建自己的 Advisor 时会遇到的关键接口：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Advisor</span> <span style="color:#66d9ef">extends</span> Ordered {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">getName</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>同步和反应式顾问的两个子接口是</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">CallAroundAdvisor</span> <span style="color:#66d9ef">extends</span> Advisor {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Around advice that wraps the ChatModel#call(Prompt) method.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * @param advisedRequest the advised request
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * @param chain the advisor chain
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * @return the response
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	AdvisedResponse <span style="color:#a6e22e">aroundCall</span>(AdvisedRequest advisedRequest, CallAroundAdvisorChain chain);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>和</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">StreamAroundAdvisor</span> <span style="color:#66d9ef">extends</span> Advisor {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * Around advice that wraps the invocation of the advised request.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * @param advisedRequest the advised request
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * @param chain the chain of advisors to execute
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 * @return the result of the advised request
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">	 */</span>
+</span></span><span style="display:flex;"><span>	Flux<span style="color:#f92672">&lt;</span>AdvisedResponse<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">aroundStream</span>(AdvisedRequest advisedRequest, StreamAroundAdvisorChain chain);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>要继续 Advice 链，请在 Advice 实现中使用 <code>CallAroundAdvisorChain</code> 和 <code>StreamAroundAdvisorChain</code> ：</p>
+<p>接口是</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">CallAroundAdvisorChain</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	AdvisedResponse <span style="color:#a6e22e">nextAroundCall</span>(AdvisedRequest advisedRequest);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>和</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">StreamAroundAdvisorChain</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Flux<span style="color:#f92672">&lt;</span>AdvisedResponse<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">nextAroundStream</span>(AdvisedRequest advisedRequest);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="实现顾问">
+  实现顾问
+  <a class="anchor" href="#%e5%ae%9e%e7%8e%b0%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>要创建 Advisor，请实现 <code>CallAroundAdvisor</code> 或 <code>StreamAroundAdvisor</code> （或两者兼有）。非流式 Advisor 的关键方法是实现 <code>nextAroundCall()</code> ，而流式 Advisor 的关键方法是 <code>nextAroundStream()</code> 。</p>
+<h2 id="示例">
+  示例
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<p>我们将提供一些实际的例子来说明如何实现顾问来观察和扩充用例。</p>
+<h2 id="日志顾问">
+  日志顾问
+  <a class="anchor" href="#%e6%97%a5%e5%bf%97%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>我们可以实现一个简单的日志顾问，在调用链中的下一个顾问之前记录 <code>AdvisedRequest</code> ，并在调用之后 <code>AdvisedResponse</code> 。请注意，该顾问仅观察请求和响应，而不会对其进行修改。此实现支持非流式和流式场景。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SimpleLoggerAdvisor</span> <span style="color:#66d9ef">implements</span> CallAroundAdvisor, StreamAroundAdvisor {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> Logger logger <span style="color:#f92672">=</span> LoggerFactory.<span style="color:#a6e22e">getLogger</span>(SimpleLoggerAdvisor.<span style="color:#a6e22e">class</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">getName</span>() { (1)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">getClass</span>().<span style="color:#a6e22e">getSimpleName</span>();
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">getOrder</span>() { (2)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> 0;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> AdvisedResponse <span style="color:#a6e22e">aroundCall</span>(AdvisedRequest advisedRequest, CallAroundAdvisorChain chain) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		logger.<span style="color:#a6e22e">debug</span>(<span style="color:#e6db74">&#34;BEFORE: {}&#34;</span>, advisedRequest);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		AdvisedResponse advisedResponse <span style="color:#f92672">=</span> chain.<span style="color:#a6e22e">nextAroundCall</span>(advisedRequest);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		logger.<span style="color:#a6e22e">debug</span>(<span style="color:#e6db74">&#34;AFTER: {}&#34;</span>, advisedResponse);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> advisedResponse;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> Flux<span style="color:#f92672">&lt;</span>AdvisedResponse<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">aroundStream</span>(AdvisedRequest advisedRequest, StreamAroundAdvisorChain chain) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		logger.<span style="color:#a6e22e">debug</span>(<span style="color:#e6db74">&#34;BEFORE: {}&#34;</span>, advisedRequest);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		Flux<span style="color:#f92672">&lt;</span>AdvisedResponse<span style="color:#f92672">&gt;</span> advisedResponses <span style="color:#f92672">=</span> chain.<span style="color:#a6e22e">nextAroundStream</span>(advisedRequest);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> MessageAggregator().<span style="color:#a6e22e">aggregateAdvisedResponse</span>(advisedResponses,
+</span></span><span style="display:flex;"><span>                    advisedResponse <span style="color:#f92672">-&gt;</span> logger.<span style="color:#a6e22e">debug</span>(<span style="color:#e6db74">&#34;AFTER: {}&#34;</span>, advisedResponse)); (3)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="重读re2顾问">
+  重读（Re2）顾问
+  <a class="anchor" href="#%e9%87%8d%e8%af%bbre2%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>“ [
+  <a href="https://arxiv.org/pdf/2309.06275">重读提升大型语言模型的推理能力</a>](
+  <a href="https://arxiv.org/pdf/2309.06275">https://arxiv.org/pdf/2309.06275</a>) ”一文介绍了一种名为重读（Re2）的技术，它可以提升大型语言模型的推理能力。Re2 技术需要像这样扩充输入提示：</p>
+<p>实现将 Re2 技术应用于用户输入查询的顾问可以如下完成：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ReReadingAdvisor</span> <span style="color:#66d9ef">implements</span> CallAroundAdvisor, StreamAroundAdvisor {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">private</span> AdvisedRequest <span style="color:#a6e22e">before</span>(AdvisedRequest advisedRequest) { (1)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> advisedUserParams <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HashMap<span style="color:#f92672">&lt;&gt;</span>(advisedRequest.<span style="color:#a6e22e">userParams</span>());
+</span></span><span style="display:flex;"><span>		advisedUserParams.<span style="color:#a6e22e">put</span>(<span style="color:#e6db74">&#34;re2_input_query&#34;</span>, advisedRequest.<span style="color:#a6e22e">userText</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> AdvisedRequest.<span style="color:#a6e22e">from</span>(advisedRequest)
+</span></span><span style="display:flex;"><span>			.<span style="color:#a6e22e">userText</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			    {re2_input_query}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			    Read the question again: {re2_input_query}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">			    &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>			.<span style="color:#a6e22e">userParams</span>(advisedUserParams)
+</span></span><span style="display:flex;"><span>			.<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> AdvisedResponse <span style="color:#a6e22e">aroundCall</span>(AdvisedRequest advisedRequest, CallAroundAdvisorChain chain) { (2)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> chain.<span style="color:#a6e22e">nextAroundCall</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">before</span>(advisedRequest));
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> Flux<span style="color:#f92672">&lt;</span>AdvisedResponse<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">aroundStream</span>(AdvisedRequest advisedRequest, StreamAroundAdvisorChain chain) { (3)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> chain.<span style="color:#a6e22e">nextAroundStream</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">before</span>(advisedRequest));
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">getOrder</span>() { (4)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> 0;
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">getName</span>() { (5)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">getClass</span>().<span style="color:#a6e22e">getSimpleName</span>();
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="spring-ai-内置顾问">
+  Spring AI 内置顾问
+  <a class="anchor" href="#spring-ai-%e5%86%85%e7%bd%ae%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>Spring AI 框架提供了多个内置顾问，以增强您的 AI 交互。以下是可用顾问的概述：</p>
+<h2 id="聊天记忆顾问">
+  聊天记忆顾问
+  <a class="anchor" href="#%e8%81%8a%e5%a4%a9%e8%ae%b0%e5%bf%86%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>这些顾问在聊天记忆库中管理对话历史记录：</p>
+<h2 id="问答顾问">
+  问答顾问
+  <a class="anchor" href="#%e9%97%ae%e7%ad%94%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<h2 id="内容安全顾问">
+  内容安全顾问
+  <a class="anchor" href="#%e5%86%85%e5%ae%b9%e5%ae%89%e5%85%a8%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<h2 id="流式传输-vs-非流式传输">
+  流式传输 vs. 非流式传输
+  <a class="anchor" href="#%e6%b5%81%e5%bc%8f%e4%bc%a0%e8%be%93-vs-%e9%9d%9e%e6%b5%81%e5%bc%8f%e4%bc%a0%e8%be%93">#</a>
+</h2>
+<p>
+  <img src="../../../../images/advisors-non-stream-vs-stream.jpg" alt="" /></p>
+<ul>
+<li>非流式顾问处理完整的请求和响应。</li>
+<li>流顾问使用反应式编程概念（例如，用于响应的 Flux）将请求和响应作为连续流进行处理。</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> Flux<span style="color:#f92672">&lt;</span>AdvisedResponse<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">aroundStream</span>(AdvisedRequest advisedRequest, StreamAroundAdvisorChain chain) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span>  Mono.<span style="color:#a6e22e">just</span>(advisedRequest)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">publishOn</span>(Schedulers.<span style="color:#a6e22e">boundedElastic</span>())
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">map</span>(request <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// This can be executed by blocking and non-blocking Threads.</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// Advisor before next section</span>
+</span></span><span style="display:flex;"><span>            })
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">flatMapMany</span>(request <span style="color:#f92672">-&gt;</span> chain.<span style="color:#a6e22e">nextAroundStream</span>(request))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">map</span>(response <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// Advisor after next section</span>
+</span></span><span style="display:flex;"><span>            });
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="最佳实践">
+  最佳实践
+  <a class="anchor" href="#%e6%9c%80%e4%bd%b3%e5%ae%9e%e8%b7%b5">#</a>
+</h2>
+<h2 id="向后兼容性">
+  向后兼容性
+  <a class="anchor" href="#%e5%90%91%e5%90%8e%e5%85%bc%e5%ae%b9%e6%80%a7">#</a>
+</h2>
+<h2 id="重大-api-变更">
+  重大 API 变更
+  <a class="anchor" href="#%e9%87%8d%e5%a4%a7-api-%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>Spring AI Advisor Chain 从 1.0 M2 版本到 1.0 M3 版本发生了较大变化，主要修改如下：</p>
+<h2 id="顾问界面">
+  顾问界面
+  <a class="anchor" href="#%e9%a1%be%e9%97%ae%e7%95%8c%e9%9d%a2">#</a>
+</h2>
+<ul>
+<li>在 1.0 M2 中，有单独的 RequestAdvisor 和 ResponseAdvisor 接口。
+<ul>
+<li>RequestAdvisor 在 ChatModel.call 和 ChatModel.stream 方法之前被调用。</li>
+<li>在这些方法之后调用了 ResponseAdvisor 。</li>
+</ul>
+</li>
+<li>RequestAdvisor 在 ChatModel.call 和 ChatModel.stream 方法之前被调用。</li>
+<li>在这些方法之后调用了 ResponseAdvisor 。</li>
+<li>在 1.0 M3 中，这些接口已被替换为：</li>
+<li>StreamResponseMode ，以前是 ResponseAdvisor 的一部分，已被删除。</li>
+</ul>
+<h2 id="上下文映射处理">
+  上下文映射处理
+  <a class="anchor" href="#%e4%b8%8a%e4%b8%8b%e6%96%87%e6%98%a0%e5%b0%84%e5%a4%84%e7%90%86">#</a>
+</h2>
+<ul>
+<li>在 1.0 平方米中：
+<ul>
+<li>上下文图是一个单独的方法参数。</li>
+<li>该地图是可变的，并沿着链条传递。</li>
+</ul>
+</li>
+<li>上下文图是一个单独的方法参数。</li>
+<li>该地图是可变的，并沿着链条传递。</li>
+<li>在 1.0 M3 中：
+<ul>
+<li>上下文映射现在是 AdvisedRequest 和 AdvisedResponse 记录的一部分。</li>
+<li>该地图是不可变的。</li>
+<li>要更新上下文，请使用 updateContext 方法，该方法使用更新的内容创建一个新的不可修改的映射。</li>
+</ul>
+</li>
+<li>上下文映射现在是 AdvisedRequest 和 AdvisedResponse 记录的一部分。</li>
+<li>该地图是不可变的。</li>
+<li>要更新上下文，请使用 updateContext 方法，该方法使用更新的内容创建一个新的不可修改的映射。</li>
+</ul>
+<p>1.0 M3 中更新上下文的示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> AdvisedResponse <span style="color:#a6e22e">aroundCall</span>(AdvisedRequest advisedRequest, CallAroundAdvisorChain chain) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">advisedRequest</span> <span style="color:#f92672">=</span> advisedRequest.<span style="color:#a6e22e">updateContext</span>(context <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>        context.<span style="color:#a6e22e">put</span>(<span style="color:#e6db74">&#34;aroundCallBefore&#34;</span> <span style="color:#f92672">+</span> getName(), <span style="color:#e6db74">&#34;AROUND_CALL_BEFORE &#34;</span> <span style="color:#f92672">+</span> getName());  <span style="color:#75715e">// Add multiple key-value pairs</span>
+</span></span><span style="display:flex;"><span>        context.<span style="color:#a6e22e">put</span>(<span style="color:#e6db74">&#34;lastBefore&#34;</span>, getName());  <span style="color:#75715e">// Add a single key-value pair</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> context;
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Method implementation continues...</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#顾问-api">顾问 API</a>
+      <ul>
+        <li><a href="#核心组件">核心组件</a></li>
+        <li><a href="#顾问订单">顾问订单</a></li>
+        <li><a href="#api-概述">API 概述</a></li>
+        <li><a href="#实现顾问">实现顾问</a></li>
+        <li><a href="#示例">示例</a></li>
+        <li><a href="#日志顾问">日志顾问</a></li>
+        <li><a href="#重读re2顾问">重读（Re2）顾问</a></li>
+        <li><a href="#spring-ai-内置顾问">Spring AI 内置顾问</a></li>
+        <li><a href="#聊天记忆顾问">聊天记忆顾问</a></li>
+        <li><a href="#问答顾问">问答顾问</a></li>
+        <li><a href="#内容安全顾问">内容安全顾问</a></li>
+        <li><a href="#流式传输-vs-非流式传输">流式传输 vs. 非流式传输</a></li>
+        <li><a href="#最佳实践">最佳实践</a></li>
+        <li><a href="#向后兼容性">向后兼容性</a></li>
+        <li><a href="#重大-api-变更">重大 API 变更</a></li>
+        <li><a href="#顾问界面">顾问界面</a></li>
+        <li><a href="#上下文映射处理">上下文映射处理</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

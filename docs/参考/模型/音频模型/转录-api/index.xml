@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>转录 API on Spring AI 1.0.0</title>
+    <link>https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/</link>
+    <description>Recent content in 转录 API on Spring AI 1.0.0</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <atom:link href="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Azure OpenAI 转录</title>
+      <link>https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/azure-openai-%E8%BD%AC%E5%BD%95/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/azure-openai-%E8%BD%AC%E5%BD%95/</guid>
+      <description>&lt;h1 id=&#34;azure-openai-转录&#34;&gt;&#xA;  Azure OpenAI 转录&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#azure-openai-%e8%bd%ac%e5%bd%95&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;Spring AI 支持 [&#xA;  &lt;a href=&#34;https://learn.microsoft.com/en-us/azure/ai-services/openai/whisper-quickstart?tabs=command-line%2Cpython-new&amp;amp;pivots=rest-api&#34;&gt;Azure Whisper 模型&lt;/a&gt;](&#xA;  &lt;a href=&#34;https://learn.microsoft.com/en-us/azure/ai-services/openai/whisper-quickstart?tabs=command-line%2Cpython-new&amp;amp;pivots=rest-api&#34;&gt;https://learn.microsoft.com/en-us/azure/ai-services/openai/whisper-quickstart?tabs=command-line%2Cpython-new&amp;pivots=rest-api&lt;/a&gt;) 。&lt;/p&gt;&#xA;&lt;h2 id=&#34;先决条件&#34;&gt;&#xA;  先决条件&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;从 [&#xA;  &lt;a href=&#34;https://portal.azure.com&#34;&gt;Azure 门户&lt;/a&gt;](&#xA;  &lt;a href=&#34;https://portal.azure.com&#34;&gt;https://portal.azure.com&lt;/a&gt;)上的“Azure OpenAI 服务”部分获取 Azure OpenAI &lt;code&gt;endpoint&lt;/code&gt; 和 &lt;code&gt;api-key&lt;/code&gt; 。Spring AI 定义了一个名为 spring.ai.azure.openai.&lt;code&gt;api-key&lt;/code&gt; 的配置属性，您应将其设置为从 Azure 获取的 &lt;code&gt;API Key&lt;/code&gt; 的值。还有一个名为 spring.ai.azure.openai.&lt;code&gt;endpoint&lt;/code&gt; 的配置属性，您应将其设置为在 Azure 中预配模型时获取的端点 URL。导出环境变量是设置该配置属性的一种方法：&lt;/p&gt;&#xA;&lt;h2 id=&#34;自动配置&#34;&gt;&#xA;  自动配置&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;Spring AI 为 Azure OpenAI 转录生成客户端提供 Spring Boot 自动配置。 Spring AI offers Spring Boot auto-configuration for the Azure OpenAI Transcription Generation Client. 若要启用此功能，请将以下依赖项添加到项目的 Maven &lt;code&gt;pom.xml&lt;/code&gt; 文件：To enable it, add the following dependency to your project&amp;rsquo;s Maven &lt;code&gt;pom.xml&lt;/code&gt; file:&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

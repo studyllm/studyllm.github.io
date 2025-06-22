@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  提示
+  #
+
+提示是引导 AI 模型生成特定输出的输入。这些提示的设计和措辞会显著影响模型的响应。
+在 Spring AI 中与 AI 模型交互的最低级别，处理 Spring AI 中的提示有点类似于管理 Spring MVC 中的“视图”。这涉及创建包含动态内容占位符的大量文本。然后，这些占位符会根据用户请求或应用程序中的其他代码进行替换。另一个类比是包含特定表达式占位符的 SQL 语句。
+随着 Spring AI 的发展，它将引入更高级别的抽象，以便与 AI 模型进行交互。本节中描述的基础类在角色和功能方面可以类比为 JDBC。例如， ChatModel 类类似于 JDK 中的核心 ChatClient 库。ChatClient 类可以类比为 JdbcClient ，它构建于 ChatModel 之上，并通过 Advisor 提供更高级的构造。
+考虑过去与模型的交互，用额外的上下文文档扩充提示，并引入代理行为。
+在人工智能领域，提示符的结构一直在不断发展。最初，提示符只是简单的字符串。随着时间的推移，它们逐渐包含特定输入的占位符，例如“USER:”，而人工智能模型可以识别这些占位符。OpenAI 通过在人工智能模型处理多个消息字符串之前，将它们分类到不同的角色中，为提示符引入了更丰富的结构。
+
+  API 概述
+  #
+
+
+  迅速的
+  #
+
+通常使用 ChatModel 的 call() 方法，该方法接受一个 Prompt 实例并返回一个 ChatResponse 。
+Prompt 类充当一系列有序的 Message 对象和一个 ChatOptions 请求的容器。每条 Message 在提示中都体现着独特的角色，其内容和意图各不相同。这些角色可以涵盖各种元素，从用户查询到 AI 生成的响应，再到相关的背景信息。这种安排使得与 AI 模型进行复杂而细致的交互成为可能，因为提示由多条消息构成，每条消息在对话中都被赋予了特定的角色。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%8F%90%E7%A4%BA/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="提示">
+  <meta property="og:description" content="提示 # 提示是引导 AI 模型生成特定输出的输入。这些提示的设计和措辞会显著影响模型的响应。
+在 Spring AI 中与 AI 模型交互的最低级别，处理 Spring AI 中的提示有点类似于管理 Spring MVC 中的“视图”。这涉及创建包含动态内容占位符的大量文本。然后，这些占位符会根据用户请求或应用程序中的其他代码进行替换。另一个类比是包含特定表达式占位符的 SQL 语句。
+随着 Spring AI 的发展，它将引入更高级别的抽象，以便与 AI 模型进行交互。本节中描述的基础类在角色和功能方面可以类比为 JDBC。例如， ChatModel 类类似于 JDK 中的核心 ChatClient 库。ChatClient 类可以类比为 JdbcClient ，它构建于 ChatModel 之上，并通过 Advisor 提供更高级的构造。 考虑过去与模型的交互，用额外的上下文文档扩充提示，并引入代理行为。
+在人工智能领域，提示符的结构一直在不断发展。最初，提示符只是简单的字符串。随着时间的推移，它们逐渐包含特定输入的占位符，例如“USER:”，而人工智能模型可以识别这些占位符。OpenAI 通过在人工智能模型处理多个消息字符串之前，将它们分类到不同的角色中，为提示符引入了更丰富的结构。
+API 概述 # 迅速的 # 通常使用 ChatModel 的 call() 方法，该方法接受一个 Prompt 实例并返回一个 ChatResponse 。
+Prompt 类充当一系列有序的 Message 对象和一个 ChatOptions 请求的容器。每条 Message 在提示中都体现着独特的角色，其内容和意图各不相同。这些角色可以涵盖各种元素，从用户查询到 AI 生成的响应，再到相关的背景信息。这种安排使得与 AI 模型进行复杂而细致的交互成为可能，因为提示由多条消息构成，每条消息在对话中都被赋予了特定的角色。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>提示 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../favicon.png" >
+<link rel="manifest" href="../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%8F%90%E7%A4%BA/">
+<link rel="stylesheet" href="../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../fuse.min.js"></script>
+  <script defer src="../../../en.search.min.71e7e6c2939a8c322f56321bb68fc2082c0a37b8656d9a9617fd1c6ebfbb4f37.js" integrity="sha256-cefmwpOajDIvVjIbto/CCCwKN7hlbZqWF/0cbr&#43;7Tzc=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ab79ee7c06b73ed1cac487be78704b1a" class="toggle"  />
+    <label for="section-ab79ee7c06b73ed1cac487be78704b1a" class="flex justify-between">
+      <a href="../../../docs/%E4%BB%8B%E7%BB%8D/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E4%BB%8B%E7%BB%8D/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="toggle" checked />
+    <label for="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/" class="">参考</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-861f1f33bc8d3da259fc08a7bd3778e9" class="toggle"  />
+    <label for="section-861f1f33bc8d3da259fc08a7bd3778e9" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/%E9%A1%BE%E9%97%AE-api/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%8F%90%E7%A4%BA/" class="active">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA%E8%BD%AC%E6%8D%A2%E5%99%A8/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E5%A4%9A%E6%A8%A1%E6%80%81-api/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f78b15e57dfff314304a2bb1e9884f4a" class="toggle"  />
+    <label for="section-f78b15e57dfff314304a2bb1e9884f4a" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/" class="">模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f01f599500243d0a36d315cf18df347c" class="toggle"  />
+    <label for="section-f01f599500243d0a36d315cf18df347c" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9-converse/" class="">亚马逊基岩 Converse</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%BA%E7%B1%BB%E5%AD%A6-3-%E8%81%8A%E5%A4%A9/" class="">人类学 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/azure-openai-%E8%81%8A%E5%A4%A9/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/deepseek-%E8%81%8A%E5%A4%A9/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/docker-%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E8%80%85%E8%81%8A%E5%A4%A9/" class="">Docker 模型运行者聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-810d79b9e4561cb82f174a0a980239af" class="toggle"  />
+    <label for="section-810d79b9e4561cb82f174a0a980239af" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/vertexai-gemini-%E8%81%8A%E5%A4%A9/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/groq-%E8%81%8A%E5%A4%A9/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%8B%A5%E6%8A%B1%E8%84%B8%E8%81%8A%E5%A4%A9/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/mistral-%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E8%81%8A%E5%A4%A9/" class="">Mistral 人工智能聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/moonshot-ai-%E8%81%8A%E5%A4%A9/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/nvidia-%E8%81%8A%E5%A4%A9/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9/" class="">聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%9B%B0%E6%83%91%E8%81%8A%E5%A4%A9/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99bf04ea1225435ee3d3aac878598d1b" class="toggle"  />
+    <label for="section-99bf04ea1225435ee3d3aac878598d1b" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/" class="">OCI 生成式 AI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/oci-genai-%E5%8D%8F%E5%90%8C%E8%81%8A%E5%A4%A9/" class="">OCI GenAI 协同聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/openai-%E8%81%8A%E5%A4%A9/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E8%81%8A%E5%A4%A9/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%99%BA%E6%B5%A6-ai-%E8%81%8A%E5%A4%A9/" class="">智浦 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-402a989be78a917606348d6ff6652ff7" class="toggle"  />
+    <label for="section-402a989be78a917606348d6ff6652ff7" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-56d4fbd63aba9093164f2784fdd04677" class="toggle"  />
+    <label for="section-56d4fbd63aba9093164f2784fdd04677" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2%E5%B5%8C%E5%85%A5/" class="">相干嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6%E5%B5%8C%E5%85%A5/" class="">泰坦嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%B5%8C%E5%85%A5/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/mistral-ai-%E5%B5%8C%E5%85%A5/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/oracle-%E4%BA%91%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD-oci-genai-%E5%B5%8C%E5%85%A5/" class="">Oracle 云基础设施 (OCI) GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/ollama-%E5%B5%8C%E5%85%A5/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/transformersonnx%E5%B5%8C%E5%85%A5/" class="">Transformers（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/openai-%E5%B5%8C%E5%85%A5/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/postgresml-%E5%B5%8C%E5%85%A5/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%B5%8C%E5%85%A5/" class="">千帆嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6ef09998ce281d0b28a33f495c099c64" class="toggle"  />
+    <label for="section-6ef09998ce281d0b28a33f495c099c64" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%B5%8C%E5%85%A5/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-76b7909527d5ee378c9b7db9a7915572" class="toggle"  />
+    <label for="section-76b7909527d5ee378c9b7db9a7915572" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">Azure OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E7%A8%B3%E5%AE%9A%E6%80%A7-ai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">ZhiPuAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%BD%B1%E5%83%8F/" class="">千帆影像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="toggle"  />
+    <label for="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/" class="">音频模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7819d6457dfee9d52c1df4ade06e9929" class="toggle"  />
+    <label for="section-7819d6457dfee9d52c1df4ade06e9929" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/azure-openai-%E8%BD%AC%E5%BD%95/" class="">Azure OpenAI 转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4d35c258b8bf725a4f8fe541655ffeee" class="toggle"  />
+    <label for="section-4d35c258b8bf725a4f8fe541655ffeee" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/" class="">文本转语音 (TTS) API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/openai-%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts/" class="">OpenAI 文本转语音 (TTS)</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f10d18dff0bfc099fff60511d3eb1388" class="toggle"  />
+    <label for="section-f10d18dff0bfc099fff60511d3eb1388" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/" class="">适度</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/%E9%80%82%E5%BA%A6/" class="">适度</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E8%AE%B0%E5%BF%86/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-137a5cc62c39eb40ab9f360dd7a4089e" class="toggle"  />
+    <label for="section-137a5cc62c39eb40ab9f360dd7a4089e" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 客户端启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 服务器启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-fe0a04b7ec0575e520d9c454f1ab8388" class="toggle"  />
+    <label for="section-fe0a04b7ec0575e520d9c454f1ab8388" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/" class="">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/etl-%E7%AE%A1%E9%81%93/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E8%AF%84%E4%BC%B0%E6%B5%8B%E8%AF%95/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c22b15d029e06bc3f36d75f90efdc60f" class="toggle"  />
+    <label for="section-c22b15d029e06bc3f36d75f90efdc60f" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai-%E6%9C%8D%E5%8A%A1/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos-db/" class="">Azure Cosmos DB</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra-%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/couchbase/" class="">Couchbase</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/elasticsearch/" class="">Elasticsearch</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire-%E7%9F%A2%E9%87%8F%E5%95%86%E5%BA%97/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb-%E5%90%91%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB 向量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/milvus/" class="">Milvus</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb-atlas/" class="">MongoDB Atlas</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j/" class="">Neo4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%80%E6%94%BE%E6%90%9C%E7%B4%A2/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/oracle-database-23ai---ai-%E5%90%91%E9%87%8F%E6%90%9C%E7%B4%A2/" class="">Oracle Database 23ai - AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg-%E8%BD%BD%E4%BD%93/" class="">PG 载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%8D%A1%E5%BE%B7%E5%85%B0%E7%89%B9/" class="">卡德兰特</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" class="">Redis</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap-hana-%E4%BA%91/" class="">SAP HANA 云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/typesense/" class="">Typesense</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%A8%81%E7%BB%B4%E7%89%B9/" class="">威维特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E5%BC%80%E5%8F%91%E6%97%B6%E6%9C%8D%E5%8A%A1/" class="">开发时服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-13f6ed8395cc1d209c839158e47f69af" class="toggle"  />
+    <label for="section-13f6ed8395cc1d209c839158e47f69af" class="flex justify-between">
+      <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/" class="">测试</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-eb04feb0bc33d1a0586638a4be3d86d6" class="toggle"  />
+    <label for="section-eb04feb0bc33d1a0586638a4be3d86d6" class="flex justify-between">
+      <a href="../../../docs/%E6%8C%87%E5%8D%97/" class="">指南</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%8C%87%E5%8D%97/%E6%8F%90%E7%A4%BA%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%8C%87%E5%8D%97/%E6%9E%84%E5%BB%BA%E6%9C%89%E6%95%88%E4%BB%A3%E7%90%86/" class="">构建有效代理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E6%8C%87%E5%8D%97/%E4%BA%91%E7%BB%91%E5%AE%9A/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-21dbdbec9c50b4c816faee9156087e37" class="toggle"  />
+    <label for="section-21dbdbec9c50b4c816faee9156087e37" class="flex justify-between">
+      <a href="../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/%E4%BB%8E-functioncallback-%E8%BF%81%E7%A7%BB%E5%88%B0-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>提示</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#提示">提示</a>
+      <ul>
+        <li><a href="#api-概述">API 概述</a></li>
+        <li><a href="#迅速的">迅速的</a></li>
+        <li><a href="#信息">信息</a></li>
+        <li><a href="#角色">角色</a></li>
+        <li><a href="#提示模板">提示模板</a></li>
+        <li><a href="#示例用法">示例用法</a></li>
+        <li><a href="#使用自定义模板渲染器">使用自定义模板渲染器</a></li>
+        <li><a href="#使用资源而不是原始字符串">使用资源而不是原始字符串</a></li>
+        <li><a href="#快速工程">快速工程</a></li>
+        <li><a href="#创建有效的提示">创建有效的提示</a></li>
+        <li><a href="#简单技巧">简单技巧</a></li>
+        <li><a href="#高级技术">高级技术</a></li>
+        <li><a href="#microsoft-指导">Microsoft 指导</a></li>
+        <li><a href="#代币">代币</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="提示">
+  提示
+  <a class="anchor" href="#%e6%8f%90%e7%a4%ba">#</a>
+</h1>
+<p>提示是引导 AI 模型生成特定输出的输入。这些提示的设计和措辞会显著影响模型的响应。</p>
+<p>在 Spring AI 中与 AI 模型交互的最低级别，处理 Spring AI 中的提示有点类似于管理 Spring MVC 中的“视图”。这涉及创建包含动态内容占位符的大量文本。然后，这些占位符会根据用户请求或应用程序中的其他代码进行替换。另一个类比是包含特定表达式占位符的 SQL 语句。</p>
+<p>随着 Spring AI 的发展，它将引入更高级别的抽象，以便与 AI 模型进行交互。本节中描述的基础类在角色和功能方面可以类比为 JDBC。例如， <code>ChatModel</code> 类类似于 JDK 中的核心 <code>ChatClient</code> 库。<code>ChatClient</code> 类可以类比为 <code>JdbcClient</code> ，它构建于 <code>ChatModel</code> 之上，并通过 <code>Advisor</code> 提供更高级的构造。
+考虑过去与模型的交互，用额外的上下文文档扩充提示，并引入代理行为。</p>
+<p>在人工智能领域，提示符的结构一直在不断发展。最初，提示符只是简单的字符串。随着时间的推移，它们逐渐包含特定输入的占位符，例如“USER:”，而人工智能模型可以识别这些占位符。OpenAI 通过在人工智能模型处理多个消息字符串之前，将它们分类到不同的角色中，为提示符引入了更丰富的结构。</p>
+<h2 id="api-概述">
+  API 概述
+  <a class="anchor" href="#api-%e6%a6%82%e8%bf%b0">#</a>
+</h2>
+<h2 id="迅速的">
+  迅速的
+  <a class="anchor" href="#%e8%bf%85%e9%80%9f%e7%9a%84">#</a>
+</h2>
+<p>通常使用 <code>ChatModel</code> 的 <code>call()</code> 方法，该方法接受一个 <code>Prompt</code> 实例并返回一个 <code>ChatResponse</code> 。</p>
+<p><code>Prompt</code> 类充当一系列有序的 <code>Message</code> 对象和一个 <code>ChatOptions</code> 请求的容器。每条 <code>Message</code> 在提示中都体现着独特的角色，其内容和意图各不相同。这些角色可以涵盖各种元素，从用户查询到 AI 生成的响应，再到相关的背景信息。这种安排使得与 AI 模型进行复杂而细致的交互成为可能，因为提示由多条消息构成，每条消息在对话中都被赋予了特定的角色。</p>
+<p>下面是 Prompt 类的截断版本，为了简洁起见省略了构造函数和实用方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Prompt</span> <span style="color:#66d9ef">implements</span> ModelRequest<span style="color:#f92672">&lt;</span>List<span style="color:#f92672">&lt;</span>Message<span style="color:#f92672">&gt;&gt;</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> List<span style="color:#f92672">&lt;</span>Message<span style="color:#f92672">&gt;</span> messages;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> ChatOptions chatOptions;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="信息">
+  信息
+  <a class="anchor" href="#%e4%bf%a1%e6%81%af">#</a>
+</h2>
+<p><code>Message</code> 接口封装了 <code>Prompt</code> 文本、元数据属性集合以及称为 <code>Message</code>Type 的分类。</p>
+<p>该接口定义如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Content</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">getContent</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">getMetadata</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Message</span> <span style="color:#66d9ef">extends</span> Content {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	MessageType <span style="color:#a6e22e">getMessageType</span>();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>多模式消息类型还实现了 ```Media<code>Content` 接口，提供了 </code>Media`` 内容对象的列表。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">MediaContent</span> <span style="color:#66d9ef">extends</span> Content {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Collection<span style="color:#f92672">&lt;</span>Media<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">getMedia</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>Message</code> 接口的各种实现对应着 AI 模型可以处理的不同类别的消息。模型会根据对话角色来区分不同的消息类别。</p>
+<p>
+  <img src="../../../images/spring-ai-message-api.jpg" alt="" /></p>
+<p>这些角色由 <code>MessageType</code> 有效映射，如下所述。</p>
+<h2 id="角色">
+  角色
+  <a class="anchor" href="#%e8%a7%92%e8%89%b2">#</a>
+</h2>
+<p>每条消息都被赋予了特定的角色。这些角色对消息进行分类，为 AI 模型明确提示中每个部分的上下文和目的。这种结构化方法增强了与 AI 沟通的细微差别和有效性，因为提示的每个部分在交互中都扮演着独特而明确的角色。</p>
+<p>主要角色是：</p>
+<ul>
+<li>系统角色：引导 AI 的行为和响应方式，设置 AI 如何解释和回复输入的参数或规则。这类似于在发起对话之前向 AI 提供指令。</li>
+<li>用户角色：代表用户的输入——他们向 AI 提出的问题、命令或语句。这个角色至关重要，因为它构成了 AI 响应的基础。</li>
+<li>助手角色：AI 对用户输入的响应。它不仅仅是一个答案或反应，对于维持对话的流畅性至关重要。通过追踪 AI 之前的响应（其“助手角色”消息），系统可以确保交互的连贯性以及与上下文的相关性。助手消息也可能包含功能工具调用请求信息。它就像 AI 中的一项特殊功能，在需要执行特定功能（例如计算、获取数据或其他不仅仅是对话的任务）时使用。</li>
+<li>工具/功能角色：工具/功能角色专注于响应工具调用助手消息返回附加信息。</li>
+</ul>
+<p>角色在 Spring AI 中表示为枚举，如下所示</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">enum</span> MessageType {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	USER(<span style="color:#e6db74">&#34;user&#34;</span>),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	ASSISTANT(<span style="color:#e6db74">&#34;assistant&#34;</span>),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	SYSTEM(<span style="color:#e6db74">&#34;system&#34;</span>),
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	TOOL(<span style="color:#e6db74">&#34;tool&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    ...
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="提示模板">
+  提示模板
+  <a class="anchor" href="#%e6%8f%90%e7%a4%ba%e6%a8%a1%e6%9d%bf">#</a>
+</h2>
+<p>Spring AI 中提示模板的一个关键组件是 <code>PromptTemplate</code> 类，旨在促进结构化提示的创建，然后将其发送到 AI 模型进行处理</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">PromptTemplate</span> <span style="color:#66d9ef">implements</span> PromptTemplateActions, PromptTemplateMessageActions {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Other methods to be discussed later</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>此类使用 <code>TemplateRenderer</code> API 来渲染模板。默认情况下，Spring AI 使用 St<code>TemplateRenderer</code> 实现，该实现基于 Terence Parr 开发的开源 [
+  <a href="https://www.stringtemplate.org/">StringTemplate</a>](
+  <a href="https://www.stringtemplate.org/">https://www.stringtemplate.org/</a>) 引擎。模板变量由 <code>{}</code> 语法标识，但您也可以配置分隔符以使用其他语法。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">TemplateRenderer</span> <span style="color:#66d9ef">extends</span> BiFunction<span style="color:#f92672">&lt;</span>String, Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span>, String<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">apply</span>(String template, Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> variables);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Spring AI 使用 <code>TemplateRenderer</code> 接口来处理将变量实际替换到模板字符串中。默认实现使用 [
+  <a href="../../../#StringTemplate">[StringTemplate]</a>](#StringTemplate) 。如果需要自定义逻辑，可以提供自己的 <code>TemplateRenderer</code> 实现。对于不需要模板渲染的场景（例如，模板字符串已经完成），可以使用提供的 NoOp<code>TemplateRenderer</code> 。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>PromptTemplate promptTemplate <span style="color:#f92672">=</span> PromptTemplate.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">renderer</span>(StTemplateRenderer.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">startDelimiterToken</span>(<span style="color:#e6db74">&#39;&lt;&#39;</span>).<span style="color:#a6e22e">endDelimiterToken</span>(<span style="color:#e6db74">&#39;&gt;&#39;</span>).<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">template</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Tell me the names of 5 movies whose soundtrack was composed by &lt;composer&gt;.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String prompt <span style="color:#f92672">=</span> promptTemplate.<span style="color:#a6e22e">render</span>(Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;composer&#34;</span>, <span style="color:#e6db74">&#34;John Williams&#34;</span>));
+</span></span></code></pre></div><p>此类实现的接口支持提示创建的不同方面：</p>
+<p><code>PromptTemplateStringActions</code> 专注于创建和渲染提示字符串，代表最基本的提示生成形式。</p>
+<p><code>PromptTemplate``Message``Actions</code> 专门用于通过生成和操作 <code>Message</code> 对象来创建提示。</p>
+<p>```Prompt<code>TemplateActions` 旨在返回 </code>Prompt<code>对象，该对象可以传递给</code>ChatModel`` 以生成响应。</p>
+<p>虽然这些界面可能在许多项目中没有被广泛使用，但它们展示了提示创建的不同方法。</p>
+<p>实现的接口是</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">PromptTemplateStringActions</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">render</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	String <span style="color:#a6e22e">render</span>(Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> model);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>方法 <code>String render()</code> ：将提示模板渲染为最终的字符串格式，无需外部输入，适用于没有占位符或动态内容的模板。</p>
+<p>方法 <code>String render(``Map&lt;String, Object&gt;`` model)</code> ：增强了渲染功能以包含动态内容。它使用 <code>Map&lt;String, Object&gt;</code> 其中映射键是提示模板中的占位符名称，值是要插入的动态内容。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">PromptTemplateMessageActions</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Message <span style="color:#a6e22e">createMessage</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    Message <span style="color:#a6e22e">createMessage</span>(List<span style="color:#f92672">&lt;</span>Media<span style="color:#f92672">&gt;</span> mediaList);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Message <span style="color:#a6e22e">createMessage</span>(Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> model);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>方法 ```Message<code> create</code>Message<code>()` ：创建一个没有附加数据的 </code>Message`` 对象，用于静态或预定义的消息内容。</p>
+<p>方法 ```Message<code> create</code>Message<code>(List&lt;Media&gt; mediaList)` ：创建具有静态文本和媒体内容的 </code>Message`` 对象。</p>
+<p>方法 <code>Message createMessage(``Map&lt;String, Object&gt;`` model)</code> ：扩展消息创建以集成动态内容，接受 <code>Map&lt;String, Object&gt;</code> 其中每个条目代表消息模板中的占位符及其对应的动态值。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">PromptTemplateActions</span> <span style="color:#66d9ef">extends</span> PromptTemplateStringActions {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Prompt <span style="color:#a6e22e">create</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Prompt <span style="color:#a6e22e">create</span>(ChatOptions modelOptions);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Prompt <span style="color:#a6e22e">create</span>(Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> model);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	Prompt <span style="color:#a6e22e">create</span>(Map<span style="color:#f92672">&lt;</span>String, Object<span style="color:#f92672">&gt;</span> model, ChatOptions modelOptions);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>方法 ```Prompt<code>create()` ：生成无需外部数据输入的</code>Prompt`` 对象，非常适合静态或预定义提示。</p>
+<p>方法 ```Prompt<code>create(ChatOptions modelOptions)` ：生成一个无需外部数据输入但具有聊天请求特定选项的</code>Prompt`` 对象。</p>
+<p>方法 <code>Prompt create(``Map&lt;String, Object&gt;`` model)</code> ：扩展提示创建功能以包含动态内容，采用 <code>Map&lt;String, Object&gt;</code> 其中每个映射条目都是提示模板及其关联动态值中的占位符。</p>
+<p>方法 <code>Prompt create(``Map&lt;String, Object&gt;`` model, ChatOptions modelOptions)</code> ：扩展提示创建功能以包含动态内容，采用 <code>Map&lt;String, Object&gt;</code> （其中每个映射条目都是提示模板中的占位符及其关联的动态值）以及聊天请求的特定选项。</p>
+<h2 id="示例用法">
+  示例用法
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b%e7%94%a8%e6%b3%95">#</a>
+</h2>
+<p>下面是一个取自 [
+  <a href="https://github.com/Azure-Samples/spring-ai-azure-workshop/blob/main/2-README-prompt-templating.md">PromptTemplates 人工智能研讨会的</a>](
+  <a href="https://github.com/Azure-Samples/spring-ai-azure-workshop/blob/main/2-README-prompt-templating.md">https://github.com/Azure-Samples/spring-ai-azure-workshop/blob/main/2-README-prompt-templating.md</a>)简单示例。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>PromptTemplate promptTemplate <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> PromptTemplate(<span style="color:#e6db74">&#34;Tell me a {adjective} joke about {topic}&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> promptTemplate.<span style="color:#a6e22e">create</span>(Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;adjective&#34;</span>, adjective, <span style="color:#e6db74">&#34;topic&#34;</span>, topic));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">return</span> chatModel.<span style="color:#a6e22e">call</span>(prompt).<span style="color:#a6e22e">getResult</span>();
+</span></span></code></pre></div><p>下面是从[
+  <a href="https://github.com/Azure-Samples/spring-ai-azure-workshop/blob/main/3-README-prompt-roles.md">角色人工智能研讨会中</a>](
+  <a href="https://github.com/Azure-Samples/spring-ai-azure-workshop/blob/main/3-README-prompt-roles.md">https://github.com/Azure-Samples/spring-ai-azure-workshop/blob/main/3-README-prompt-roles.md</a>)摘取的另一个示例。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String userText <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Tell me about three famous pirates from the Golden Age of Piracy and why they did.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    Write at least a sentence for each pirate.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Message userMessage <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> UserMessage(userText);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String systemText <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  You are a helpful AI assistant that helps people find information.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Your name is {name}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  You should reply to the user&#39;s request with your name and also in the style of a {voice}.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>SystemPromptTemplate systemPromptTemplate <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> SystemPromptTemplate(systemText);
+</span></span><span style="display:flex;"><span>Message systemMessage <span style="color:#f92672">=</span> systemPromptTemplate.<span style="color:#a6e22e">createMessage</span>(Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;name&#34;</span>, name, <span style="color:#e6db74">&#34;voice&#34;</span>, voice));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(List.<span style="color:#a6e22e">of</span>(userMessage, systemMessage));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>List<span style="color:#f92672">&lt;</span>Generation<span style="color:#f92672">&gt;</span> response <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(prompt).<span style="color:#a6e22e">getResults</span>();
+</span></span></code></pre></div><p>这展示了如何使用 System<code>Prompt</code>Template 创建一条 <code>Message</code> 来构建 <code>Prompt</code> 实例，该 <code>Message</code> 带有系统角色，并传入占位符值。然后将带有角色 <code>user</code> 的消息与角色 <code>system</code> 的消息组合起来形成提示。之后，该提示会被传递给 ChatModel 以获得生成的响应。</p>
+<h2 id="使用自定义模板渲染器">
+  使用自定义模板渲染器
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e8%87%aa%e5%ae%9a%e4%b9%89%e6%a8%a1%e6%9d%bf%e6%b8%b2%e6%9f%93%e5%99%a8">#</a>
+</h2>
+<p>您可以通过实现 <code>TemplateRenderer</code> 接口并将其传递给 <code>PromptTemplate</code> 构造函数来使用自定义模板渲染器。您也可以继续使用默认的 St<code>TemplateRenderer</code> ，但需要自定义配置。</p>
+<p>默认情况下，模板变量由 <code>{}</code> 语法标识。如果您计划在提示中包含 JSON，则可能需要使用其他语法以避免与 JSON 语法冲突。例如，您可以使用 <code>&lt;</code> 和 <code>&gt;</code> 分隔符。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>PromptTemplate promptTemplate <span style="color:#f92672">=</span> PromptTemplate.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">renderer</span>(StTemplateRenderer.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">startDelimiterToken</span>(<span style="color:#e6db74">&#39;&lt;&#39;</span>).<span style="color:#a6e22e">endDelimiterToken</span>(<span style="color:#e6db74">&#39;&gt;&#39;</span>).<span style="color:#a6e22e">build</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">template</span>(<span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            Tell me the names of 5 movies whose soundtrack was composed by &lt;composer&gt;.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;&#34;&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String prompt <span style="color:#f92672">=</span> promptTemplate.<span style="color:#a6e22e">render</span>(Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;composer&#34;</span>, <span style="color:#e6db74">&#34;John Williams&#34;</span>));
+</span></span></code></pre></div><h2 id="使用资源而不是原始字符串">
+  使用资源而不是原始字符串
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e8%b5%84%e6%ba%90%e8%80%8c%e4%b8%8d%e6%98%af%e5%8e%9f%e5%a7%8b%e5%ad%97%e7%ac%a6%e4%b8%b2">#</a>
+</h2>
+<p>Spring AI 支持 `org.springframework.core.io.<code>Resource``` 抽象，因此您可以将提示数据放入可直接在 </code>PromptTemplate<code>中使用的文件中。例如，您可以在 Spring 托管组件中定义一个字段来检索</code>Resource`` 。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Value</span>(<span style="color:#e6db74">&#34;classpath:/prompts/system-message.st&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span> Resource systemResource;
+</span></span></code></pre></div><p>然后将该资源直接传递给 <code>SystemPromptTemplate</code> 。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>SystemPromptTemplate systemPromptTemplate <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> SystemPromptTemplate(systemResource);
+</span></span></code></pre></div><h2 id="快速工程">
+  快速工程
+  <a class="anchor" href="#%e5%bf%ab%e9%80%9f%e5%b7%a5%e7%a8%8b">#</a>
+</h2>
+<p>在生成式人工智能中，创建提示对于开发人员来说是一项至关重要的任务。这些提示的质量和结构会显著影响人工智能输出的有效性。投入时间和精力设计周到的提示可以显著提升人工智能的成果。</p>
+<p>分享和讨论提示是人工智能社区的常见做法。这种协作方式不仅营造了共享的学习环境，还能帮助人们识别和使用高效的提示。</p>
+<p>该领域的研究通常涉及分析和比较不同的提示，以评估它们在不同情况下的有效性。例如，一项重要的研究表明，以“深呼吸，一步一步解决这个问题”作为提示开头，可以显著提高解决问题的效率。这凸显了精心选择的语言对生成式人工智能系统性能的影响。</p>
+<p>掌握最有效的提示使用方法，尤其是在人工智能技术飞速发展的今天，是一项持续的挑战。您应该认识到提示工程的重要性，并考虑借鉴社区和研究的洞见来改进提示创建策略。</p>
+<h2 id="创建有效的提示">
+  创建有效的提示
+  <a class="anchor" href="#%e5%88%9b%e5%bb%ba%e6%9c%89%e6%95%88%e7%9a%84%e6%8f%90%e7%a4%ba">#</a>
+</h2>
+<p>在制定提示时，整合几个关键组件以确保清晰度和有效性非常重要：</p>
+<ul>
+<li>指示 ：向 AI 提供清晰直接的指令，类似于与人沟通的方式。这种清晰的指令对于帮助 AI“理解”预期至关重要。</li>
+<li>外部背景 ：在必要时，包含相关的背景信息或 AI 响应的具体指导。这种“外部背景”构成了提示的框架，并帮助 AI 掌握整体场景。</li>
+<li>用户输入 ：这是最直接的部分——用户的直接请求或问题构成提示的核心。</li>
+<li>输出指示符 ：这方面可能比较棘手。它需要指定 AI 响应所需的格式，例如 JSON。但请注意，AI 可能并不总是严格遵循此格式。例如，它可能会将“这是你的 JSON”之类的短语添加到实际 JSON 数据之前，或者有时会生成不准确的类似 JSON 的结构。</li>
+</ul>
+<p>在设计提示时，为 AI 提供预期问答格式的示例非常有益。这种做法有助于 AI“理解”查询的结构和意图，从而提供更精确、更相关的响应。虽然本文档并未深入探讨这些技术，但它们为进一步探索 AI 提示工程提供了一个起点。</p>
+<p>以下是需要进一步调查的资源列表。</p>
+<h2 id="简单技巧">
+  简单技巧
+  <a class="anchor" href="#%e7%ae%80%e5%8d%95%e6%8a%80%e5%b7%a7">#</a>
+</h2>
+<ul>
+<li>将大量文本精简为简洁的摘要，捕捉关键点和主要思想，同时省略不太重要的细节。</li>
+<li>专注于根据用户提出的问题，从提供的文本中获取具体答案。它旨在精准定位并提取相关信息以响应查询。</li>
+<li>系统地将文本分类到预定义的类别或组中，分析文本并根据其内容将其分配到最合适的类别。</li>
+<li>创建交互式对话，让人工智能可以与用户进行来回交流，模拟自然的对话流程。</li>
+<li>根据特定的用户要求或描述生成功能代码片段，将自然语言指令转换为可执行代码。</li>
+</ul>
+<h2 id="高级技术">
+  高级技术
+  <a class="anchor" href="#%e9%ab%98%e7%ba%a7%e6%8a%80%e6%9c%af">#</a>
+</h2>
+<ul>
+<li>使模型能够在特定问题类型的极少或没有先前示例的情况下做出准确的预测或响应，并使用学习到的概括来理解和执行新任务。</li>
+<li>链接多个 AI 响应，创建连贯且符合语境的对话。它有助于 AI 保持讨论的线索，确保相关性和连续性。</li>
+<li>在这种方法中，人工智能首先分析输入（原因），然后确定最合适的行动或响应方案。它将理解与决策结合在一起。</li>
+</ul>
+<h2 id="microsoft-指导">
+  Microsoft 指导
+  <a class="anchor" href="#microsoft-%e6%8c%87%e5%af%bc">#</a>
+</h2>
+<ul>
+<li>微软提供了一种结构化的方法来开发和完善提示。该框架指导用户创建有效的提示，以便从 AI 模型中获取所需的响应，并优化交互以提高清晰度和效率。</li>
+</ul>
+<h2 id="代币">
+  代币
+  <a class="anchor" href="#%e4%bb%a3%e5%b8%81">#</a>
+</h2>
+<p>标记在 AI 模型处理文本的过程中至关重要，它充当着将我们理解的单词转换为 AI 模型能够处理的格式的桥梁。这种转换分为两个阶段：输入时将单词转换为标记，然后在输出时将这些标记转换回单词。</p>
+<p>标记化是将文本分解成标记的过程，它是 AI 模型理解和处理语言的基础。AI 模型运用这种标记化格式来理解并响应提示。</p>
+<p>为了更好地理解标记，可以将它们视为单词的一部分。通常，一个标记代表一个单词的四分之三左右。例如，莎士比亚全集共约 90 万字，翻译过来大约需要 120 万个标记。</p>
+<p>试验 [
+  <a href="https://platform.openai.com/tokenizer">OpenAI Tokenizer UI</a>](
+  <a href="https://platform.openai.com/tokenizer">https://platform.openai.com/tokenizer</a>) 来查看单词如何转换为标记。</p>
+<p>代币除了在人工智能处理中的技术作用外，还具有实际意义，特别是在计费和模型功能方面：</p>
+<ul>
+<li>计费：AI 模型服务通常根据令牌使用情况计费。输入（提示）和输出（响应）都会计入令牌总数，因此较短的提示更具成本效益。</li>
+<li>模型限制：不同的 AI 模型具有不同的令牌限制，这定义了它们的“上下文窗口”——即它们一次可以处理的最大信息量。例如，GPT-3 的限制为 4000 个令牌，而 Claude 2 和 Meta Llama 2 等其他模型的限制为 10 万个令牌，一些研究模型最多可以处理 100 万个令牌。</li>
+<li>上下文窗口：模型的令牌限制决定了其上下文窗口。超过此限制的输入不会被模型处理。务必仅发送最少的有效信息集进行处理。例如，在查询《哈姆雷特》时，无需包含莎士比亚所有其他作品的令牌。</li>
+<li>响应元数据：来自 AI 模型的响应的元数据包括使用的令牌数量，这是管理使用情况和成本的重要信息。</li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#提示">提示</a>
+      <ul>
+        <li><a href="#api-概述">API 概述</a></li>
+        <li><a href="#迅速的">迅速的</a></li>
+        <li><a href="#信息">信息</a></li>
+        <li><a href="#角色">角色</a></li>
+        <li><a href="#提示模板">提示模板</a></li>
+        <li><a href="#示例用法">示例用法</a></li>
+        <li><a href="#使用自定义模板渲染器">使用自定义模板渲染器</a></li>
+        <li><a href="#使用资源而不是原始字符串">使用资源而不是原始字符串</a></li>
+        <li><a href="#快速工程">快速工程</a></li>
+        <li><a href="#创建有效的提示">创建有效的提示</a></li>
+        <li><a href="#简单技巧">简单技巧</a></li>
+        <li><a href="#高级技术">高级技术</a></li>
+        <li><a href="#microsoft-指导">Microsoft 指导</a></li>
+        <li><a href="#代币">代币</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

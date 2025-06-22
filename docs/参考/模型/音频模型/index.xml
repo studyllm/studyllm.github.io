@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>音频模型 on Spring AI 1.0.0</title>
+    <link>https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/</link>
+    <description>Recent content in 音频模型 on Spring AI 1.0.0</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <atom:link href="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/index.xml" rel="self" type="application/rss+xml" />
+  </channel>
+</rss>

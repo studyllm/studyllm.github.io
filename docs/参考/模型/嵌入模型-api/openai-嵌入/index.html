@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  OpenAI 嵌入
+  #
+
+Spring AI 支持 OpenAI 的文本嵌入模型。OpenAI 的文本嵌入用于衡量文本字符串的相关性。嵌入是一个浮点数向量（列表）。两个向量之间的距离衡量它们的相关性。距离越小，相关性越高；距离越大，相关性越低。
+
+  先决条件
+  #
+
+您需要使用 OpenAI 创建一个 API 来访问 OpenAI 嵌入模型。
+在 [
+  OpenAI 注册页面](
+  https://platform.openai.com/signup)创建一个帐户，并在 [
+  API 密钥页面](
+  https://platform.openai.com/account/api-keys)上生成令牌。
+Spring AI 项目定义了一个名为 spring.ai.openai.api-key 的配置属性，您应该将其设置为从 openai.com 获取的 API Key 的值。
+您可以在 application.properties 文件中设置此配置属性：
+spring.ai.openai.api-key=&lt;your-openai-api-key&gt;
+为了在处理 API 密钥等敏感信息时增强安全性，您可以使用 Spring 表达式语言 (SpEL) 来引用环境变量：
+# In application.yml
+spring:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+# In your environment or .env file
+export OPENAI_API_KEY=&lt;your-openai-api-key&gt;
+您还可以在应用程序代码中以编程方式设置此配置：
+// Retrieve API key from a secure source or environment variable
+String apiKey = System.getenv(&#34;OPENAI_API_KEY&#34;);
+
+  添加存储库和 BOM
+  #
+
+Spring AI 的构件已发布在 Maven Central 和 Spring Snapshot 仓库中。请参阅 [
+  “构件仓库”](../../getting-started.html#artifact-repositories) 部分，将这些仓库添加到您的构建系统中。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/openai-%E5%B5%8C%E5%85%A5/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="OpenAI 嵌入">
+  <meta property="og:description" content="OpenAI 嵌入 # Spring AI 支持 OpenAI 的文本嵌入模型。OpenAI 的文本嵌入用于衡量文本字符串的相关性。嵌入是一个浮点数向量（列表）。两个向量之间的距离衡量它们的相关性。距离越小，相关性越高；距离越大，相关性越低。
+先决条件 # 您需要使用 OpenAI 创建一个 API 来访问 OpenAI 嵌入模型。
+在 [ OpenAI 注册页面]( https://platform.openai.com/signup)创建一个帐户，并在 [ API 密钥页面]( https://platform.openai.com/account/api-keys)上生成令牌。
+Spring AI 项目定义了一个名为 spring.ai.openai.api-key 的配置属性，您应该将其设置为从 openai.com 获取的 API Key 的值。
+您可以在 application.properties 文件中设置此配置属性：
+spring.ai.openai.api-key=&lt;your-openai-api-key&gt; 为了在处理 API 密钥等敏感信息时增强安全性，您可以使用 Spring 表达式语言 (SpEL) 来引用环境变量：
+# In application.yml spring: ai: openai: api-key: ${OPENAI_API_KEY} # In your environment or .env file export OPENAI_API_KEY=&lt;your-openai-api-key&gt; 您还可以在应用程序代码中以编程方式设置此配置：
+// Retrieve API key from a secure source or environment variable String apiKey = System.getenv(&#34;OPENAI_API_KEY&#34;); 添加存储库和 BOM # Spring AI 的构件已发布在 Maven Central 和 Spring Snapshot 仓库中。请参阅 [ “构件仓库”](../../getting-started.html#artifact-repositories) 部分，将这些仓库添加到您的构建系统中。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>OpenAI 嵌入 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../../../favicon.png" >
+<link rel="manifest" href="../../../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/openai-%E5%B5%8C%E5%85%A5/">
+<link rel="stylesheet" href="../../../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../../../fuse.min.js"></script>
+  <script defer src="../../../../../en.search.min.71e7e6c2939a8c322f56321bb68fc2082c0a37b8656d9a9617fd1c6ebfbb4f37.js" integrity="sha256-cefmwpOajDIvVjIbto/CCCwKN7hlbZqWF/0cbr&#43;7Tzc=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ab79ee7c06b73ed1cac487be78704b1a" class="toggle"  />
+    <label for="section-ab79ee7c06b73ed1cac487be78704b1a" class="flex justify-between">
+      <a href="../../../../../docs/%E4%BB%8B%E7%BB%8D/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E4%BB%8B%E7%BB%8D/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="toggle" checked />
+    <label for="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/" class="">参考</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-861f1f33bc8d3da259fc08a7bd3778e9" class="toggle"  />
+    <label for="section-861f1f33bc8d3da259fc08a7bd3778e9" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/%E9%A1%BE%E9%97%AE-api/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%8F%90%E7%A4%BA/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA%E8%BD%AC%E6%8D%A2%E5%99%A8/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E5%A4%9A%E6%A8%A1%E6%80%81-api/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f78b15e57dfff314304a2bb1e9884f4a" class="toggle" checked />
+    <label for="section-f78b15e57dfff314304a2bb1e9884f4a" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/" class="">模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f01f599500243d0a36d315cf18df347c" class="toggle"  />
+    <label for="section-f01f599500243d0a36d315cf18df347c" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9-converse/" class="">亚马逊基岩 Converse</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%BA%E7%B1%BB%E5%AD%A6-3-%E8%81%8A%E5%A4%A9/" class="">人类学 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/azure-openai-%E8%81%8A%E5%A4%A9/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/deepseek-%E8%81%8A%E5%A4%A9/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/docker-%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E8%80%85%E8%81%8A%E5%A4%A9/" class="">Docker 模型运行者聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-810d79b9e4561cb82f174a0a980239af" class="toggle"  />
+    <label for="section-810d79b9e4561cb82f174a0a980239af" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/vertexai-gemini-%E8%81%8A%E5%A4%A9/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/groq-%E8%81%8A%E5%A4%A9/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%8B%A5%E6%8A%B1%E8%84%B8%E8%81%8A%E5%A4%A9/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/mistral-%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E8%81%8A%E5%A4%A9/" class="">Mistral 人工智能聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/moonshot-ai-%E8%81%8A%E5%A4%A9/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/nvidia-%E8%81%8A%E5%A4%A9/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9/" class="">聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%9B%B0%E6%83%91%E8%81%8A%E5%A4%A9/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99bf04ea1225435ee3d3aac878598d1b" class="toggle"  />
+    <label for="section-99bf04ea1225435ee3d3aac878598d1b" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/" class="">OCI 生成式 AI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/oci-genai-%E5%8D%8F%E5%90%8C%E8%81%8A%E5%A4%A9/" class="">OCI GenAI 协同聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/openai-%E8%81%8A%E5%A4%A9/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E8%81%8A%E5%A4%A9/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%99%BA%E6%B5%A6-ai-%E8%81%8A%E5%A4%A9/" class="">智浦 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-402a989be78a917606348d6ff6652ff7" class="toggle" checked />
+    <label for="section-402a989be78a917606348d6ff6652ff7" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-56d4fbd63aba9093164f2784fdd04677" class="toggle"  />
+    <label for="section-56d4fbd63aba9093164f2784fdd04677" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2%E5%B5%8C%E5%85%A5/" class="">相干嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6%E5%B5%8C%E5%85%A5/" class="">泰坦嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%B5%8C%E5%85%A5/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/mistral-ai-%E5%B5%8C%E5%85%A5/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/oracle-%E4%BA%91%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD-oci-genai-%E5%B5%8C%E5%85%A5/" class="">Oracle 云基础设施 (OCI) GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/ollama-%E5%B5%8C%E5%85%A5/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/transformersonnx%E5%B5%8C%E5%85%A5/" class="">Transformers（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/openai-%E5%B5%8C%E5%85%A5/" class="active">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/postgresml-%E5%B5%8C%E5%85%A5/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%B5%8C%E5%85%A5/" class="">千帆嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6ef09998ce281d0b28a33f495c099c64" class="toggle"  />
+    <label for="section-6ef09998ce281d0b28a33f495c099c64" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%B5%8C%E5%85%A5/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-76b7909527d5ee378c9b7db9a7915572" class="toggle"  />
+    <label for="section-76b7909527d5ee378c9b7db9a7915572" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">Azure OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E7%A8%B3%E5%AE%9A%E6%80%A7-ai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">ZhiPuAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%BD%B1%E5%83%8F/" class="">千帆影像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="toggle"  />
+    <label for="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/" class="">音频模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7819d6457dfee9d52c1df4ade06e9929" class="toggle"  />
+    <label for="section-7819d6457dfee9d52c1df4ade06e9929" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/azure-openai-%E8%BD%AC%E5%BD%95/" class="">Azure OpenAI 转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4d35c258b8bf725a4f8fe541655ffeee" class="toggle"  />
+    <label for="section-4d35c258b8bf725a4f8fe541655ffeee" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/" class="">文本转语音 (TTS) API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/openai-%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts/" class="">OpenAI 文本转语音 (TTS)</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f10d18dff0bfc099fff60511d3eb1388" class="toggle"  />
+    <label for="section-f10d18dff0bfc099fff60511d3eb1388" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/" class="">适度</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/%E9%80%82%E5%BA%A6/" class="">适度</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E8%AE%B0%E5%BF%86/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-137a5cc62c39eb40ab9f360dd7a4089e" class="toggle"  />
+    <label for="section-137a5cc62c39eb40ab9f360dd7a4089e" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 客户端启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 服务器启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-fe0a04b7ec0575e520d9c454f1ab8388" class="toggle"  />
+    <label for="section-fe0a04b7ec0575e520d9c454f1ab8388" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/" class="">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/etl-%E7%AE%A1%E9%81%93/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E8%AF%84%E4%BC%B0%E6%B5%8B%E8%AF%95/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c22b15d029e06bc3f36d75f90efdc60f" class="toggle"  />
+    <label for="section-c22b15d029e06bc3f36d75f90efdc60f" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai-%E6%9C%8D%E5%8A%A1/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos-db/" class="">Azure Cosmos DB</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra-%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/couchbase/" class="">Couchbase</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/elasticsearch/" class="">Elasticsearch</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire-%E7%9F%A2%E9%87%8F%E5%95%86%E5%BA%97/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb-%E5%90%91%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB 向量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/milvus/" class="">Milvus</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb-atlas/" class="">MongoDB Atlas</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j/" class="">Neo4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%80%E6%94%BE%E6%90%9C%E7%B4%A2/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/oracle-database-23ai---ai-%E5%90%91%E9%87%8F%E6%90%9C%E7%B4%A2/" class="">Oracle Database 23ai - AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg-%E8%BD%BD%E4%BD%93/" class="">PG 载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%8D%A1%E5%BE%B7%E5%85%B0%E7%89%B9/" class="">卡德兰特</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" class="">Redis</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap-hana-%E4%BA%91/" class="">SAP HANA 云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/typesense/" class="">Typesense</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%A8%81%E7%BB%B4%E7%89%B9/" class="">威维特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E5%BC%80%E5%8F%91%E6%97%B6%E6%9C%8D%E5%8A%A1/" class="">开发时服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-13f6ed8395cc1d209c839158e47f69af" class="toggle"  />
+    <label for="section-13f6ed8395cc1d209c839158e47f69af" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/" class="">测试</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-eb04feb0bc33d1a0586638a4be3d86d6" class="toggle"  />
+    <label for="section-eb04feb0bc33d1a0586638a4be3d86d6" class="flex justify-between">
+      <a href="../../../../../docs/%E6%8C%87%E5%8D%97/" class="">指南</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E6%8C%87%E5%8D%97/%E6%8F%90%E7%A4%BA%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E6%8C%87%E5%8D%97/%E6%9E%84%E5%BB%BA%E6%9C%89%E6%95%88%E4%BB%A3%E7%90%86/" class="">构建有效代理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E6%8C%87%E5%8D%97/%E4%BA%91%E7%BB%91%E5%AE%9A/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-21dbdbec9c50b4c816faee9156087e37" class="toggle"  />
+    <label for="section-21dbdbec9c50b4c816faee9156087e37" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/%E4%BB%8E-functioncallback-%E8%BF%81%E7%A7%BB%E5%88%B0-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>OpenAI 嵌入</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#openai-嵌入">OpenAI 嵌入</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#添加存储库和-bom">添加存储库和 BOM</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#嵌入属性">嵌入属性</a></li>
+        <li><a href="#重试属性">重试属性</a></li>
+        <li><a href="#连接属性">连接属性</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#运行时选项">运行时选项</a></li>
+        <li><a href="#样品控制器">样品控制器</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="openai-嵌入">
+  OpenAI 嵌入
+  <a class="anchor" href="#openai-%e5%b5%8c%e5%85%a5">#</a>
+</h1>
+<p>Spring AI 支持 OpenAI 的文本嵌入模型。OpenAI 的文本嵌入用于衡量文本字符串的相关性。嵌入是一个浮点数向量（列表）。两个向量之间的距离衡量它们的相关性。距离越小，相关性越高；距离越大，相关性越低。</p>
+<h2 id="先决条件">
+  先决条件
+  <a class="anchor" href="#%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6">#</a>
+</h2>
+<p>您需要使用 OpenAI 创建一个 API 来访问 OpenAI 嵌入模型。</p>
+<p>在 [
+  <a href="https://platform.openai.com/signup">OpenAI 注册页面</a>](
+  <a href="https://platform.openai.com/signup">https://platform.openai.com/signup</a>)创建一个帐户，并在 [
+  <a href="https://platform.openai.com/account/api-keys">API 密钥页面</a>](
+  <a href="https://platform.openai.com/account/api-keys">https://platform.openai.com/account/api-keys</a>)上生成令牌。</p>
+<p>Spring AI 项目定义了一个名为 <code>spring.ai.openai.api-key</code> 的配置属性，您应该将其设置为从 openai.com 获取的 <code>API Key</code> 的值。</p>
+<p>您可以在 <code>application.properties</code> 文件中设置此配置属性：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.api-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;your-openai-api-key&gt;</span>
+</span></span></code></pre></div><p>为了在处理 API 密钥等敏感信息时增强安全性，您可以使用 Spring 表达式语言 (SpEL) 来引用环境变量：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># In application.yml</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">openai</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">api-key</span>: <span style="color:#ae81ff">${OPENAI_API_KEY}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># In your environment or .env file</span>
+</span></span><span style="display:flex;"><span>export OPENAI_API_KEY<span style="color:#f92672">=</span>&lt;your-openai-api-key&gt;
+</span></span></code></pre></div><p>您还可以在应用程序代码中以编程方式设置此配置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Retrieve API key from a secure source or environment variable</span>
+</span></span><span style="display:flex;"><span>String apiKey <span style="color:#f92672">=</span> System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>);
+</span></span></code></pre></div><h2 id="添加存储库和-bom">
+  添加存储库和 BOM
+  <a class="anchor" href="#%e6%b7%bb%e5%8a%a0%e5%ad%98%e5%82%a8%e5%ba%93%e5%92%8c-bom">#</a>
+</h2>
+<p>Spring AI 的构件已发布在 Maven Central 和 Spring Snapshot 仓库中。请参阅 [
+  <a href="../../getting-started.html#artifact-repositories">“构件仓库”</a>](../../getting-started.html#artifact-repositories) 部分，将这些仓库添加到您的构建系统中。</p>
+<p>为了帮助管理依赖项，Spring AI 提供了 BOM（物料清单），以确保在整个项目中使用一致版本的 Spring AI。请参阅[
+  <a href="../../getting-started.html#dependency-management">依赖项管理</a>](../../getting-started.html#dependency-management)部分，将 Spring AI BOM 添加到您的构建系统中。</p>
+<h2 id="自动配置">
+  自动配置
+  <a class="anchor" href="#%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>Spring AI 为 OpenAI 嵌入模型提供了 Spring Boot 自动配置功能。要启用此功能，请将以下依赖项添加到项目的 Maven <code>pom.xml</code> 文件中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-starter-model-openai<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或者到你的 Gradle <code>build.gradle</code> 构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-starter-model-openai&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><h2 id="嵌入属性">
+  嵌入属性
+  <a class="anchor" href="#%e5%b5%8c%e5%85%a5%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<h2 id="重试属性">
+  重试属性
+  <a class="anchor" href="#%e9%87%8d%e8%af%95%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>前缀 <code>spring.ai.retry</code> 用作属性前缀，可让您配置 OpenAI Embedding 模型的重试机制。</p>
+<h2 id="连接属性">
+  连接属性
+  <a class="anchor" href="#%e8%bf%9e%e6%8e%a5%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>前缀 <code>spring.ai.openai</code> 用作允许您连接到 OpenAI 的属性前缀。</p>
+<h2 id="配置属性">
+  配置属性
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>前缀 <code>spring.ai.openai.embedding</code> 是配置 OpenAI 的 <code>EmbeddingModel</code> 实现的属性前缀。</p>
+<h2 id="运行时选项">
+  运行时选项
+  <a class="anchor" href="#%e8%bf%90%e8%a1%8c%e6%97%b6%e9%80%89%e9%a1%b9">#</a>
+</h2>
+<p>[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiEmbeddingOptions.java">OpenAiEmbeddingOptions.java</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/[OpenAiEmbeddingOptions.java]%28https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiEmbeddingOptions.java%29">https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/[OpenAiEmbeddingOptions.java](https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiEmbeddingOptions.java)</a>) 提供 OpenAI 配置，例如要使用的模型等。</p>
+<p>也可以使用 <code>spring.ai.openai.embedding.options</code> 属性来配置默认选项。</p>
+<p>启动时，使用 <code>OpenAiEmbeddingModel</code> 构造函数设置所有嵌入请求的默认选项。运行时，您可以使用 <code>OpenAiEmbeddingOptions</code> 实例作为 <code>EmbeddingRequest</code> 的一部分来覆盖默认选项。</p>
+<p>例如，要覆盖特定请求的默认模型名称：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>EmbeddingResponse embeddingResponse <span style="color:#f92672">=</span> embeddingModel.<span style="color:#a6e22e">call</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> EmbeddingRequest(List.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;Hello World&#34;</span>, <span style="color:#e6db74">&#34;World is big and salvation is near&#34;</span>),
+</span></span><span style="display:flex;"><span>        OpenAiEmbeddingOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;Different-Embedding-Model-Deployment-Name&#34;</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>()));
+</span></span></code></pre></div><h2 id="样品控制器">
+  样品控制器
+  <a class="anchor" href="#%e6%a0%b7%e5%93%81%e6%8e%a7%e5%88%b6%e5%99%a8">#</a>
+</h2>
+<p>这将创建一个 <code>EmbeddingModel</code> 实现，您可以将其注入到您的类中。这是一个使用 <code>EmbeddingModel</code> 实现的简单 <code>@Controller</code> 类的示例。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-application.properties" data-lang="application.properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.api-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">YOUR_API_KEY</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.embedding.options.model</span><span style="color:#f92672">=</span><span style="color:#e6db74">text-embedding-ada-002</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@RestController</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">EmbeddingController</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> EmbeddingModel embeddingModel;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Autowired</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">EmbeddingController</span>(EmbeddingModel embeddingModel) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">embeddingModel</span> <span style="color:#f92672">=</span> embeddingModel;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@GetMapping</span>(<span style="color:#e6db74">&#34;/ai/embedding&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Map <span style="color:#a6e22e">embed</span>(<span style="color:#a6e22e">@RequestParam</span>(value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;message&#34;</span>, defaultValue <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Tell me a joke&#34;</span>) String message) {
+</span></span><span style="display:flex;"><span>        EmbeddingResponse embeddingResponse <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">embeddingModel</span>.<span style="color:#a6e22e">embedForResponse</span>(List.<span style="color:#a6e22e">of</span>(message));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;embedding&#34;</span>, embeddingResponse);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="手动配置">
+  手动配置
+  <a class="anchor" href="#%e6%89%8b%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>如果您不使用 Spring Boot，则可以手动配置 OpenAI 嵌入模型。为此，请将 <code>spring-ai-openai</code> 依赖项添加到项目的 Maven <code>pom.xml</code> 文件中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-openai<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或者到你的 Gradle <code>build.gradle</code> 构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-openai&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>接下来，创建一个 <code>OpenAiEmbeddingModel</code> 实例并使用它来计算两个输入文本之间的相似度：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> openAiApi <span style="color:#f92672">=</span> OpenAiApi.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">apiKey</span>(System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>))
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> embeddingModel <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> OpenAiEmbeddingModel(
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">openAiApi</span>,
+</span></span><span style="display:flex;"><span>        MetadataMode.<span style="color:#a6e22e">EMBED</span>,
+</span></span><span style="display:flex;"><span>        OpenAiEmbeddingOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;text-embedding-ada-002&#34;</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">user</span>(<span style="color:#e6db74">&#34;user-6&#34;</span>)
+</span></span><span style="display:flex;"><span>                .<span style="color:#a6e22e">build</span>(),
+</span></span><span style="display:flex;"><span>        RetryUtils.<span style="color:#a6e22e">DEFAULT_RETRY_TEMPLATE</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>EmbeddingResponse embeddingResponse <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">embeddingModel</span>
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">embedForResponse</span>(List.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;Hello World&#34;</span>, <span style="color:#e6db74">&#34;World is big and salvation is near&#34;</span>));
+</span></span></code></pre></div><p><code>OpenAiEmbeddingOptions</code> 提供嵌入请求的配置信息。api 和 options 类提供了一个 <code>builder()</code> ，方便用户轻松创建选项。</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#openai-嵌入">OpenAI 嵌入</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#添加存储库和-bom">添加存储库和 BOM</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#嵌入属性">嵌入属性</a></li>
+        <li><a href="#重试属性">重试属性</a></li>
+        <li><a href="#连接属性">连接属性</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#运行时选项">运行时选项</a></li>
+        <li><a href="#样品控制器">样品控制器</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

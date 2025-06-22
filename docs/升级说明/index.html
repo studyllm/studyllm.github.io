@@ -1,0 +1,2841 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  升级说明
+  #
+
+
+  升级到 1.0.0-SNAPSHOT
+  #
+
+
+  概述
+  #
+
+1.0.0-SNAPSHOT 版本对构件 ID、软件包名称和模块结构进行了重大更改。本节提供有关使用 SNAPSHOT 版本的具体指导。
+
+  添加快照存储库
+  #
+
+要使用 1.0.0-SNAPSHOT 版本，您需要将快照存储库添加到构建文件中。有关详细说明，请参阅入门指南中的 [
+  “快照 - 添加快照存储库”](getting-started.html#snapshots-add-snapshot-repositories) 部分。
+
+  更新依赖管理
+  #
+
+在构建配置中，将 Spring AI BOM 版本更新为 1.0.0-SNAPSHOT 。有关配置依赖项管理的详细说明，请参阅入门指南中的 [
+  “依赖项管理”](getting-started.html#dependency-management) 部分。
+
+  工件 ID、包和模块变更
+  #
+
+1.0.0-SNAPSHOT 包括对工件 ID、包名称和模块结构的更改。
+详情请参考：- [
+  通用神器 ID 变更](#common-artifact-id-changes)
+
+[
+  常见软件包变更](#common-package-changes)
+[
+  通用模块结构](#common-module-structure)
+
+
+  升级到 1.0.0-RC1
+  #
+
+您可以使用 OpenRewrite 配方自动升级到 1.0.0-RC1。此配方有助于应用此版本所需的许多代码更改。您可以在 [
+  Arconia Spring AI 迁移](
+  https://github.com/arconia-io/arconia-migrations/blob/main/docs/spring-ai.md)中找到配方和使用说明。
+
+  重大变化
+  #
+
+
+  聊天客户端和顾问
+  #
+
+影响最终用户代码的主要变化是：
+
+在 VectorStoreChatMemoryAdvisor 中：
+
+常量 CHAT_MEMORY_RETRIEVE_SIZE_KEY 已重命名为 TOP_K 。
+常量 DEFAULT_CHAT_MEMORY_RESPONSE_SIZE （值：100）已重命名为 DEFAULT_TOP_K ，其新默认值为 20。
+
+
+常量 CHAT_MEMORY_RETRIEVE_SIZE_KEY 已重命名为 TOP_K 。
+常量 DEFAULT_CHAT_MEMORY_RESPONSE_SIZE （值：100）已重命名为 DEFAULT_TOP_K ，其新默认值为 20。
+常量 CHAT_MEMORY_CONVERSATION_ID_KEY 已重命名为 CONVERSATION_ID ，并从 AbstractChatMemoryAdvisor 移至 ChatMemory 接口。请更新您的导入以使用 org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID 。
+
+
+  顾问中的自包含模板
+  #
+
+执行提示增强的内置顾问已更新为使用自包含模板。目标是使每个顾问能够执行模板操作，而不会影响或受其他顾问中的模板和提示决策的影响。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="升级说明">
+  <meta property="og:description" content="升级说明 # 升级到 1.0.0-SNAPSHOT # 概述 # 1.0.0-SNAPSHOT 版本对构件 ID、软件包名称和模块结构进行了重大更改。本节提供有关使用 SNAPSHOT 版本的具体指导。
+添加快照存储库 # 要使用 1.0.0-SNAPSHOT 版本，您需要将快照存储库添加到构建文件中。有关详细说明，请参阅入门指南中的 [ “快照 - 添加快照存储库”](getting-started.html#snapshots-add-snapshot-repositories) 部分。
+更新依赖管理 # 在构建配置中，将 Spring AI BOM 版本更新为 1.0.0-SNAPSHOT 。有关配置依赖项管理的详细说明，请参阅入门指南中的 [ “依赖项管理”](getting-started.html#dependency-management) 部分。
+工件 ID、包和模块变更 # 1.0.0-SNAPSHOT 包括对工件 ID、包名称和模块结构的更改。
+详情请参考：- [ 通用神器 ID 变更](#common-artifact-id-changes)
+[ 常见软件包变更](#common-package-changes) [ 通用模块结构](#common-module-structure) 升级到 1.0.0-RC1 # 您可以使用 OpenRewrite 配方自动升级到 1.0.0-RC1。此配方有助于应用此版本所需的许多代码更改。您可以在 [ Arconia Spring AI 迁移]( https://github.com/arconia-io/arconia-migrations/blob/main/docs/spring-ai.md)中找到配方和使用说明。
+重大变化 # 聊天客户端和顾问 # 影响最终用户代码的主要变化是：
+在 VectorStoreChatMemoryAdvisor 中： 常量 CHAT_MEMORY_RETRIEVE_SIZE_KEY 已重命名为 TOP_K 。 常量 DEFAULT_CHAT_MEMORY_RESPONSE_SIZE （值：100）已重命名为 DEFAULT_TOP_K ，其新默认值为 20。 常量 CHAT_MEMORY_RETRIEVE_SIZE_KEY 已重命名为 TOP_K 。 常量 DEFAULT_CHAT_MEMORY_RESPONSE_SIZE （值：100）已重命名为 DEFAULT_TOP_K ，其新默认值为 20。 常量 CHAT_MEMORY_CONVERSATION_ID_KEY 已重命名为 CONVERSATION_ID ，并从 AbstractChatMemoryAdvisor 移至 ChatMemory 接口。请更新您的导入以使用 org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID 。 顾问中的自包含模板 # 执行提示增强的内置顾问已更新为使用自包含模板。目标是使每个顾问能够执行模板操作，而不会影响或受其他顾问中的模板和提示决策的影响。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="website">
+<title>升级说明 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../favicon.png" >
+<link rel="manifest" href="../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/">
+<link rel="stylesheet" href="../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../fuse.min.js"></script>
+  <script defer src="../../en.search.min.71e7e6c2939a8c322f56321bb68fc2082c0a37b8656d9a9617fd1c6ebfbb4f37.js" integrity="sha256-cefmwpOajDIvVjIbto/CCCwKN7hlbZqWF/0cbr&#43;7Tzc=" crossorigin="anonymous"></script>
+<link rel="alternate" type="application/rss+xml" href="https://studyllm.github.io/docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/index.xml" title="Spring AI 1.0.0" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ab79ee7c06b73ed1cac487be78704b1a" class="toggle"  />
+    <label for="section-ab79ee7c06b73ed1cac487be78704b1a" class="flex justify-between">
+      <a href="../../docs/%E4%BB%8B%E7%BB%8D/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E4%BB%8B%E7%BB%8D/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="toggle"  />
+    <label for="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/" class="">参考</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-861f1f33bc8d3da259fc08a7bd3778e9" class="toggle"  />
+    <label for="section-861f1f33bc8d3da259fc08a7bd3778e9" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/%E9%A1%BE%E9%97%AE-api/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%8F%90%E7%A4%BA/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA%E8%BD%AC%E6%8D%A2%E5%99%A8/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E5%A4%9A%E6%A8%A1%E6%80%81-api/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f78b15e57dfff314304a2bb1e9884f4a" class="toggle"  />
+    <label for="section-f78b15e57dfff314304a2bb1e9884f4a" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/" class="">模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f01f599500243d0a36d315cf18df347c" class="toggle"  />
+    <label for="section-f01f599500243d0a36d315cf18df347c" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9-converse/" class="">亚马逊基岩 Converse</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%BA%E7%B1%BB%E5%AD%A6-3-%E8%81%8A%E5%A4%A9/" class="">人类学 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/azure-openai-%E8%81%8A%E5%A4%A9/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/deepseek-%E8%81%8A%E5%A4%A9/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/docker-%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E8%80%85%E8%81%8A%E5%A4%A9/" class="">Docker 模型运行者聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-810d79b9e4561cb82f174a0a980239af" class="toggle"  />
+    <label for="section-810d79b9e4561cb82f174a0a980239af" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/vertexai-gemini-%E8%81%8A%E5%A4%A9/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/groq-%E8%81%8A%E5%A4%A9/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%8B%A5%E6%8A%B1%E8%84%B8%E8%81%8A%E5%A4%A9/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/mistral-%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E8%81%8A%E5%A4%A9/" class="">Mistral 人工智能聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/moonshot-ai-%E8%81%8A%E5%A4%A9/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/nvidia-%E8%81%8A%E5%A4%A9/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9/" class="">聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%9B%B0%E6%83%91%E8%81%8A%E5%A4%A9/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99bf04ea1225435ee3d3aac878598d1b" class="toggle"  />
+    <label for="section-99bf04ea1225435ee3d3aac878598d1b" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/" class="">OCI 生成式 AI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/oci-genai-%E5%8D%8F%E5%90%8C%E8%81%8A%E5%A4%A9/" class="">OCI GenAI 协同聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/openai-%E8%81%8A%E5%A4%A9/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E8%81%8A%E5%A4%A9/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%99%BA%E6%B5%A6-ai-%E8%81%8A%E5%A4%A9/" class="">智浦 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-402a989be78a917606348d6ff6652ff7" class="toggle"  />
+    <label for="section-402a989be78a917606348d6ff6652ff7" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-56d4fbd63aba9093164f2784fdd04677" class="toggle"  />
+    <label for="section-56d4fbd63aba9093164f2784fdd04677" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2%E5%B5%8C%E5%85%A5/" class="">相干嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6%E5%B5%8C%E5%85%A5/" class="">泰坦嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%B5%8C%E5%85%A5/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/mistral-ai-%E5%B5%8C%E5%85%A5/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/oracle-%E4%BA%91%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD-oci-genai-%E5%B5%8C%E5%85%A5/" class="">Oracle 云基础设施 (OCI) GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/ollama-%E5%B5%8C%E5%85%A5/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/transformersonnx%E5%B5%8C%E5%85%A5/" class="">Transformers（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/openai-%E5%B5%8C%E5%85%A5/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/postgresml-%E5%B5%8C%E5%85%A5/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%B5%8C%E5%85%A5/" class="">千帆嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6ef09998ce281d0b28a33f495c099c64" class="toggle"  />
+    <label for="section-6ef09998ce281d0b28a33f495c099c64" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%B5%8C%E5%85%A5/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-76b7909527d5ee378c9b7db9a7915572" class="toggle"  />
+    <label for="section-76b7909527d5ee378c9b7db9a7915572" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">Azure OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E7%A8%B3%E5%AE%9A%E6%80%A7-ai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">ZhiPuAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%BD%B1%E5%83%8F/" class="">千帆影像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="toggle"  />
+    <label for="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/" class="">音频模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7819d6457dfee9d52c1df4ade06e9929" class="toggle"  />
+    <label for="section-7819d6457dfee9d52c1df4ade06e9929" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/azure-openai-%E8%BD%AC%E5%BD%95/" class="">Azure OpenAI 转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4d35c258b8bf725a4f8fe541655ffeee" class="toggle"  />
+    <label for="section-4d35c258b8bf725a4f8fe541655ffeee" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/" class="">文本转语音 (TTS) API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/openai-%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts/" class="">OpenAI 文本转语音 (TTS)</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f10d18dff0bfc099fff60511d3eb1388" class="toggle"  />
+    <label for="section-f10d18dff0bfc099fff60511d3eb1388" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/" class="">适度</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/%E9%80%82%E5%BA%A6/" class="">适度</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E8%AE%B0%E5%BF%86/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-137a5cc62c39eb40ab9f360dd7a4089e" class="toggle"  />
+    <label for="section-137a5cc62c39eb40ab9f360dd7a4089e" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 客户端启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 服务器启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-fe0a04b7ec0575e520d9c454f1ab8388" class="toggle"  />
+    <label for="section-fe0a04b7ec0575e520d9c454f1ab8388" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/" class="">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/etl-%E7%AE%A1%E9%81%93/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E8%AF%84%E4%BC%B0%E6%B5%8B%E8%AF%95/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c22b15d029e06bc3f36d75f90efdc60f" class="toggle"  />
+    <label for="section-c22b15d029e06bc3f36d75f90efdc60f" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai-%E6%9C%8D%E5%8A%A1/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos-db/" class="">Azure Cosmos DB</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra-%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/couchbase/" class="">Couchbase</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/elasticsearch/" class="">Elasticsearch</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire-%E7%9F%A2%E9%87%8F%E5%95%86%E5%BA%97/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb-%E5%90%91%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB 向量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/milvus/" class="">Milvus</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb-atlas/" class="">MongoDB Atlas</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j/" class="">Neo4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%80%E6%94%BE%E6%90%9C%E7%B4%A2/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/oracle-database-23ai---ai-%E5%90%91%E9%87%8F%E6%90%9C%E7%B4%A2/" class="">Oracle Database 23ai - AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg-%E8%BD%BD%E4%BD%93/" class="">PG 载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%8D%A1%E5%BE%B7%E5%85%B0%E7%89%B9/" class="">卡德兰特</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" class="">Redis</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap-hana-%E4%BA%91/" class="">SAP HANA 云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/typesense/" class="">Typesense</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%A8%81%E7%BB%B4%E7%89%B9/" class="">威维特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E5%BC%80%E5%8F%91%E6%97%B6%E6%9C%8D%E5%8A%A1/" class="">开发时服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-13f6ed8395cc1d209c839158e47f69af" class="toggle"  />
+    <label for="section-13f6ed8395cc1d209c839158e47f69af" class="flex justify-between">
+      <a href="../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/" class="">测试</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-eb04feb0bc33d1a0586638a4be3d86d6" class="toggle"  />
+    <label for="section-eb04feb0bc33d1a0586638a4be3d86d6" class="flex justify-between">
+      <a href="../../docs/%E6%8C%87%E5%8D%97/" class="">指南</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%8C%87%E5%8D%97/%E6%8F%90%E7%A4%BA%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%8C%87%E5%8D%97/%E6%9E%84%E5%BB%BA%E6%9C%89%E6%95%88%E4%BB%A3%E7%90%86/" class="">构建有效代理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E6%8C%87%E5%8D%97/%E4%BA%91%E7%BB%91%E5%AE%9A/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-21dbdbec9c50b4c816faee9156087e37" class="toggle" checked />
+    <label for="section-21dbdbec9c50b4c816faee9156087e37" class="flex justify-between">
+      <a href="../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="active">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/%E4%BB%8E-functioncallback-%E8%BF%81%E7%A7%BB%E5%88%B0-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>升级说明</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#升级说明">升级说明</a>
+      <ul>
+        <li><a href="#升级到-100-snapshot">升级到 1.0.0-SNAPSHOT</a></li>
+        <li><a href="#概述">概述</a></li>
+        <li><a href="#添加快照存储库">添加快照存储库</a></li>
+        <li><a href="#更新依赖管理">更新依赖管理</a></li>
+        <li><a href="#工件-id包和模块变更">工件 ID、包和模块变更</a></li>
+        <li><a href="#升级到-100-rc1">升级到 1.0.0-RC1</a></li>
+        <li><a href="#重大变化">重大变化</a></li>
+        <li><a href="#聊天客户端和顾问">聊天客户端和顾问</a></li>
+        <li><a href="#顾问中的自包含模板">顾问中的自包含模板</a></li>
+        <li><a href="#可观察性">可观察性</a></li>
+        <li><a href="#聊天内存存储库模块和自动配置重命名">聊天内存存储库模块和自动配置重命名</a></li>
+        <li><a href="#工件-id">工件 ID</a></li>
+        <li><a href="#java-包">Java 包</a></li>
+        <li><a href="#配置类">配置类</a></li>
+        <li><a href="#特性">特性</a></li>
+        <li><a href="#消息聚合器重构">消息聚合器重构</a></li>
+        <li><a href="#变化">变化</a></li>
+        <li><a href="#迁移指南">迁移指南</a></li>
+        <li><a href="#沃森">沃森</a></li>
+        <li><a href="#moonshot-和-qianfan">MoonShot 和 QianFan</a></li>
+        <li><a href="#移除向量存储">移除向量存储</a></li>
+        <li><a href="#内存管理">内存管理</a></li>
+        <li><a href="#消息和模板-api">消息和模板 API</a></li>
+        <li><a href="#其他客户端-api-变更">其他客户端 API 变更</a></li>
+        <li><a href="#软件包结构变化">软件包结构变化</a></li>
+        <li><a href="#依赖项">依赖项</a></li>
+        <li><a href="#行为变化">行为变化</a></li>
+        <li><a href="#常规清理">常规清理</a></li>
+        <li><a href="#升级到-100-m8">升级到 1.0.0-M8</a></li>
+        <li><a href="#重大变化-1">重大变化</a></li>
+        <li><a href="#例子">例子</a></li>
+        <li><a href="#解决方案">解决方案</a></li>
+        <li><a href="#删除的实现和-api">删除的实现和 API</a></li>
+        <li><a href="#内存管理-1">内存管理</a></li>
+        <li><a href="#客户端-api">客户端 API</a></li>
+        <li><a href="#消息和模板-api-1">消息和模板 API</a></li>
+        <li><a href="#模型实现">模型实现</a></li>
+        <li><a href="#软件包结构变化-1">软件包结构变化</a></li>
+        <li><a href="#依赖项-1">依赖项</a></li>
+        <li><a href="#行为变化-1">行为变化</a></li>
+        <li><a href="#可观察性-1">可观察性</a></li>
+        <li><a href="#常规清理-1">常规清理</a></li>
+        <li><a href="#升级到-100-m7">升级到 1.0.0-M7</a></li>
+        <li><a href="#变更概述">变更概述</a></li>
+        <li><a href="#工件-id包和模块变更-1">工件 ID、包和模块变更</a></li>
+        <li><a href="#mcp-java-sdk-升级至-090">MCP Java SDK 升级至 0.9.0</a></li>
+        <li><a href="#接口重命名">接口重命名</a></li>
+        <li><a href="#服务器创建更改">服务器创建更改</a></li>
+        <li><a href="#处理程序签名变更">处理程序签名变更</a></li>
+        <li><a href="#通过交易所与客户互动">通过交易所与客户互动</a></li>
+        <li><a href="#roots-变更处理程序">Roots 变更处理程序</a></li>
+        <li><a href="#启用禁用模型自动配置">启用/禁用模型自动配置</a></li>
+        <li><a href="#利用人工智能实现自动升级">利用人工智能实现自动升级</a></li>
+        <li><a href="#跨版本的常见变更">跨版本的常见变更</a></li>
+        <li><a href="#神器-id-变更">神器 ID 变更</a></li>
+        <li><a href="#示例">示例</a></li>
+        <li><a href="#spring-ai-自动配置工件的变更">Spring AI 自动配置工件的变更</a></li>
+        <li><a href="#新的自动配置工件示例">新的自动配置工件示例</a></li>
+        <li><a href="#软件包名称变更">软件包名称变更</a></li>
+        <li><a href="#模块结构">模块结构</a></li>
+        <li><a href="#spring-ai-矢量存储">spring-ai-矢量存储</a></li>
+        <li><a href="#spring-ai-客户端聊天">spring-ai-客户端聊天</a></li>
+        <li><a href="#spring-ai-model-聊天-内存-cassandra">spring-ai-model-聊天-内存-cassandra</a></li>
+        <li><a href="#春艾拉格">春艾拉格</a></li>
+        <li><a href="#依赖结构">依赖结构</a></li>
+        <li><a href="#toolcontext-更改">ToolContext 更改</a></li>
+        <li><a href="#升级到-100-m6">升级到 1.0.0-M6</a></li>
+        <li><a href="#usage-接口和-defaultusage-实现的变更">Usage 接口和 DefaultUsage 实现的变更</a></li>
+        <li><a href="#所需行动">所需行动</a></li>
+        <li><a href="#json-serdeser-更改">JSON Ser/Deser 更改</a></li>
+        <li><a href="#工具调用的-functioncallingoptions-用法的变更">工具调用的 FunctionCallingOptions 用法的变更</a></li>
+        <li><a href="#删除已弃用的-amazon-bedrock-聊天模型">删除已弃用的 Amazon Bedrock 聊天模型</a></li>
+        <li><a href="#使用-spring-boot-342-进行依赖管理的变更">使用 Spring Boot 3.4.2 进行依赖管理的变更</a></li>
+        <li><a href="#所需行动-1">所需行动</a></li>
+        <li><a href="#矢量存储-api-变更">矢量存储 API 变更</a></li>
+        <li><a href="#100-m6-之前">1.0.0-M6 之前：</a></li>
+        <li><a href="#在-100-m6-及更高版本中">在 1.0.0-M6 及更高版本中：</a></li>
+        <li><a href="#升级到-100m5">升级到 1.0.0.M5</a></li>
+        <li><a href="#升级到-100rc3">升级到 1.0.0.RC3</a></li>
+        <li><a href="#升级到-100m2">升级到 1.0.0.M2</a></li>
+        <li><a href="#升级到-100m1">升级到 1.0.0.M1</a></li>
+        <li><a href="#chatclient-变更">ChatClient 变更</a></li>
+        <li><a href="#神器名称变更">神器名称变更</a></li>
+        <li><a href="#升级到-081">升级到 0.8.1</a></li>
+        <li><a href="#升级到-080">升级到 0.8.0</a></li>
+        <li><a href="#2024-年-1-月-24-日更新">2024 年 1 月 24 日更新</a></li>
+        <li><a href="#2024-年-1-月-13-日更新">2024 年 1 月 13 日更新</a></li>
+        <li><a href="#2023年12月27日更新">2023年12月27日更新</a></li>
+        <li><a href="#2023年12月20日更新">2023年12月20日更新</a></li>
+        <li><a href="#2023年12月19日更新">2023年12月19日更新</a></li>
+        <li><a href="#2023年12月1日">2023年12月1日</a></li>
+        <li><a href="#071-snapshot-依赖项">0.7.1-SNAPSHOT 依赖项</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="升级说明">
+  升级说明
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e8%af%b4%e6%98%8e">#</a>
+</h1>
+<h2 id="升级到-100-snapshot">
+  升级到 1.0.0-SNAPSHOT
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-100-snapshot">#</a>
+</h2>
+<h2 id="概述">
+  概述
+  <a class="anchor" href="#%e6%a6%82%e8%bf%b0">#</a>
+</h2>
+<p>1.0.0-SNAPSHOT 版本对构件 ID、软件包名称和模块结构进行了重大更改。本节提供有关使用 SNAPSHOT 版本的具体指导。</p>
+<h2 id="添加快照存储库">
+  添加快照存储库
+  <a class="anchor" href="#%e6%b7%bb%e5%8a%a0%e5%bf%ab%e7%85%a7%e5%ad%98%e5%82%a8%e5%ba%93">#</a>
+</h2>
+<p>要使用 1.0.0-SNAPSHOT 版本，您需要将快照存储库添加到构建文件中。有关详细说明，请参阅入门指南中的 [
+  <a href="getting-started.html#snapshots-add-snapshot-repositories">“快照 - 添加快照存储库”</a>](getting-started.html#snapshots-add-snapshot-repositories) 部分。</p>
+<h2 id="更新依赖管理">
+  更新依赖管理
+  <a class="anchor" href="#%e6%9b%b4%e6%96%b0%e4%be%9d%e8%b5%96%e7%ae%a1%e7%90%86">#</a>
+</h2>
+<p>在构建配置中，将 Spring AI BOM 版本更新为 <code>1.0.0-SNAPSHOT</code> 。有关配置依赖项管理的详细说明，请参阅入门指南中的 [
+  <a href="getting-started.html#dependency-management">“依赖项管理”</a>](getting-started.html#dependency-management) 部分。</p>
+<h2 id="工件-id包和模块变更">
+  工件 ID、包和模块变更
+  <a class="anchor" href="#%e5%b7%a5%e4%bb%b6-id%e5%8c%85%e5%92%8c%e6%a8%a1%e5%9d%97%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>1.0.0-SNAPSHOT 包括对工件 ID、包名称和模块结构的更改。</p>
+<p>详情请参考：- [
+  <a href="../../#common-artifact-id-changes">通用神器 ID 变更</a>](#common-artifact-id-changes)</p>
+<ul>
+<li>[
+  <a href="../../#common-package-changes">常见软件包变更</a>](#common-package-changes)</li>
+<li>[
+  <a href="../../#common-module-structure">通用模块结构</a>](#common-module-structure)</li>
+</ul>
+<h2 id="升级到-100-rc1">
+  升级到 1.0.0-RC1
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-100-rc1">#</a>
+</h2>
+<p>您可以使用 OpenRewrite 配方自动升级到 1.0.0-RC1。此配方有助于应用此版本所需的许多代码更改。您可以在 [
+  <a href="https://github.com/arconia-io/arconia-migrations/blob/main/docs/spring-ai.md">Arconia Spring AI 迁移</a>](
+  <a href="https://github.com/arconia-io/arconia-migrations/blob/main/docs/spring-ai.md">https://github.com/arconia-io/arconia-migrations/blob/main/docs/spring-ai.md</a>)中找到配方和使用说明。</p>
+<h2 id="重大变化">
+  重大变化
+  <a class="anchor" href="#%e9%87%8d%e5%a4%a7%e5%8f%98%e5%8c%96">#</a>
+</h2>
+<h2 id="聊天客户端和顾问">
+  聊天客户端和顾问
+  <a class="anchor" href="#%e8%81%8a%e5%a4%a9%e5%ae%a2%e6%88%b7%e7%ab%af%e5%92%8c%e9%a1%be%e9%97%ae">#</a>
+</h2>
+<p>影响最终用户代码的主要变化是：</p>
+<ul>
+<li>在 VectorStoreChatMemoryAdvisor 中：
+<ul>
+<li>常量 CHAT_MEMORY_RETRIEVE_SIZE_KEY 已重命名为 TOP_K 。</li>
+<li>常量 DEFAULT_CHAT_MEMORY_RESPONSE_SIZE （值：100）已重命名为 DEFAULT_TOP_K ，其新默认值为 20。</li>
+</ul>
+</li>
+<li>常量 CHAT_MEMORY_RETRIEVE_SIZE_KEY 已重命名为 TOP_K 。</li>
+<li>常量 DEFAULT_CHAT_MEMORY_RESPONSE_SIZE （值：100）已重命名为 DEFAULT_TOP_K ，其新默认值为 20。</li>
+<li>常量 CHAT_MEMORY_CONVERSATION_ID_KEY 已重命名为 CONVERSATION_ID ，并从 AbstractChatMemoryAdvisor 移至 ChatMemory 接口。请更新您的导入以使用 org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID 。</li>
+</ul>
+<h2 id="顾问中的自包含模板">
+  顾问中的自包含模板
+  <a class="anchor" href="#%e9%a1%be%e9%97%ae%e4%b8%ad%e7%9a%84%e8%87%aa%e5%8c%85%e5%90%ab%e6%a8%a1%e6%9d%bf">#</a>
+</h2>
+<p>执行提示增强的内置顾问已更新为使用自包含模板。目标是使每个顾问能够执行模板操作，而不会影响或受其他顾问中的模板和提示决策的影响。</p>
+<p>如果您为以下顾问提供自定义模板，则需要更新它们以确保包含所有预期的占位符。</p>
+<ul>
+<li>QuestionAnswerAdvisor 需要一个带有以下占位符的模板（查看更多详细信息 ）：
+<ul>
+<li>用于接收用户问题的 query 占位符。</li>
+<li>一个 question_answer_context 占位符来接收检索到的上下文。</li>
+</ul>
+</li>
+<li>用于接收用户问题的 query 占位符。</li>
+<li>一个 question_answer_context 占位符来接收检索到的上下文。</li>
+<li>PromptChatMemoryAdvisor 需要一个带有以下占位符的模板（查看更多详细信息 ）：
+<ul>
+<li>接收原始系统消息的 instructions 占位符。</li>
+<li>一个 memory 占位符，用于接收检索到的对话内存。</li>
+</ul>
+</li>
+<li>接收原始系统消息的 instructions 占位符。</li>
+<li>一个 memory 占位符，用于接收检索到的对话内存。</li>
+<li>VectorStoreChatMemoryAdvisor 需要一个带有以下占位符的模板（查看更多详细信息 ）：
+<ul>
+<li>接收原始系统消息的 instructions 占位符。</li>
+<li>long_term_memory 占位符用于接收检索到的对话记忆。</li>
+</ul>
+</li>
+<li>接收原始系统消息的 instructions 占位符。</li>
+<li>long_term_memory 占位符用于接收检索到的对话记忆。</li>
+</ul>
+<h2 id="可观察性">
+  可观察性
+  <a class="anchor" href="#%e5%8f%af%e8%a7%82%e5%af%9f%e6%80%a7">#</a>
+</h2>
+<ul>
+<li>重构内容观察以使用日志记录而不是跟踪（ ca843e8 ）
+<ul>
+<li>用日志处理程序替换内容观察过滤器</li>
+<li>重命名配置属性以更好地反映其用途：</li>
+<li>为跟踪感知日志记录添加了 TracingAwareLoggingObservationHandler</li>
+<li>已将 micrometer-tracing-bridge-otel 替换为 micrometer-tracing</li>
+<li>删除基于事件的跟踪，转而采用直接记录</li>
+<li>消除了对 OTel SDK 的直接依赖</li>
+<li>将观察属性中的 includePrompt 重命名为 logPrompt （在 ChatClientBuilderProperties 、 ChatObservationProperties 和 ImageObservationProperties 中）</li>
+</ul>
+</li>
+<li>用日志处理程序替换内容观察过滤器</li>
+<li>重命名配置属性以更好地反映其用途：</li>
+<li>为跟踪感知日志记录添加了 TracingAwareLoggingObservationHandler</li>
+<li>已将 micrometer-tracing-bridge-otel 替换为 micrometer-tracing</li>
+<li>删除基于事件的跟踪，转而采用直接记录</li>
+<li>消除了对 OTel SDK 的直接依赖</li>
+<li>将观察属性中的 includePrompt 重命名为 logPrompt （在 ChatClientBuilderProperties 、 ChatObservationProperties 和 ImageObservationProperties 中）</li>
+</ul>
+<h2 id="聊天内存存储库模块和自动配置重命名">
+  聊天内存存储库模块和自动配置重命名
+  <a class="anchor" href="#%e8%81%8a%e5%a4%a9%e5%86%85%e5%ad%98%e5%ad%98%e5%82%a8%e5%ba%93%e6%a8%a1%e5%9d%97%e5%92%8c%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae%e9%87%8d%e5%91%bd%e5%90%8d">#</a>
+</h2>
+<p>我们通过在整个代码库中添加存储库后缀，标准化了聊天记忆组件的命名模式。此更改会影响 Cassandra、JDBC 和 Neo4j 实现，从而影响到工件 ID、Java 包名称和类名称，以方便区分。</p>
+<h2 id="工件-id">
+  工件 ID
+  <a class="anchor" href="#%e5%b7%a5%e4%bb%b6-id">#</a>
+</h2>
+<p>所有与内存相关的工件现在都遵循一致的模式：</p>
+<ul>
+<li>spring-ai-model-chat-memory- → spring-ai-model-chat-memory-repository-</li>
+<li>spring-ai-autoconfigure-model-chat-memory- → spring-ai-autoconfigure-model-chat-memory-repository-</li>
+<li>spring-ai-starter-model-chat-memory- → spring-ai-starter-model-chat-memory-repository-</li>
+</ul>
+<h2 id="java-包">
+  Java 包
+  <a class="anchor" href="#java-%e5%8c%85">#</a>
+</h2>
+<ul>
+<li>包路径现在包括 .repository. 段</li>
+<li>例如： org.springframework.ai.chat.memory.jdbc → org.springframework.ai.chat.memory.repository.jdbc</li>
+</ul>
+<h2 id="配置类">
+  配置类
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e7%b1%bb">#</a>
+</h2>
+<ul>
+<li>主自动配置类现在使用 Repository 后缀</li>
+<li>例如： JdbcChatMemoryAutoConfiguration → JdbcChatMemoryRepositoryAutoConfiguration</li>
+</ul>
+<h2 id="特性">
+  特性
+  <a class="anchor" href="#%e7%89%b9%e6%80%a7">#</a>
+</h2>
+<ul>
+<li>配置属性已从 spring.ai.chat.memory.<storage>…​ 重命名为 spring.ai.chat.memory.repository.<storage>…​</li>
+</ul>
+<p>需要迁移：</p>
+<ul>
+<li>更新您的 Maven/Gradle 依赖项以使用新的工件 ID。</li>
+<li>更新使用旧包或类名的任何导入、类引用或配置。</li>
+</ul>
+<h2 id="消息聚合器重构">
+  消息聚合器重构
+  <a class="anchor" href="#%e6%b6%88%e6%81%af%e8%81%9a%e5%90%88%e5%99%a8%e9%87%8d%e6%9e%84">#</a>
+</h2>
+<h2 id="变化">
+  变化
+  <a class="anchor" href="#%e5%8f%98%e5%8c%96">#</a>
+</h2>
+<ul>
+<li>MessageAggregator 类已从 spring-ai-client-chat 模块中的 org.springframework.ai.chat.model 包移至 spring-ai-model 模块（相同的包名）</li>
+<li>已从 MessageAggregator 中移除了 aggregateChatClientResponse 方法，并将其移至 org.springframework.ai.chat.client 包中的新类 ChatClientMessageAggregator</li>
+</ul>
+<h2 id="迁移指南">
+  迁移指南
+  <a class="anchor" href="#%e8%bf%81%e7%a7%bb%e6%8c%87%e5%8d%97">#</a>
+</h2>
+<p>如果您直接使用 <code>MessageAggregator</code> 中的 <code>aggregateChatClientResponse</code> 方法，则需要使用新的 ChatClient<code>MessageAggregator</code> 类：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Before</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">new</span> MessageAggregator().<span style="color:#a6e22e">aggregateChatClientResponse</span>(chatClientResponses, aggregationHandler);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// After</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">new</span> ChatClientMessageAggregator().<span style="color:#a6e22e">aggregateChatClientResponse</span>(chatClientResponses, aggregationHandler);
+</span></span></code></pre></div><p>不要忘记添加适当的导入：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#f92672">import</span> org.springframework.ai.chat.client.ChatClientMessageAggregator;
+</span></span></code></pre></div><h2 id="沃森">
+  沃森
+  <a class="anchor" href="#%e6%b2%83%e6%a3%ae">#</a>
+</h2>
+<p>Watson AI 模型已被移除，因为它基于较旧的文本生成模型，而该模型被认为已经过时，因为有新的聊天生成模型可用。希望 Watson 能够在 Spring AI 的未来版本中重新出现。</p>
+<h2 id="moonshot-和-qianfan">
+  MoonShot 和 QianFan
+  <a class="anchor" href="#moonshot-%e5%92%8c-qianfan">#</a>
+</h2>
+<p>Moonshot 和 Qianfan 已被移除，因为它们在中国境外无法访问。它们已被移至 Spring AI 社区代码库。</p>
+<h2 id="移除向量存储">
+  移除向量存储
+  <a class="anchor" href="#%e7%a7%bb%e9%99%a4%e5%90%91%e9%87%8f%e5%ad%98%e5%82%a8">#</a>
+</h2>
+<ul>
+<li>删除了 HanaDB 矢量存储自动配置（ f3b4624 ）</li>
+</ul>
+<h2 id="内存管理">
+  内存管理
+  <a class="anchor" href="#%e5%86%85%e5%ad%98%e7%ae%a1%e7%90%86">#</a>
+</h2>
+<ul>
+<li>删除了 CassandraChatMemory 实现（ 11e3c8f ）</li>
+<li>简化了聊天内存顾问层次结构并删除了已弃用的 API（ 848a3fd ）</li>
+<li>删除了 JdbcChatMemory 中的弃用内容 ( 356a68f )</li>
+<li>重构聊天内存存储库工件以提高清晰度（ 2d517ee ）</li>
+<li>重构聊天内存存储库自动配置和 Spring Boot 启动器以提高清晰度（ f6dba1b ）</li>
+</ul>
+<h2 id="消息和模板-api">
+  消息和模板 API
+  <a class="anchor" href="#%e6%b6%88%e6%81%af%e5%92%8c%e6%a8%a1%e6%9d%bf-api">#</a>
+</h2>
+<ul>
+<li>删除了已弃用的 UserMessage 构造函数 ( 06edee4 )</li>
+<li>删除了已弃用的 PromptTemplate 构造函数 ( 722c77e )</li>
+<li>从 Media 中删除了已弃用的方法 ( 228ef10 )</li>
+<li>重构 StTemplateRenderer：将 supportStFunctions 重命名为 validStFunctions ( 0e15197 )</li>
+<li>移动 TemplateRender 接口后将其剩余的内容删除（ 52675d8 ）</li>
+</ul>
+<h2 id="其他客户端-api-变更">
+  其他客户端 API 变更
+  <a class="anchor" href="#%e5%85%b6%e4%bb%96%e5%ae%a2%e6%88%b7%e7%ab%af-api-%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<ul>
+<li>删除了 ChatClient 和 Advisors 中的弃用内容 ( 4fe74d8 )</li>
+<li>删除了 OllamaApi 和 AnthropicApi 中的弃用部分 ( 46be898 )</li>
+</ul>
+<h2 id="软件包结构变化">
+  软件包结构变化
+  <a class="anchor" href="#%e8%bd%af%e4%bb%b6%e5%8c%85%e7%bb%93%e6%9e%84%e5%8f%98%e5%8c%96">#</a>
+</h2>
+<ul>
+<li>删除了 spring-ai-model ( ebfa5b9 ) 中的包间依赖循环</li>
+<li>将 MessageAggregator 移至 spring-ai-model 模块（ 54e5c07 ）</li>
+</ul>
+<h2 id="依赖项">
+  依赖项
+  <a class="anchor" href="#%e4%be%9d%e8%b5%96%e9%a1%b9">#</a>
+</h2>
+<ul>
+<li>删除了 spring-ai-openai 中未使用的 json-path 依赖项（ 9de13d1 ）</li>
+</ul>
+<h2 id="行为变化">
+  行为变化
+  <a class="anchor" href="#%e8%a1%8c%e4%b8%ba%e5%8f%98%e5%8c%96">#</a>
+</h2>
+<ul>
+<li>为 Azure OpenAI 添加了 Entra ID 身份管理，并具有干净的自动配置（ 3dc86d3 ）</li>
+</ul>
+<h2 id="常规清理">
+  常规清理
+  <a class="anchor" href="#%e5%b8%b8%e8%a7%84%e6%b8%85%e7%90%86">#</a>
+</h2>
+<ul>
+<li>删除了所有弃用的代码（ 76bee8c ）和（ b6ce7f3 ）</li>
+</ul>
+<h2 id="升级到-100-m8">
+  升级到 1.0.0-M8
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-100-m8">#</a>
+</h2>
+<p>您可以使用 OpenRewrite 配方自动升级到 1.0.0-M8。此配方有助于应用此版本所需的许多代码更改。您可以在 [
+  <a href="https://github.com/arconia-io/arconia-migrations/blob/main/docs/spring-ai.md">Arconia Spring AI 迁移</a>](
+  <a href="https://github.com/arconia-io/arconia-migrations/blob/main/docs/spring-ai.md">https://github.com/arconia-io/arconia-migrations/blob/main/docs/spring-ai.md</a>)中找到配方和使用说明。</p>
+<h2 id="重大变化-1">
+  重大变化
+  <a class="anchor" href="#%e9%87%8d%e5%a4%a7%e5%8f%98%e5%8c%96-1">#</a>
+</h2>
+<p>从 Spring AI 1.0 M7 升级到 1.0 M8 时，之前注册过工具回调的用户会遇到重大变更，导致工具调用功能静默失败。这尤其会影响使用已弃用的 <code>tools()</code> 方法的代码。</p>
+<h2 id="例子">
+  例子
+  <a class="anchor" href="#%e4%be%8b%e5%ad%90">#</a>
+</h2>
+<p>以下是在 M7 中可以运行但在 M8 中不再按预期运行的代码示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// This worked in M7 but silently fails in M8</span>
+</span></span><span style="display:flex;"><span>ChatClient chatClient <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> OpenAiChatClient(api)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">tools</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> Tool(<span style="color:#e6db74">&#34;get_current_weather&#34;</span>, <span style="color:#e6db74">&#34;Get the current weather in a given location&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> ToolSpecification.<span style="color:#a6e22e">ToolParameter</span>(<span style="color:#e6db74">&#34;location&#34;</span>, <span style="color:#e6db74">&#34;The city and state, e.g. San Francisco, CA&#34;</span>, <span style="color:#66d9ef">true</span>))
+</span></span><span style="display:flex;"><span>    ))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolCallbacks</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> ToolCallback(<span style="color:#e6db74">&#34;get_current_weather&#34;</span>, (toolName, params) <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// Weather retrieval logic</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;temperature&#34;</span>, 72, <span style="color:#e6db74">&#34;unit&#34;</span>, <span style="color:#e6db74">&#34;fahrenheit&#34;</span>, <span style="color:#e6db74">&#34;description&#34;</span>, <span style="color:#e6db74">&#34;Sunny&#34;</span>);
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>    ));
+</span></span></code></pre></div><h2 id="解决方案">
+  解决方案
+  <a class="anchor" href="#%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88">#</a>
+</h2>
+<p>解决方案是使用 <code>toolSpecifications()</code> 方法，而不是已弃用的 <code>tools()</code> 方法：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// This works in M8</span>
+</span></span><span style="display:flex;"><span>ChatClient chatClient <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> OpenAiChatClient(api)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolSpecifications</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> Tool(<span style="color:#e6db74">&#34;get_current_weather&#34;</span>, <span style="color:#e6db74">&#34;Get the current weather in a given location&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> ToolSpecification.<span style="color:#a6e22e">ToolParameter</span>(<span style="color:#e6db74">&#34;location&#34;</span>, <span style="color:#e6db74">&#34;The city and state, e.g. San Francisco, CA&#34;</span>, <span style="color:#66d9ef">true</span>))
+</span></span><span style="display:flex;"><span>    ))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">toolCallbacks</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> ToolCallback(<span style="color:#e6db74">&#34;get_current_weather&#34;</span>, (toolName, params) <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// Weather retrieval logic</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;temperature&#34;</span>, 72, <span style="color:#e6db74">&#34;unit&#34;</span>, <span style="color:#e6db74">&#34;fahrenheit&#34;</span>, <span style="color:#e6db74">&#34;description&#34;</span>, <span style="color:#e6db74">&#34;Sunny&#34;</span>);
+</span></span><span style="display:flex;"><span>        })
+</span></span><span style="display:flex;"><span>    ));
+</span></span></code></pre></div><h2 id="删除的实现和-api">
+  删除的实现和 API
+  <a class="anchor" href="#%e5%88%a0%e9%99%a4%e7%9a%84%e5%ae%9e%e7%8e%b0%e5%92%8c-api">#</a>
+</h2>
+<h2 id="内存管理-1">
+  内存管理
+  <a class="anchor" href="#%e5%86%85%e5%ad%98%e7%ae%a1%e7%90%86-1">#</a>
+</h2>
+<ul>
+<li>删除了 CassandraChatMemory 实现（ 11e3c8f ）</li>
+<li>简化了聊天内存顾问层次结构并删除了已弃用的 API（ 848a3fd ）</li>
+<li>删除了 JdbcChatMemory 中的弃用内容 ( 356a68f )</li>
+<li>重构聊天内存存储库工件以提高清晰度（ 2d517ee ）</li>
+<li>重构聊天内存存储库自动配置和 Spring Boot 启动器以提高清晰度（ f6dba1b ）</li>
+</ul>
+<h2 id="客户端-api">
+  客户端 API
+  <a class="anchor" href="#%e5%ae%a2%e6%88%b7%e7%ab%af-api">#</a>
+</h2>
+<ul>
+<li>删除了 ChatClient 和 Advisors 中的弃用内容 ( 4fe74d8 )</li>
+<li>聊天客户端工具调用的重大变更（ 5b7849d ）</li>
+<li>删除了 OllamaApi 和 AnthropicApi 中的弃用部分 ( 46be898 )</li>
+</ul>
+<h2 id="消息和模板-api-1">
+  消息和模板 API
+  <a class="anchor" href="#%e6%b6%88%e6%81%af%e5%92%8c%e6%a8%a1%e6%9d%bf-api-1">#</a>
+</h2>
+<ul>
+<li>删除了已弃用的 UserMessage 构造函数 ( 06edee4 )</li>
+<li>删除了已弃用的 PromptTemplate 构造函数 ( 722c77e )</li>
+<li>从 Media 中删除了已弃用的方法 ( 228ef10 )</li>
+<li>重构 StTemplateRenderer：将 supportStFunctions 重命名为 validStFunctions ( 0e15197 )</li>
+<li>移动 TemplateRender 接口后将其剩余的内容删除（ 52675d8 ）</li>
+</ul>
+<h2 id="模型实现">
+  模型实现
+  <a class="anchor" href="#%e6%a8%a1%e5%9e%8b%e5%ae%9e%e7%8e%b0">#</a>
+</h2>
+<ul>
+<li>删除了 Watson 文本生成模型 ( 9e71b16 )</li>
+<li>删除了千帆代码（ bfcaad7 ）</li>
+<li>删除了 HanaDB 矢量存储自动配置（ f3b4624 ）</li>
+<li>从 OpenAiApi 中删除了 deepseek 选项 ( 59b36d1 )</li>
+</ul>
+<h2 id="软件包结构变化-1">
+  软件包结构变化
+  <a class="anchor" href="#%e8%bd%af%e4%bb%b6%e5%8c%85%e7%bb%93%e6%9e%84%e5%8f%98%e5%8c%96-1">#</a>
+</h2>
+<ul>
+<li>删除了 spring-ai-model ( ebfa5b9 ) 中的包间依赖循环</li>
+<li>将 MessageAggregator 移至 spring-ai-model 模块（ 54e5c07 ）</li>
+</ul>
+<h2 id="依赖项-1">
+  依赖项
+  <a class="anchor" href="#%e4%be%9d%e8%b5%96%e9%a1%b9-1">#</a>
+</h2>
+<ul>
+<li>删除了 spring-ai-openai 中未使用的 json-path 依赖项（ 9de13d1 ）</li>
+</ul>
+<h2 id="行为变化-1">
+  行为变化
+  <a class="anchor" href="#%e8%a1%8c%e4%b8%ba%e5%8f%98%e5%8c%96-1">#</a>
+</h2>
+<h2 id="可观察性-1">
+  可观察性
+  <a class="anchor" href="#%e5%8f%af%e8%a7%82%e5%af%9f%e6%80%a7-1">#</a>
+</h2>
+<ul>
+<li>
+<p>重构内容观察以使用日志记录而不是跟踪（ ca843e8 ）</p>
+<ul>
+<li>用日志处理程序替换内容观察过滤器</li>
+<li>重命名配置属性以更好地反映其用途：</li>
+<li>为跟踪感知日志记录添加了 TracingAwareLoggingObservationHandler</li>
+<li>已将 micrometer-tracing-bridge-otel 替换为 micrometer-tracing</li>
+<li>删除基于事件的跟踪，转而采用直接记录</li>
+<li>消除了对 OTel SDK 的直接依赖</li>
+<li>将观察属性中的 includePrompt 重命名为 logPrompt （在 ChatClientBuilderProperties 、 ChatObservationProperties 和 ImageObservationProperties 中）</li>
+</ul>
+</li>
+<li>
+<p>用日志处理程序替换内容观察过滤器</p>
+</li>
+<li>
+<p>重命名配置属性以更好地反映其用途：</p>
+</li>
+<li>
+<p>为跟踪感知日志记录添加了 TracingAwareLoggingObservationHandler</p>
+</li>
+<li>
+<p>已将 micrometer-tracing-bridge-otel 替换为 micrometer-tracing</p>
+</li>
+<li>
+<p>删除基于事件的跟踪，转而采用直接记录</p>
+</li>
+<li>
+<p>消除了对 OTel SDK 的直接依赖</p>
+</li>
+<li>
+<p>将观察属性中的 includePrompt 重命名为 logPrompt （在 ChatClientBuilderProperties 、 ChatObservationProperties 和 ImageObservationProperties 中）</p>
+</li>
+<li>
+<p>为 Azure OpenAI 添加了 Entra ID 身份管理，并具有干净的自动配置（ 3dc86d3 ）</p>
+</li>
+</ul>
+<h2 id="常规清理-1">
+  常规清理
+  <a class="anchor" href="#%e5%b8%b8%e8%a7%84%e6%b8%85%e7%90%86-1">#</a>
+</h2>
+<ul>
+<li>删除了 1.0.0-M8 中的所有弃用内容 ( 76bee8c )</li>
+<li>常规弃用清理（ b6ce7f3 ）</li>
+</ul>
+<h2 id="升级到-100-m7">
+  升级到 1.0.0-M7
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-100-m7">#</a>
+</h2>
+<h2 id="变更概述">
+  变更概述
+  <a class="anchor" href="#%e5%8f%98%e6%9b%b4%e6%a6%82%e8%bf%b0">#</a>
+</h2>
+<p>Spring AI 1.0.0-M7 是 RC1 和 GA 版本之前的最后一个里程碑版本。它对工件 ID、包名称和模块结构进行了一些重要更改，这些更改将在最终版本中保留。</p>
+<h2 id="工件-id包和模块变更-1">
+  工件 ID、包和模块变更
+  <a class="anchor" href="#%e5%b7%a5%e4%bb%b6-id%e5%8c%85%e5%92%8c%e6%a8%a1%e5%9d%97%e5%8f%98%e6%9b%b4-1">#</a>
+</h2>
+<p>1.0.0-M7 包含与 1.0.0-SNAPSHOT 相同的结构变化。</p>
+<p>详情请参考：- [
+  <a href="../../#common-artifact-id-changes">通用神器 ID 变更</a>](#common-artifact-id-changes)</p>
+<ul>
+<li>[
+  <a href="../../#common-package-changes">常见软件包变更</a>](#common-package-changes)</li>
+<li>[
+  <a href="../../#common-module-structure">通用模块结构</a>](#common-module-structure)</li>
+</ul>
+<h2 id="mcp-java-sdk-升级至-090">
+  MCP Java SDK 升级至 0.9.0
+  <a class="anchor" href="#mcp-java-sdk-%e5%8d%87%e7%ba%a7%e8%87%b3-090">#</a>
+</h2>
+<p>Spring AI 1.0.0-M7 现使用 MCP Java SDK 0.9.0 版本，该版本与之前的版本相比有显著变化。如果您在应用程序中使用 MCP，则需要更新代码以适应这些变化。</p>
+<p>主要变化包括：</p>
+<h2 id="接口重命名">
+  接口重命名
+  <a class="anchor" href="#%e6%8e%a5%e5%8f%a3%e9%87%8d%e5%91%bd%e5%90%8d">#</a>
+</h2>
+<ul>
+<li>DefaultMcpSession → McpClientSession 或 McpServerSession</li>
+<li>所有 *Registration 类别 → *Specification 类别</li>
+</ul>
+<h2 id="服务器创建更改">
+  服务器创建更改
+  <a class="anchor" href="#%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%88%9b%e5%bb%ba%e6%9b%b4%e6%94%b9">#</a>
+</h2>
+<ul>
+<li>使用 McpServerTransportProvider 代替 ServerMcpTransport</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Before</span>
+</span></span><span style="display:flex;"><span>ServerMcpTransport transport <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> WebFluxSseServerTransport(objectMapper, <span style="color:#e6db74">&#34;/mcp/message&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> server <span style="color:#f92672">=</span> McpServer.<span style="color:#a6e22e">sync</span>(transport)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">serverInfo</span>(<span style="color:#e6db74">&#34;my-server&#34;</span>, <span style="color:#e6db74">&#34;1.0.0&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// After</span>
+</span></span><span style="display:flex;"><span>McpServerTransportProvider transportProvider <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> WebFluxSseServerTransportProvider(objectMapper, <span style="color:#e6db74">&#34;/mcp/message&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> server <span style="color:#f92672">=</span> McpServer.<span style="color:#a6e22e">sync</span>(transportProvider)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">serverInfo</span>(<span style="color:#e6db74">&#34;my-server&#34;</span>, <span style="color:#e6db74">&#34;1.0.0&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span></code></pre></div><h2 id="处理程序签名变更">
+  处理程序签名变更
+  <a class="anchor" href="#%e5%a4%84%e7%90%86%e7%a8%8b%e5%ba%8f%e7%ad%be%e5%90%8d%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>所有处理程序现在都接收 <code>exchange</code> 参数作为其第一个参数：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Before</span>
+</span></span><span style="display:flex;"><span>.<span style="color:#a6e22e">tool</span>(calculatorTool, args <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">new</span> CallToolResult(<span style="color:#e6db74">&#34;Result: &#34;</span> <span style="color:#f92672">+</span> calculate(args)))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// After</span>
+</span></span><span style="display:flex;"><span>.<span style="color:#a6e22e">tool</span>(calculatorTool, (exchange, args) <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">new</span> CallToolResult(<span style="color:#e6db74">&#34;Result: &#34;</span> <span style="color:#f92672">+</span> calculate(args)))
+</span></span></code></pre></div><h2 id="通过交易所与客户互动">
+  通过交易所与客户互动
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87%e4%ba%a4%e6%98%93%e6%89%80%e4%b8%8e%e5%ae%a2%e6%88%b7%e4%ba%92%e5%8a%a8">#</a>
+</h2>
+<p>以前在服务器上可用的方法现在可以通过交换对象访问：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Before</span>
+</span></span><span style="display:flex;"><span>ClientCapabilities capabilities <span style="color:#f92672">=</span> server.<span style="color:#a6e22e">getClientCapabilities</span>();
+</span></span><span style="display:flex;"><span>CreateMessageResult result <span style="color:#f92672">=</span> server.<span style="color:#a6e22e">createMessage</span>(<span style="color:#66d9ef">new</span> CreateMessageRequest(...));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// After</span>
+</span></span><span style="display:flex;"><span>ClientCapabilities capabilities <span style="color:#f92672">=</span> exchange.<span style="color:#a6e22e">getClientCapabilities</span>();
+</span></span><span style="display:flex;"><span>CreateMessageResult result <span style="color:#f92672">=</span> exchange.<span style="color:#a6e22e">createMessage</span>(<span style="color:#66d9ef">new</span> CreateMessageRequest(...));
+</span></span></code></pre></div><h2 id="roots-变更处理程序">
+  Roots 变更处理程序
+  <a class="anchor" href="#roots-%e5%8f%98%e6%9b%b4%e5%a4%84%e7%90%86%e7%a8%8b%e5%ba%8f">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Before</span>
+</span></span><span style="display:flex;"><span>.<span style="color:#a6e22e">rootsChangeConsumers</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>    roots <span style="color:#f92672">-&gt;</span> System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Roots changed: &#34;</span> <span style="color:#f92672">+</span> roots)
+</span></span><span style="display:flex;"><span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// After</span>
+</span></span><span style="display:flex;"><span>.<span style="color:#a6e22e">rootsChangeHandlers</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>    (exchange, roots) <span style="color:#f92672">-&gt;</span> System.<span style="color:#a6e22e">out</span>.<span style="color:#a6e22e">println</span>(<span style="color:#e6db74">&#34;Roots changed: &#34;</span> <span style="color:#f92672">+</span> roots)
+</span></span><span style="display:flex;"><span>))
+</span></span></code></pre></div><p>有关迁移 MCP 代码的完整指南，请参阅 [
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-docs/src/main/antora/modules/ROOT/pages/mcp-migration.adoc">MCP 迁移指南</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-docs/src/main/antora/modules/ROOT/pages/mcp-migration.adoc">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-docs/src/main/antora/modules/ROOT/pages/mcp-migration.adoc</a>) 。</p>
+<h2 id="启用禁用模型自动配置">
+  启用/禁用模型自动配置
+  <a class="anchor" href="#%e5%90%af%e7%94%a8%e7%a6%81%e7%94%a8%e6%a8%a1%e5%9e%8b%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>先前用于启用/禁用模型自动配置的配置属性已被删除：</p>
+<p>默认情况下，如果在类路径中找到模型提供程序（例如 OpenAI、Ollama），则会启用其针对相关模型类型（聊天、嵌入等）的相应自动配置。如果同一模型类型存在多个提供程序（例如， <code>spring-ai-openai-spring-boot-starter</code> 和 <code>spring-ai-ollama-spring-boot-starter</code> ），您可以使用以下属性来选择应启用哪个提供程序的自动配置，从而有效地禁用该特定模型类型的其他提供程序。</p>
+<p>要完全禁用特定模型类型的自动配置，即使只存在一个提供程序，也请将相应的属性设置为与类路径上的任何提供程序都不匹配的值（例如， <code>none</code> 或 <code>disabled</code> ）。</p>
+<p>您可以参考 <code>[[SpringAIModels](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/SpringAIModels.java)](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/[SpringAIModels](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/SpringAIModels.java).java)</code> 枚举以获取知名提供程序值的列表。</p>
+<h2 id="利用人工智能实现自动升级">
+  利用人工智能实现自动升级
+  <a class="anchor" href="#%e5%88%a9%e7%94%a8%e4%ba%ba%e5%b7%a5%e6%99%ba%e8%83%bd%e5%ae%9e%e7%8e%b0%e8%87%aa%e5%8a%a8%e5%8d%87%e7%ba%a7">#</a>
+</h2>
+<p>您可以使用 Claude Code CLI 工具通过提供的提示自动将升级过程升级到 1.0.0-M7：</p>
+<h2 id="跨版本的常见变更">
+  跨版本的常见变更
+  <a class="anchor" href="#%e8%b7%a8%e7%89%88%e6%9c%ac%e7%9a%84%e5%b8%b8%e8%a7%81%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<h2 id="神器-id-变更">
+  神器 ID 变更
+  <a class="anchor" href="#%e7%a5%9e%e5%99%a8-id-%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>Spring AI 启动器工件的命名模式已更改。您需要根据以下模式更新依赖项：</p>
+<ul>
+<li>模型启动器： spring-ai-{model}-spring-boot-starter → spring-ai-starter-model-{model}</li>
+<li>矢量商店启动器： spring-ai-{store}-store-spring-boot-starter → spring-ai-starter-vector-store-{store}</li>
+<li>MCP 启动器： spring-ai-mcp-{type}-spring-boot-starter → spring-ai-starter-mcp-{type}</li>
+</ul>
+<h2 id="示例">
+  示例
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h2 id="spring-ai-自动配置工件的变更">
+  Spring AI 自动配置工件的变更
+  <a class="anchor" href="#spring-ai-%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae%e5%b7%a5%e4%bb%b6%e7%9a%84%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>Spring AI 自动配置已从单个整体式构件更改为每个模型、向量存储和其他组件的单独自动配置构件。此更改旨在最大限度地减少不同版本依赖库（例如 Google Protocol Buffers、Google RPC 等）冲突的影响。通过将自动配置分离为特定于组件的构件，您可以避免引入不必要的依赖项，并降低应用程序中发生版本冲突的风险。</p>
+<p>原始的整体工件不再可用：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- NO LONGER AVAILABLE --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-spring-boot-autoconfigure<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;version&gt;</span>${project.version}<span style="color:#f92672">&lt;/version&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>相反，每个组件现在都有自己的自动配置工件，遵循以下模式：</p>
+<ul>
+<li>模型自动配置： spring-ai-autoconfigure-model-{model}</li>
+<li>矢量存储自动配置： spring-ai-autoconfigure-vector-store-{store}</li>
+<li>MCP 自动配置： spring-ai-autoconfigure-mcp-{type}</li>
+</ul>
+<h2 id="新的自动配置工件示例">
+  新的自动配置工件示例
+  <a class="anchor" href="#%e6%96%b0%e7%9a%84%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae%e5%b7%a5%e4%bb%b6%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h2 id="软件包名称变更">
+  软件包名称变更
+  <a class="anchor" href="#%e8%bd%af%e4%bb%b6%e5%8c%85%e5%90%8d%e7%a7%b0%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>您的 IDE 应该协助重构到新的包位置。</p>
+<ul>
+<li>KeywordMetadataEnricher 和 SummaryMetadataEnricher 已从 org.springframework.ai.transformer 移至 org.springframework.ai.chat.transformer 。</li>
+<li>Content 、 MediaContent 和 Media 已从 org.springframework.ai.model 移至 org.springframework.ai.content 。</li>
+</ul>
+<h2 id="模块结构">
+  模块结构
+  <a class="anchor" href="#%e6%a8%a1%e5%9d%97%e7%bb%93%e6%9e%84">#</a>
+</h2>
+<p>该项目的模块和构件结构经历了重大变化。之前， <code>spring-ai-core</code> 包含所有核心接口，但现在已拆分为专门的领域模块，以减少应用程序中不必要的依赖。</p>
+<p>
+  <img src="../../images/spring-ai-dependencies.png" alt="" /></p>
+<p>基础模块，不依赖其他 Spring AI 模块。包含：- 核心领域模型（ <code>Document</code> 、 <code>TextSplitter</code> ）- JSON 实用程序和资源处理 - 结构化日志记录和可观察性支持</p>
+<p>提供 AI 能力抽象： - <code>ChatModel</code> 、 <code>EmbeddingModel</code> 和 <code>ImageModel</code> 等接口</p>
+<ul>
+<li>消息类型和提示模板</li>
+<li>函数调用框架（ <code>ToolDefinition</code> 、 <code>ToolCallback</code> ） - 内容过滤和观察支持</li>
+</ul>
+<h2 id="spring-ai-矢量存储">
+  spring-ai-矢量存储
+  <a class="anchor" href="#spring-ai-%e7%9f%a2%e9%87%8f%e5%ad%98%e5%82%a8">#</a>
+</h2>
+<p>统一向量数据库抽象： - 用于相似性搜索的 <code>VectorStore</code> 接口 - 使用类似 SQL 表达式的高级过滤 - 用于内存使用的 Simple<code>VectorStore</code> - 对嵌入的批处理支持</p>
+<h2 id="spring-ai-客户端聊天">
+  spring-ai-客户端聊天
+  <a class="anchor" href="#spring-ai-%e5%ae%a2%e6%88%b7%e7%ab%af%e8%81%8a%e5%a4%a9">#</a>
+</h2>
+<p>高级对话式 AI API： - <code>ChatClient</code> 接口 - 通过 <code>ChatMemory</code> 实现对话持久化</p>
+<ul>
+<li>使用 <code>OutputConverter</code> 进行响应转换</li>
+<li>基于顾问的拦截</li>
+<li>同步和反应流支持</li>
+</ul>
+<p>桥梁与 RAG 的矢量存储聊天： - <code>QuestionAnswerAdvisor</code> ：将上下文注入提示 - <code>VectorStoreChatMemoryAdvisor</code> ：存储/检索对话历史记录</p>
+<h2 id="spring-ai-model-聊天-内存-cassandra">
+  spring-ai-model-聊天-内存-cassandra
+  <a class="anchor" href="#spring-ai-model-%e8%81%8a%e5%a4%a9-%e5%86%85%e5%ad%98-cassandra">#</a>
+</h2>
+<p>Apache Cassandra <code>ChatMemory</code> 持久性： - Cassandra<code>ChatMemory</code> 实现 - 使用 Cassandra 的 QueryBuilder 的类型安全 CQL ==== spring-ai-model-chat-memory-neo4j</p>
+<p>Neo4j 图形数据库持久化聊天对话。</p>
+<h2 id="春艾拉格">
+  春艾拉格
+  <a class="anchor" href="#%e6%98%a5%e8%89%be%e6%8b%89%e6%a0%bc">#</a>
+</h2>
+<p>检索增强生成的综合框架：- RAG 管道的模块化架构 - <code>RetrievalAugmentationAdvisor</code> 作为主要入口点 - 具有可组合组件的函数式编程原理</p>
+<h2 id="依赖结构">
+  依赖结构
+  <a class="anchor" href="#%e4%be%9d%e8%b5%96%e7%bb%93%e6%9e%84">#</a>
+</h2>
+<p>依赖层次可以概括为：</p>
+<ul>
+<li>spring-ai-commons （基金会）</li>
+<li>spring-ai-model （依赖于 commons）</li>
+<li>spring-ai-vector-store 和 spring-ai-client-chat （均依赖于模型）</li>
+<li>spring-ai-advisors-vector-store 和 spring-ai-rag （依赖于客户端聊天和矢量存储）</li>
+<li>spring-ai-model-chat-memory-* 模块（依赖于客户端聊天）</li>
+</ul>
+<h2 id="toolcontext-更改">
+  ToolContext 更改
+  <a class="anchor" href="#toolcontext-%e6%9b%b4%e6%94%b9">#</a>
+</h2>
+<p><code>ToolContext</code> 类已得到增强，支持显式和隐式工具解析。工具现在可以：</p>
+<p>从 1.0.0-M7 开始，仅当在提示中明确请求或在调用中明确包含工具时，工具才会包含在对模型的调用中。</p>
+<p>此外， <code>ToolContext</code> 类现已被标记为 final，无法再进行扩展。它原本不应被子类化。您可以在实例化 <code>ToolContext</code> 时以 <code>Map&lt;String, Object&gt;</code> 的形式添加所需的所有上下文数据。更多信息，请参阅
+  <a href="[[docs.spring.io/spring-ai/reference/api/tools.html#_tool_context]%28https://docs.spring.io/spring-ai/reference/api/tools.html#_tool_context%29]%28https://[docs.spring.io/spring-ai/reference/api/tools.html#_tool_context]%28https://docs.spring.io/spring-ai/reference/api/tools.html#_tool_context%29%29">文档</a>。</p>
+<h2 id="升级到-100-m6">
+  升级到 1.0.0-M6
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-100-m6">#</a>
+</h2>
+<h2 id="usage-接口和-defaultusage-实现的变更">
+  Usage 接口和 DefaultUsage 实现的变更
+  <a class="anchor" href="#usage-%e6%8e%a5%e5%8f%a3%e5%92%8c-defaultusage-%e5%ae%9e%e7%8e%b0%e7%9a%84%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p><code>Usage</code> 接口及其默认实现 Default<code>Usage</code> 经历了以下变化：</p>
+<h2 id="所需行动">
+  所需行动
+  <a class="anchor" href="#%e6%89%80%e9%9c%80%e8%a1%8c%e5%8a%a8">#</a>
+</h2>
+<ul>
+<li>将所有对 getGenerationTokens() 的调用替换为 getCompletionTokens()</li>
+<li>更新 DefaultUsage 构造函数调用：</li>
+</ul>
+<h2 id="json-serdeser-更改">
+  JSON Ser/Deser 更改
+  <a class="anchor" href="#json-serdeser-%e6%9b%b4%e6%94%b9">#</a>
+</h2>
+<p>虽然 M6 保留了 <code>generationTokens</code> 字段 JSON 反序列化的向后兼容性，但该字段将在 M7 中被移除。所有使用旧字段名的持久化 JSON 文档都应更新为使用 <code>completionTokens</code> 。</p>
+<p>新 JSON 格式的示例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;promptTokens&#34;</span>: <span style="color:#ae81ff">100</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;completionTokens&#34;</span>: <span style="color:#ae81ff">50</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;totalTokens&#34;</span>: <span style="color:#ae81ff">150</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="工具调用的-functioncallingoptions-用法的变更">
+  工具调用的 FunctionCallingOptions 用法的变更
+  <a class="anchor" href="#%e5%b7%a5%e5%85%b7%e8%b0%83%e7%94%a8%e7%9a%84-functioncallingoptions-%e7%94%a8%e6%b3%95%e7%9a%84%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>每个 <code>ChatModel</code> 实例在构造时都接受一个可选的 <code>ChatOptions</code> 或 <code>FunctionCallingOptions</code> 实例，可用于配置用于调用模型的默认工具。</p>
+<p>1.0.0-M6 之前：</p>
+<ul>
+<li>通过默认 FunctionCallingOptions 实例的 functions() 方法传递的任何工具都包含在从该 ChatModel 实例对模型的每次调用中，可能会被运行时选项覆盖。</li>
+<li>通过默认 FunctionCallingOptions 实例的 functionCallbacks() 方法传递的任何工具仅可用于运行时动态解析（请参阅工具解析 ），但除非明确请求，否则永远不会包含在对模型的任何调用中。</li>
+</ul>
+<p>启动 1.0.0-M6：</p>
+<ul>
+<li>通过 functions() 方法或默认 FunctionCallingOptions 的 functionCallbacks() 传递的任何工具
+实例现在以相同的方式处理：它会包含在该 ChatModel 实例对模型的每次调用中，并可能被运行时选项覆盖。这样，在模型调用中包含工具的方式就保持一致，并避免了由于 functionCallbacks() 和所有其他选项之间的行为差​​异而导致的混淆。</li>
+</ul>
+<p>如果您希望使工具可用于运行时动态解析，并且仅在明确请求时将其包含在模型的聊天请求中，则可以使用[
+  <a href="api/tools.html#_tool_resolution">工具解析</a>](api/tools.html#_tool_resolution)中描述的策略之一。</p>
+<h2 id="删除已弃用的-amazon-bedrock-聊天模型">
+  删除已弃用的 Amazon Bedrock 聊天模型
+  <a class="anchor" href="#%e5%88%a0%e9%99%a4%e5%b7%b2%e5%bc%83%e7%94%a8%e7%9a%84-amazon-bedrock-%e8%81%8a%e5%a4%a9%e6%a8%a1%e5%9e%8b">#</a>
+</h2>
+<p>从 1.0.0-M6 开始，Spring AI 已过渡到使用 Amazon Bedrock 的 Converse API 来实现 Spring AI 中的所有聊天对话。除 Cohere 和 Titan 的 Embedding 模型外，所有 Amazon Bedrock Chat 模型均已移除。</p>
+<h2 id="使用-spring-boot-342-进行依赖管理的变更">
+  使用 Spring Boot 3.4.2 进行依赖管理的变更
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8-spring-boot-342-%e8%bf%9b%e8%a1%8c%e4%be%9d%e8%b5%96%e7%ae%a1%e7%90%86%e7%9a%84%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>Spring AI 更新后使用 Spring Boot 3.4.2 进行依赖管理。您可以参考[
+  <a href="https://github.com/spring-projects/spring-boot/blob/v3.4.2/spring-boot-project/spring-boot-dependencies/build.gradle">此处</a>](
+  <a href="https://github.com/spring-projects/spring-boot/blob/v3.4.2/spring-boot-project/spring-boot-dependencies/build.gradle">https://github.com/spring-projects/spring-boot/blob/v3.4.2/spring-boot-project/spring-boot-dependencies/build.gradle</a>)了解 Spring Boot 3.4.2 管理的依赖项</p>
+<h2 id="所需行动-1">
+  所需行动
+  <a class="anchor" href="#%e6%89%80%e9%9c%80%e8%a1%8c%e5%8a%a8-1">#</a>
+</h2>
+<ul>
+<li>如果您要升级到 Spring Boot 3.4.2，请务必参考此文档，了解配置 REST 客户端所需的更改。需要注意的是，如果您的类路径中没有 HTTP 客户端库，这可能会导致使用 JdkClientHttpRequestFactory ，而之前应该使用 SimpleClientHttpRequestFactory 。要切换到使用 SimpleClientHttpRequestFactory ，您需要设置 spring.http.client.factory=simple 。</li>
+<li>如果您使用的是不同版本的 Spring Boot（例如 Spring Boot 3.3.x）并且需要特定版本的依赖项，则可以在构建配置中覆盖它。</li>
+</ul>
+<h2 id="矢量存储-api-变更">
+  矢量存储 API 变更
+  <a class="anchor" href="#%e7%9f%a2%e9%87%8f%e5%ad%98%e5%82%a8-api-%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>在 1.0.0-M6 版本中， <code>VectorStore</code> 接口中的 <code>delete</code> 方法已修改为 void 操作，而不是返回 <code>Optional&lt;Boolean&gt;</code> 。如果您的代码之前检查了 <code>delete</code> 操作的返回值，则需要移除此检查。现在，如果删除失败，该操作会抛出异常，从而提供更直接的错误处理。</p>
+<h2 id="100-m6-之前">
+  1.0.0-M6 之前：
+  <a class="anchor" href="#100-m6-%e4%b9%8b%e5%89%8d">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Optional<span style="color:#f92672">&lt;</span>Boolean<span style="color:#f92672">&gt;</span> result <span style="color:#f92672">=</span> vectorStore.<span style="color:#a6e22e">delete</span>(ids);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (result.<span style="color:#a6e22e">isPresent</span>() <span style="color:#f92672">&amp;&amp;</span> result.<span style="color:#a6e22e">get</span>()) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// handle successful deletion</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="在-100-m6-及更高版本中">
+  在 1.0.0-M6 及更高版本中：
+  <a class="anchor" href="#%e5%9c%a8-100-m6-%e5%8f%8a%e6%9b%b4%e9%ab%98%e7%89%88%e6%9c%ac%e4%b8%ad">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>vectorStore.<span style="color:#a6e22e">delete</span>(ids);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// deletion successful if no exception is thrown</span>
+</span></span></code></pre></div><h2 id="升级到-100m5">
+  升级到 1.0.0.M5
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-100m5">#</a>
+</h2>
+<ul>
+<li>为了保持一致性，向量构建器已被重构。</li>
+<li>当前 VectorStore 实现构造函数已被弃用，请使用构建器模式。</li>
+<li>VectorStore 实现包已移至唯一的包名称，以避免跨工件发生冲突。例如， org.springframework.ai.vectorstore 移至 org.springframework.ai.pgvector.vectorstore 。</li>
+</ul>
+<h2 id="升级到-100rc3">
+  升级到 1.0.0.RC3
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-100rc3">#</a>
+</h2>
+<ul>
+<li>便携式聊天选项（ frequencyPenalty 、 presencePenalty 、 temperature 、 topP ）的类型已从 Float 更改为 Double 。</li>
+</ul>
+<h2 id="升级到-100m2">
+  升级到 1.0.0.M2
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-100m2">#</a>
+</h2>
+<ul>
+<li>Chroma 矢量存储的配置前缀已从 spring.ai.vectorstore.chroma.store 更改为 spring.ai.vectorstore.chroma ，以与其他矢量存储的命名约定保持一致。</li>
+<li>能够 initialize-schema 属性的默认值现已设置为 false 。这意味着，如果希望在应用程序启动时创建模式，则应用程序现在需要明确选择在受支持的向量存储上启用模式初始化。并非所有向量存储都支持此属性。有关更多详细信息，请参阅相应的向量存储文档。以下是当前不支持 initialize-schema 属性的向量存储。
+<ul>
+<li>哈娜</li>
+<li>松果</li>
+<li>威维特</li>
+</ul>
+</li>
+<li>在《侏罗纪世界 2》基岩版中，聊天选项 countPenalty 、 frequencyPenalty 和 presencePenalty
+已重命名为 countPenaltyOptions 、 frequencyPenaltyOptions 和 presencePenaltyOptions 。此外，聊天选项 stopSequences 的类型已从 String[] 更改为 List<String> 。</li>
+<li>在 Azure OpenAI 中，聊天选项 frequencyPenalty 和 presencePenalty 的类型
+已从 Double 更改为 Float ，与所有其他实现一致。</li>
+</ul>
+<h2 id="升级到-100m1">
+  升级到 1.0.0.M1
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-100m1">#</a>
+</h2>
+<p>在即将发布 1.0.0 M1 的过程中，我们做出了几项重大变更。抱歉，这是为了更好的体验！</p>
+<h2 id="chatclient-变更">
+  ChatClient 变更
+  <a class="anchor" href="#chatclient-%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>此次重大改动在于，将“旧版” <code>ChatClient</code> 功能迁移至 <code>ChatModel</code> 。“新版” <code>ChatClient</code> 现在接受 <code>ChatModel</code> 的实例。此举旨在支持流畅的 API，以类似于 Spring 生态系统中其他客户端类（例如 <code>RestClient</code> 、 <code>WebClient</code> 和 <code>JdbcClient</code> ）的风格创建和执行提示。有关流畅 API 的更多信息，请参阅 
+  <a href="[[docs.spring.io/spring-ai/docs/api]%28https://docs.spring.io/spring-ai/docs/api%29]%28https://[docs.spring.io/spring-ai/docs/api]%28https://docs.spring.io/spring-ai/docs/api%29%29">JavaDoc</a>，正式的参考文档即将发布。</p>
+<p>我们将“旧”的 `````Model<code>Client` 重命名为 </code>Model<code> ，并重命名了实现类，例如将 ``ImageClient`` 重命名为 Image</code>Model<code>。</code>Model<code>实现代表了在 Spring AI API 和底层 AI</code>Model```` API 之间进行转换的可移植层。</p>
+<p>一个新的包 <code>model</code> ，包含接口和基类，支持为任何输入/输出数据类型组合创建 AI 模型客户端。目前，聊天和图像模型包已实现此功能。我们将很快将嵌入包更新到此新模型。</p>
+<p>一种新的“可移植选项”设计模式。我们希望在 <code>ModelCall</code> 中尽可能地实现跨不同聊天 AI 模型的可移植性。它包含一组通用的生成选项，以及特定于模型提供者的选项。我们使用了一种“鸭子类型”方法。模型包中的 <code>ModelOptions</code> 是一个标记接口，指示此类的实现将为模型提供选项。请参阅 <code>ImageOptions</code> ，它是一个子接口，定义了跨所有文本→图像 <code>ImageModel</code> 实现的可移植选项。StabilityAi<code>ImageOptions</code> 和 OpenAi<code>ImageOptions</code> 则提供了特定于每个模型提供者的选项。所有选项类均通过流畅的 API 构建器创建，所有选项类都可以传递到可移植的 <code>ImageModel</code> API 中。这些选项数据类型用于 <code>ImageModel</code> 实现 StabilityAi<code>ImageOptions</code> 自动配置/配置属性。</p>
+<h2 id="神器名称变更">
+  神器名称变更
+  <a class="anchor" href="#%e7%a5%9e%e5%99%a8%e5%90%8d%e7%a7%b0%e5%8f%98%e6%9b%b4">#</a>
+</h2>
+<p>重命名的 POM 工件名称： - spring-ai-qdrant → spring-ai-qdrant-store - spring-ai-cassandra → spring-ai-cassandra-store - spring-ai-pinecone → spring-ai-pinecone-store - spring-ai-redis → spring-ai-redis-store - spring-ai-qdrant → spring-ai-qdrant-store - spring-ai-gemfire → spring-ai-gemfire-store - spring-ai-azure-vector-store-spring-boot-starter → spring-ai-azure-store-spring-boot-starter - spring-ai-redis-spring-boot-starter → spring-ai-starter-vector-store-redis</p>
+<h2 id="升级到-081">
+  升级到 0.8.1
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-081">#</a>
+</h2>
+<p>之前的 <code>spring-ai-vertex-ai</code> 已重命名为 <code>spring-ai-vertex-ai</code>-palm2 并且 <code>spring-ai-vertex-ai</code>-spring-boot-starter 已重命名为 <code>spring-ai-vertex-ai</code>-palm2-spring-boot-starter 。</p>
+<p>因此，您需要将依赖关系从</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-vertex-ai<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>到</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-vertex-ai-palm2<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>并且 Palm2 型号的相关 Boot 启动器已从</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-vertex-ai-spring-boot-starter<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>到</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-vertex-ai-palm2-spring-boot-starter<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><ul>
+<li>重命名课程（2024 年 3 月 1 日）</li>
+</ul>
+<h2 id="升级到-080">
+  升级到 0.8.0
+  <a class="anchor" href="#%e5%8d%87%e7%ba%a7%e5%88%b0-080">#</a>
+</h2>
+<h2 id="2024-年-1-月-24-日更新">
+  2024 年 1 月 24 日更新
+  <a class="anchor" href="#2024-%e5%b9%b4-1-%e6%9c%88-24-%e6%97%a5%e6%9b%b4%e6%96%b0">#</a>
+</h2>
+<ul>
+<li>将 prompt 和 messages 以及 metadata 包移动到 org.springframework.ai.chat 的子包中</li>
+<li>新功能是文本转图片客户端。类包括 OpenAiImageModel 和 StabilityAiImageModel 。使用方法请参阅集成测试，文档即将发布。</li>
+<li>一个新的包 model ，包含接口和基类，支持为任何输入/输出数据类型组合创建 AI 模型客户端。目前，聊天和图像模型包已实现此功能。我们将很快将嵌入包更新到此新模型。</li>
+<li>一种新的“可移植选项”设计模式。我们希望在 ModelCall 中尽可能地实现跨不同聊天 AI 模型的可移植性。它包含一组通用的生成选项，以及特定于模型提供者的选项。我们使用了一种“鸭子类型”方法。模型包中的 ModelOptions 是一个标记接口，指示此类的实现将为模型提供选项。请参阅 ImageOptions ，它是一个子接口，定义了跨所有文本→图像 ImageModel 实现的可移植选项。StabilityAiImageOptions 和 OpenAiImageOptions 则提供了特定于每个模型提供者的选项。所有选项类均通过流畅的 API 构建器创建，所有选项类都可以传递到可移植的 ImageModel API 中。这些选项数据类型用于 ImageModel 实现 StabilityAiImageOptions 自动配置/配置属性。</li>
+</ul>
+<h2 id="2024-年-1-月-13-日更新">
+  2024 年 1 月 13 日更新
+  <a class="anchor" href="#2024-%e5%b9%b4-1-%e6%9c%88-13-%e6%97%a5%e6%9b%b4%e6%96%b0">#</a>
+</h2>
+<p>以下 OpenAi 自动配置聊天属性已更改</p>
+<ul>
+<li>从 spring.ai.openai.model 到 spring.ai.openai.chat.options.model 。</li>
+<li>从 spring.ai.openai.temperature 到 spring.ai.openai.chat.options.temperature 。</li>
+</ul>
+<p>查找有关 OpenAi 属性的更新文档： [
+  <a href="https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html">docs.spring.io/spring-ai/reference/api/chat/openai-chat.html</a>](https://
+  <a href="https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html">docs.spring.io/spring-ai/reference/api/chat/openai-chat.html</a>)</p>
+<h2 id="2023年12月27日更新">
+  2023年12月27日更新
+  <a class="anchor" href="#2023%e5%b9%b412%e6%9c%8827%e6%97%a5%e6%9b%b4%e6%96%b0">#</a>
+</h2>
+<p>将 SimplePersistentVectorStore 和 InMemoryVectorStore 合并为 SimpleVectorStore * 将 InMemoryVectorStore 替换为 SimpleVectorStore</p>
+<h2 id="2023年12月20日更新">
+  2023年12月20日更新
+  <a class="anchor" href="#2023%e5%b9%b412%e6%9c%8820%e6%97%a5%e6%9b%b4%e6%96%b0">#</a>
+</h2>
+<p>重构 Ollama 客户端及相关类和包名</p>
+<ul>
+<li>将 org.springframework.ai.ollama.client.OllamaClient 替换为 org.springframework.ai.ollama.OllamaModelCall。</li>
+<li>OllamaChatClient 方法签名已改变。</li>
+<li>将 org.springframework.ai.autoconfigure.ollama.OllamaProperties 重命名为 org.springframework.ai.model.ollama.autoconfigure.OllamaChatProperties ，并将后缀更改为： spring.ai.ollama.chat 。部分属性也进行了修改。</li>
+</ul>
+<h2 id="2023年12月19日更新">
+  2023年12月19日更新
+  <a class="anchor" href="#2023%e5%b9%b412%e6%9c%8819%e6%97%a5%e6%9b%b4%e6%96%b0">#</a>
+</h2>
+<p>重命名 AiClient 及相关类和包名称</p>
+<ul>
+<li>将 AiClient 重命名为 ChatClient</li>
+<li>将 AiResponse 重命名为 ChatResponse</li>
+<li>将 AiStreamClient 重命名为 StreamingChatClient</li>
+<li>将包 org.sf.ai.client 重命名为 org.sf.ai.chat</li>
+</ul>
+<p>重命名工件 ID</p>
+<ul>
+<li>嵌入到 spring-ai-transformers 中的 transformers-embedding</li>
+</ul>
+<p>将 Maven 模块从顶级目录和 <code>embedding-clients</code> 端子目录移动到单个 <code>models</code> 目录下。</p>
+<h2 id="2023年12月1日">
+  2023年12月1日
+  <a class="anchor" href="#2023%e5%b9%b412%e6%9c%881%e6%97%a5">#</a>
+</h2>
+<p>我们正在转换项目的组 ID：</p>
+<ul>
+<li>发件人 ： org.springframework.experimental.ai</li>
+<li>至 ： org.springframework.ai</li>
+</ul>
+<p>工件仍将托管在快照存储库中，如下所示。</p>
+<p>主分支将迁移至 <code>0.8.0-SNAPSHOT</code> 版本。该版本将在一两周内不稳定。如果您不想使用最新版，请使用 0.7.1-SNAPSHOT 版本。</p>
+<p>您可以像以前一样访问 <code>0.7.1-SNAPSHOT</code> 工件，并且仍然可以访问 <code>0.7.1-SNAPSHOT</code> 文档 。</p>
+<h2 id="071-snapshot-依赖项">
+  0.7.1-SNAPSHOT 依赖项
+  <a class="anchor" href="#071-snapshot-%e4%be%9d%e8%b5%96%e9%a1%b9">#</a>
+</h2>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#升级说明">升级说明</a>
+      <ul>
+        <li><a href="#升级到-100-snapshot">升级到 1.0.0-SNAPSHOT</a></li>
+        <li><a href="#概述">概述</a></li>
+        <li><a href="#添加快照存储库">添加快照存储库</a></li>
+        <li><a href="#更新依赖管理">更新依赖管理</a></li>
+        <li><a href="#工件-id包和模块变更">工件 ID、包和模块变更</a></li>
+        <li><a href="#升级到-100-rc1">升级到 1.0.0-RC1</a></li>
+        <li><a href="#重大变化">重大变化</a></li>
+        <li><a href="#聊天客户端和顾问">聊天客户端和顾问</a></li>
+        <li><a href="#顾问中的自包含模板">顾问中的自包含模板</a></li>
+        <li><a href="#可观察性">可观察性</a></li>
+        <li><a href="#聊天内存存储库模块和自动配置重命名">聊天内存存储库模块和自动配置重命名</a></li>
+        <li><a href="#工件-id">工件 ID</a></li>
+        <li><a href="#java-包">Java 包</a></li>
+        <li><a href="#配置类">配置类</a></li>
+        <li><a href="#特性">特性</a></li>
+        <li><a href="#消息聚合器重构">消息聚合器重构</a></li>
+        <li><a href="#变化">变化</a></li>
+        <li><a href="#迁移指南">迁移指南</a></li>
+        <li><a href="#沃森">沃森</a></li>
+        <li><a href="#moonshot-和-qianfan">MoonShot 和 QianFan</a></li>
+        <li><a href="#移除向量存储">移除向量存储</a></li>
+        <li><a href="#内存管理">内存管理</a></li>
+        <li><a href="#消息和模板-api">消息和模板 API</a></li>
+        <li><a href="#其他客户端-api-变更">其他客户端 API 变更</a></li>
+        <li><a href="#软件包结构变化">软件包结构变化</a></li>
+        <li><a href="#依赖项">依赖项</a></li>
+        <li><a href="#行为变化">行为变化</a></li>
+        <li><a href="#常规清理">常规清理</a></li>
+        <li><a href="#升级到-100-m8">升级到 1.0.0-M8</a></li>
+        <li><a href="#重大变化-1">重大变化</a></li>
+        <li><a href="#例子">例子</a></li>
+        <li><a href="#解决方案">解决方案</a></li>
+        <li><a href="#删除的实现和-api">删除的实现和 API</a></li>
+        <li><a href="#内存管理-1">内存管理</a></li>
+        <li><a href="#客户端-api">客户端 API</a></li>
+        <li><a href="#消息和模板-api-1">消息和模板 API</a></li>
+        <li><a href="#模型实现">模型实现</a></li>
+        <li><a href="#软件包结构变化-1">软件包结构变化</a></li>
+        <li><a href="#依赖项-1">依赖项</a></li>
+        <li><a href="#行为变化-1">行为变化</a></li>
+        <li><a href="#可观察性-1">可观察性</a></li>
+        <li><a href="#常规清理-1">常规清理</a></li>
+        <li><a href="#升级到-100-m7">升级到 1.0.0-M7</a></li>
+        <li><a href="#变更概述">变更概述</a></li>
+        <li><a href="#工件-id包和模块变更-1">工件 ID、包和模块变更</a></li>
+        <li><a href="#mcp-java-sdk-升级至-090">MCP Java SDK 升级至 0.9.0</a></li>
+        <li><a href="#接口重命名">接口重命名</a></li>
+        <li><a href="#服务器创建更改">服务器创建更改</a></li>
+        <li><a href="#处理程序签名变更">处理程序签名变更</a></li>
+        <li><a href="#通过交易所与客户互动">通过交易所与客户互动</a></li>
+        <li><a href="#roots-变更处理程序">Roots 变更处理程序</a></li>
+        <li><a href="#启用禁用模型自动配置">启用/禁用模型自动配置</a></li>
+        <li><a href="#利用人工智能实现自动升级">利用人工智能实现自动升级</a></li>
+        <li><a href="#跨版本的常见变更">跨版本的常见变更</a></li>
+        <li><a href="#神器-id-变更">神器 ID 变更</a></li>
+        <li><a href="#示例">示例</a></li>
+        <li><a href="#spring-ai-自动配置工件的变更">Spring AI 自动配置工件的变更</a></li>
+        <li><a href="#新的自动配置工件示例">新的自动配置工件示例</a></li>
+        <li><a href="#软件包名称变更">软件包名称变更</a></li>
+        <li><a href="#模块结构">模块结构</a></li>
+        <li><a href="#spring-ai-矢量存储">spring-ai-矢量存储</a></li>
+        <li><a href="#spring-ai-客户端聊天">spring-ai-客户端聊天</a></li>
+        <li><a href="#spring-ai-model-聊天-内存-cassandra">spring-ai-model-聊天-内存-cassandra</a></li>
+        <li><a href="#春艾拉格">春艾拉格</a></li>
+        <li><a href="#依赖结构">依赖结构</a></li>
+        <li><a href="#toolcontext-更改">ToolContext 更改</a></li>
+        <li><a href="#升级到-100-m6">升级到 1.0.0-M6</a></li>
+        <li><a href="#usage-接口和-defaultusage-实现的变更">Usage 接口和 DefaultUsage 实现的变更</a></li>
+        <li><a href="#所需行动">所需行动</a></li>
+        <li><a href="#json-serdeser-更改">JSON Ser/Deser 更改</a></li>
+        <li><a href="#工具调用的-functioncallingoptions-用法的变更">工具调用的 FunctionCallingOptions 用法的变更</a></li>
+        <li><a href="#删除已弃用的-amazon-bedrock-聊天模型">删除已弃用的 Amazon Bedrock 聊天模型</a></li>
+        <li><a href="#使用-spring-boot-342-进行依赖管理的变更">使用 Spring Boot 3.4.2 进行依赖管理的变更</a></li>
+        <li><a href="#所需行动-1">所需行动</a></li>
+        <li><a href="#矢量存储-api-变更">矢量存储 API 变更</a></li>
+        <li><a href="#100-m6-之前">1.0.0-M6 之前：</a></li>
+        <li><a href="#在-100-m6-及更高版本中">在 1.0.0-M6 及更高版本中：</a></li>
+        <li><a href="#升级到-100m5">升级到 1.0.0.M5</a></li>
+        <li><a href="#升级到-100rc3">升级到 1.0.0.RC3</a></li>
+        <li><a href="#升级到-100m2">升级到 1.0.0.M2</a></li>
+        <li><a href="#升级到-100m1">升级到 1.0.0.M1</a></li>
+        <li><a href="#chatclient-变更">ChatClient 变更</a></li>
+        <li><a href="#神器名称变更">神器名称变更</a></li>
+        <li><a href="#升级到-081">升级到 0.8.1</a></li>
+        <li><a href="#升级到-080">升级到 0.8.0</a></li>
+        <li><a href="#2024-年-1-月-24-日更新">2024 年 1 月 24 日更新</a></li>
+        <li><a href="#2024-年-1-月-13-日更新">2024 年 1 月 13 日更新</a></li>
+        <li><a href="#2023年12月27日更新">2023年12月27日更新</a></li>
+        <li><a href="#2023年12月20日更新">2023年12月20日更新</a></li>
+        <li><a href="#2023年12月19日更新">2023年12月19日更新</a></li>
+        <li><a href="#2023年12月1日">2023年12月1日</a></li>
+        <li><a href="#071-snapshot-依赖项">0.7.1-SNAPSHOT 依赖项</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

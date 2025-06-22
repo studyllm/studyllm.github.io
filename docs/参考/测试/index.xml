@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>测试 on Spring AI 1.0.0</title>
+    <link>https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/</link>
+    <description>Recent content in 测试 on Spring AI 1.0.0</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <atom:link href="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>测试容器</title>
+      <link>https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/</guid>
+      <description>&lt;h1 id=&#34;测试容器&#34;&gt;&#xA;  测试容器&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#%e6%b5%8b%e8%af%95%e5%ae%b9%e5%99%a8&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;Spring AI 提供了 Spring Boot 自动配置，用于建立与通过 Testcontainers 运行的模型服务或向量存储的连接。要启用此功能，请将以下依赖项添加到项目的 Maven &lt;code&gt;pom.xml&lt;/code&gt; 文件中：&lt;/p&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-xml&#34; data-lang=&#34;xml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;dependency&amp;gt;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;groupId&amp;gt;&lt;/span&gt;org.springframework.ai&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;/groupId&amp;gt;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;   &lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;artifactId&amp;gt;&lt;/span&gt;spring-ai-spring-boot-testcontainers&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;/artifactId&amp;gt;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;&amp;lt;/dependency&amp;gt;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;或者到你的 Gradle &lt;code&gt;build.gradle&lt;/code&gt; 构建文件。&lt;/p&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-groovy&#34; data-lang=&#34;groovy&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;dependencies &lt;span style=&#34;color:#f92672&#34;&gt;{&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    implementation &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;org.springframework.ai:spring-ai-spring-boot-testcontainers&amp;#39;&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;}&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;服务连接&#34;&gt;&#xA;  服务连接&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#%e6%9c%8d%e5%8a%a1%e8%bf%9e%e6%8e%a5&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;&lt;code&gt;spring-ai-spring-boot-testcontainers&lt;/code&gt; 模块中提供了以下服务连接工厂：&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

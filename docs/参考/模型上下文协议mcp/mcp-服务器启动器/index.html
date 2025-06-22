@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  MCP 服务器启动器
+  #
+
+Spring AI MCP（模型上下文协议）服务器启动启动器提供了在 Spring Boot 应用程序中设置 MCP 服务器的自动配置功能。它支持 MCP 服务器功能与 Spring Boot 的自动配置系统无缝集成。
+MCP 服务器启动器提供：
+
+MCP 服务器组件的自动配置
+支持同步和异步操作模式
+多种传输层选项
+灵活的工具、资源和提示规范
+更改通知功能
+
+
+  开胃菜
+  #
+
+根据您的运输需求选择以下其中一种启动器：
+
+  标准 MCP 服务器
+  #
+
+完整的 MCP 服务器功能支持 STDIO 服务器传输。
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-mcp-server-spring-boot-starter&lt;/artifactId&gt;
+&lt;/dependency&gt;
+
+适用于命令行和桌面工具
+无需额外的 Web 依赖项
+
+启动器激活 McpServerAutoConfiguration 自动配置，负责：
+
+配置基本服务器组件
+处理工具、资源和提示规范
+管理服务器功能和变更通知
+提供同步和异步服务器实现
+
+
+  WebMVC 服务器传输
+  #
+
+完整的 MCP 服务器功能支持基于 Spring MVC 的 SSE （服务器发送事件）服务器传输和可选的 STDIO 传输。
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-ai-starter-mcp-server-webmvc&lt;/artifactId&gt;
+&lt;/dependency&gt;
+启动器激活 McpWebMvcServerAutoConfiguration 和 McpServerAutoConfiguration 自动配置以提供：">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%99%A8/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="MCP 服务器启动器">
+  <meta property="og:description" content="MCP 服务器启动器 # Spring AI MCP（模型上下文协议）服务器启动启动器提供了在 Spring Boot 应用程序中设置 MCP 服务器的自动配置功能。它支持 MCP 服务器功能与 Spring Boot 的自动配置系统无缝集成。
+MCP 服务器启动器提供：
+MCP 服务器组件的自动配置 支持同步和异步操作模式 多种传输层选项 灵活的工具、资源和提示规范 更改通知功能 开胃菜 # 根据您的运输需求选择以下其中一种启动器：
+标准 MCP 服务器 # 完整的 MCP 服务器功能支持 STDIO 服务器传输。
+&lt;dependency&gt; &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt; &lt;artifactId&gt;spring-ai-mcp-server-spring-boot-starter&lt;/artifactId&gt; &lt;/dependency&gt; 适用于命令行和桌面工具 无需额外的 Web 依赖项 启动器激活 McpServerAutoConfiguration 自动配置，负责：
+配置基本服务器组件 处理工具、资源和提示规范 管理服务器功能和变更通知 提供同步和异步服务器实现 WebMVC 服务器传输 # 完整的 MCP 服务器功能支持基于 Spring MVC 的 SSE （服务器发送事件）服务器传输和可选的 STDIO 传输。
+&lt;dependency&gt; &lt;groupId&gt;org.springframework.ai&lt;/groupId&gt; &lt;artifactId&gt;spring-ai-starter-mcp-server-webmvc&lt;/artifactId&gt; &lt;/dependency&gt; 启动器激活 McpWebMvcServerAutoConfiguration 和 McpServerAutoConfiguration 自动配置以提供：">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>MCP 服务器启动器 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../../favicon.png" >
+<link rel="manifest" href="../../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%99%A8/">
+<link rel="stylesheet" href="../../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../../fuse.min.js"></script>
+  <script defer src="../../../../en.search.min.71e7e6c2939a8c322f56321bb68fc2082c0a37b8656d9a9617fd1c6ebfbb4f37.js" integrity="sha256-cefmwpOajDIvVjIbto/CCCwKN7hlbZqWF/0cbr&#43;7Tzc=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ab79ee7c06b73ed1cac487be78704b1a" class="toggle"  />
+    <label for="section-ab79ee7c06b73ed1cac487be78704b1a" class="flex justify-between">
+      <a href="../../../../docs/%E4%BB%8B%E7%BB%8D/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E4%BB%8B%E7%BB%8D/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="toggle" checked />
+    <label for="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/" class="">参考</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-861f1f33bc8d3da259fc08a7bd3778e9" class="toggle"  />
+    <label for="section-861f1f33bc8d3da259fc08a7bd3778e9" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/%E9%A1%BE%E9%97%AE-api/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%8F%90%E7%A4%BA/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA%E8%BD%AC%E6%8D%A2%E5%99%A8/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E5%A4%9A%E6%A8%A1%E6%80%81-api/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f78b15e57dfff314304a2bb1e9884f4a" class="toggle"  />
+    <label for="section-f78b15e57dfff314304a2bb1e9884f4a" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/" class="">模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f01f599500243d0a36d315cf18df347c" class="toggle"  />
+    <label for="section-f01f599500243d0a36d315cf18df347c" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9-converse/" class="">亚马逊基岩 Converse</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%BA%E7%B1%BB%E5%AD%A6-3-%E8%81%8A%E5%A4%A9/" class="">人类学 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/azure-openai-%E8%81%8A%E5%A4%A9/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/deepseek-%E8%81%8A%E5%A4%A9/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/docker-%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E8%80%85%E8%81%8A%E5%A4%A9/" class="">Docker 模型运行者聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-810d79b9e4561cb82f174a0a980239af" class="toggle"  />
+    <label for="section-810d79b9e4561cb82f174a0a980239af" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/vertexai-gemini-%E8%81%8A%E5%A4%A9/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/groq-%E8%81%8A%E5%A4%A9/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%8B%A5%E6%8A%B1%E8%84%B8%E8%81%8A%E5%A4%A9/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/mistral-%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E8%81%8A%E5%A4%A9/" class="">Mistral 人工智能聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/moonshot-ai-%E8%81%8A%E5%A4%A9/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/nvidia-%E8%81%8A%E5%A4%A9/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9/" class="">聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%9B%B0%E6%83%91%E8%81%8A%E5%A4%A9/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99bf04ea1225435ee3d3aac878598d1b" class="toggle"  />
+    <label for="section-99bf04ea1225435ee3d3aac878598d1b" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/" class="">OCI 生成式 AI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/oci-genai-%E5%8D%8F%E5%90%8C%E8%81%8A%E5%A4%A9/" class="">OCI GenAI 协同聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/openai-%E8%81%8A%E5%A4%A9/" class="">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E8%81%8A%E5%A4%A9/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%99%BA%E6%B5%A6-ai-%E8%81%8A%E5%A4%A9/" class="">智浦 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-402a989be78a917606348d6ff6652ff7" class="toggle"  />
+    <label for="section-402a989be78a917606348d6ff6652ff7" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-56d4fbd63aba9093164f2784fdd04677" class="toggle"  />
+    <label for="section-56d4fbd63aba9093164f2784fdd04677" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2%E5%B5%8C%E5%85%A5/" class="">相干嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6%E5%B5%8C%E5%85%A5/" class="">泰坦嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%B5%8C%E5%85%A5/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/mistral-ai-%E5%B5%8C%E5%85%A5/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/oracle-%E4%BA%91%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD-oci-genai-%E5%B5%8C%E5%85%A5/" class="">Oracle 云基础设施 (OCI) GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/ollama-%E5%B5%8C%E5%85%A5/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/transformersonnx%E5%B5%8C%E5%85%A5/" class="">Transformers（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/openai-%E5%B5%8C%E5%85%A5/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/postgresml-%E5%B5%8C%E5%85%A5/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%B5%8C%E5%85%A5/" class="">千帆嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6ef09998ce281d0b28a33f495c099c64" class="toggle"  />
+    <label for="section-6ef09998ce281d0b28a33f495c099c64" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%B5%8C%E5%85%A5/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-76b7909527d5ee378c9b7db9a7915572" class="toggle"  />
+    <label for="section-76b7909527d5ee378c9b7db9a7915572" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">Azure OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E7%A8%B3%E5%AE%9A%E6%80%A7-ai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">ZhiPuAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%BD%B1%E5%83%8F/" class="">千帆影像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="toggle"  />
+    <label for="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/" class="">音频模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7819d6457dfee9d52c1df4ade06e9929" class="toggle"  />
+    <label for="section-7819d6457dfee9d52c1df4ade06e9929" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/azure-openai-%E8%BD%AC%E5%BD%95/" class="">Azure OpenAI 转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4d35c258b8bf725a4f8fe541655ffeee" class="toggle"  />
+    <label for="section-4d35c258b8bf725a4f8fe541655ffeee" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/" class="">文本转语音 (TTS) API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/openai-%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts/" class="">OpenAI 文本转语音 (TTS)</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f10d18dff0bfc099fff60511d3eb1388" class="toggle"  />
+    <label for="section-f10d18dff0bfc099fff60511d3eb1388" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/" class="">适度</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/%E9%80%82%E5%BA%A6/" class="">适度</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E8%AE%B0%E5%BF%86/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-137a5cc62c39eb40ab9f360dd7a4089e" class="toggle" checked />
+    <label for="section-137a5cc62c39eb40ab9f360dd7a4089e" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 客户端启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%99%A8/" class="active">MCP 服务器启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-fe0a04b7ec0575e520d9c454f1ab8388" class="toggle"  />
+    <label for="section-fe0a04b7ec0575e520d9c454f1ab8388" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/" class="">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/etl-%E7%AE%A1%E9%81%93/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E8%AF%84%E4%BC%B0%E6%B5%8B%E8%AF%95/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c22b15d029e06bc3f36d75f90efdc60f" class="toggle"  />
+    <label for="section-c22b15d029e06bc3f36d75f90efdc60f" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai-%E6%9C%8D%E5%8A%A1/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos-db/" class="">Azure Cosmos DB</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra-%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/couchbase/" class="">Couchbase</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/elasticsearch/" class="">Elasticsearch</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire-%E7%9F%A2%E9%87%8F%E5%95%86%E5%BA%97/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb-%E5%90%91%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB 向量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/milvus/" class="">Milvus</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb-atlas/" class="">MongoDB Atlas</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j/" class="">Neo4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%80%E6%94%BE%E6%90%9C%E7%B4%A2/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/oracle-database-23ai---ai-%E5%90%91%E9%87%8F%E6%90%9C%E7%B4%A2/" class="">Oracle Database 23ai - AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg-%E8%BD%BD%E4%BD%93/" class="">PG 载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%8D%A1%E5%BE%B7%E5%85%B0%E7%89%B9/" class="">卡德兰特</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" class="">Redis</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap-hana-%E4%BA%91/" class="">SAP HANA 云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/typesense/" class="">Typesense</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%A8%81%E7%BB%B4%E7%89%B9/" class="">威维特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E5%BC%80%E5%8F%91%E6%97%B6%E6%9C%8D%E5%8A%A1/" class="">开发时服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-13f6ed8395cc1d209c839158e47f69af" class="toggle"  />
+    <label for="section-13f6ed8395cc1d209c839158e47f69af" class="flex justify-between">
+      <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/" class="">测试</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-eb04feb0bc33d1a0586638a4be3d86d6" class="toggle"  />
+    <label for="section-eb04feb0bc33d1a0586638a4be3d86d6" class="flex justify-between">
+      <a href="../../../../docs/%E6%8C%87%E5%8D%97/" class="">指南</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E6%8C%87%E5%8D%97/%E6%8F%90%E7%A4%BA%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E6%8C%87%E5%8D%97/%E6%9E%84%E5%BB%BA%E6%9C%89%E6%95%88%E4%BB%A3%E7%90%86/" class="">构建有效代理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E6%8C%87%E5%8D%97/%E4%BA%91%E7%BB%91%E5%AE%9A/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-21dbdbec9c50b4c816faee9156087e37" class="toggle"  />
+    <label for="section-21dbdbec9c50b4c816faee9156087e37" class="flex justify-between">
+      <a href="../../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/%E4%BB%8E-functioncallback-%E8%BF%81%E7%A7%BB%E5%88%B0-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>MCP 服务器启动器</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#mcp-服务器启动器">MCP 服务器启动器</a>
+      <ul>
+        <li><a href="#开胃菜">开胃菜</a></li>
+        <li><a href="#标准-mcp-服务器">标准 MCP 服务器</a></li>
+        <li><a href="#webmvc-服务器传输">WebMVC 服务器传输</a></li>
+        <li><a href="#webflux-服务器传输">WebFlux 服务器传输</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#同步异步服务器类型">同步/异步服务器类型</a></li>
+        <li><a href="#服务器功能">服务器功能</a></li>
+        <li><a href="#交通选择">交通选择</a></li>
+        <li><a href="#特性和功能">特性和功能</a></li>
+        <li><a href="#工具">工具</a></li>
+        <li><a href="#工具上下文支持">工具上下文支持</a></li>
+        <li><a href="#资源管理">资源管理</a></li>
+        <li><a href="#及时管理">及时管理</a></li>
+        <li><a href="#完工管理">完工管理</a></li>
+        <li><a href="#根源改变消费者">根源改变消费者</a></li>
+        <li><a href="#使用示例">使用示例</a></li>
+        <li><a href="#标准-stdio-服务器配置">标准 STDIO 服务器配置</a></li>
+        <li><a href="#webmvc-服务器配置">WebMVC 服务器配置</a></li>
+        <li><a href="#webflux-服务器配置">WebFlux 服务器配置</a></li>
+        <li><a href="#使用-mcp-server-创建-spring-boot-应用程序">使用 MCP Server 创建 Spring Boot 应用程序</a></li>
+        <li><a href="#示例应用程序">示例应用程序</a></li>
+        <li><a href="#其他资源">其他资源</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="mcp-服务器启动器">
+  MCP 服务器启动器
+  <a class="anchor" href="#mcp-%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%90%af%e5%8a%a8%e5%99%a8">#</a>
+</h1>
+<p>Spring AI MCP（模型上下文协议）服务器启动启动器提供了在 Spring Boot 应用程序中设置 MCP 服务器的自动配置功能。它支持 MCP 服务器功能与 Spring Boot 的自动配置系统无缝集成。</p>
+<p>MCP 服务器启动器提供：</p>
+<ul>
+<li>MCP 服务器组件的自动配置</li>
+<li>支持同步和异步操作模式</li>
+<li>多种传输层选项</li>
+<li>灵活的工具、资源和提示规范</li>
+<li>更改通知功能</li>
+</ul>
+<h2 id="开胃菜">
+  开胃菜
+  <a class="anchor" href="#%e5%bc%80%e8%83%83%e8%8f%9c">#</a>
+</h2>
+<p>根据您的运输需求选择以下其中一种启动器：</p>
+<h2 id="标准-mcp-服务器">
+  标准 MCP 服务器
+  <a class="anchor" href="#%e6%a0%87%e5%87%86-mcp-%e6%9c%8d%e5%8a%a1%e5%99%a8">#</a>
+</h2>
+<p>完整的 MCP 服务器功能支持 <code>STDIO</code> 服务器传输。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-mcp-server-spring-boot-starter<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><ul>
+<li>适用于命令行和桌面工具</li>
+<li>无需额外的 Web 依赖项</li>
+</ul>
+<p>启动器激活 <code>McpServerAutoConfiguration</code> 自动配置，负责：</p>
+<ul>
+<li>配置基本服务器组件</li>
+<li>处理工具、资源和提示规范</li>
+<li>管理服务器功能和变更通知</li>
+<li>提供同步和异步服务器实现</li>
+</ul>
+<h2 id="webmvc-服务器传输">
+  WebMVC 服务器传输
+  <a class="anchor" href="#webmvc-%e6%9c%8d%e5%8a%a1%e5%99%a8%e4%bc%a0%e8%be%93">#</a>
+</h2>
+<p>完整的 MCP 服务器功能支持基于 Spring MVC 的 <code>SSE</code> （服务器发送事件）服务器传输和可选的 <code>STDIO</code> 传输。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-starter-mcp-server-webmvc<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>启动器激活 <code>McpWebMvcServerAutoConfiguration</code> 和 <code>McpServerAutoConfiguration</code> 自动配置以提供：</p>
+<ul>
+<li>使用 Spring MVC ( WebMvcSseServerTransportProvider ) 的基于 HTTP 的传输</li>
+<li>自动配置的 SSE 端点</li>
+<li>可选的 STDIO 传输（通过设置 spring.ai.mcp.server.stdio=true 启用）</li>
+<li>包含 spring-boot-starter-web 和 mcp-spring-webmvc 依赖项</li>
+</ul>
+<h2 id="webflux-服务器传输">
+  WebFlux 服务器传输
+  <a class="anchor" href="#webflux-%e6%9c%8d%e5%8a%a1%e5%99%a8%e4%bc%a0%e8%be%93">#</a>
+</h2>
+<p>完整的 MCP 服务器功能支持基于 Spring WebFlux 的 <code>SSE</code> （服务器发送事件）服务器传输和可选的 <code>STDIO</code> 传输。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-starter-mcp-server-webflux<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>启动器激活 <code>McpWebFluxServerAutoConfiguration</code> 和 <code>McpServerAutoConfiguration</code> 自动配置以提供：</p>
+<ul>
+<li>使用 Spring WebFlux 进行反应式传输 ( WebFluxSseServerTransportProvider )</li>
+<li>自动配置的反应式 SSE 端点</li>
+<li>可选的 STDIO 传输（通过设置 spring.ai.mcp.server.stdio=true 启用）</li>
+<li>包含 spring-boot-starter-webflux 和 mcp-spring-webflux 依赖项</li>
+</ul>
+<h2 id="配置属性">
+  配置属性
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>所有属性都以 <code>spring.ai.mcp.server</code> 为前缀：</p>
+<h2 id="同步异步服务器类型">
+  同步/异步服务器类型
+  <a class="anchor" href="#%e5%90%8c%e6%ad%a5%e5%bc%82%e6%ad%a5%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%b1%bb%e5%9e%8b">#</a>
+</h2>
+<ul>
+<li>同步服务器 - 使用 McpSyncServer 实现的默认服务器类型。它专为应用程序中简单的请求-响应模式而设计。要启用此服务器类型，请在配置中设置 spring.ai.mcp.server.type=SYNC 。激活后，它会自动处理同步工具规范的配置。</li>
+<li>异步服务器 - 异步服务器实现使用 McpAsyncServer ，并针对非阻塞操作进行了优化。要启用此服务器类型，请使用 spring.ai.mcp.server.type=ASYNC 配置您的应用程序。此服务器类型会自动设置异步工具规范，并内置 Project Reactor 支持。</li>
+</ul>
+<h2 id="服务器功能">
+  服务器功能
+  <a class="anchor" href="#%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%8a%9f%e8%83%bd">#</a>
+</h2>
+<p>MCP 服务器支持四种主要功能类型，可以单独启用或禁用：</p>
+<ul>
+<li>工具 - 使用 spring.ai.mcp.server.capabilities.tool=true|false 启用/禁用工具功能</li>
+<li>资源 - 使用 spring.ai.mcp.server.capabilities.resource=true|false 启用/禁用资源功能</li>
+<li>提示 - 使用 spring.ai.mcp.server.capabilities.prompt=true|false 启用/禁用提示功能</li>
+<li>完成 - 使用 spring.ai.mcp.server.capabilities.completion=true|false 启用/禁用完成功能</li>
+</ul>
+<p>所有功能默认启用。禁用某项功能将阻止服务器注册并向客户端公开相应的功能。</p>
+<h2 id="交通选择">
+  交通选择
+  <a class="anchor" href="#%e4%ba%a4%e9%80%9a%e9%80%89%e6%8b%a9">#</a>
+</h2>
+<p>MCP 服务器支持三种传输机制，每种机制都有其专用的启动器：</p>
+<ul>
+<li>标准输入/输出（STDIO） - spring-ai-starter-mcp-server</li>
+<li>Spring MVC（服务器发送事件）- spring-ai-starter-mcp-server-webmvc</li>
+<li>Spring WebFlux（反应式 SSE）- spring-ai-starter-mcp-server-webflux</li>
+</ul>
+<h2 id="特性和功能">
+  特性和功能
+  <a class="anchor" href="#%e7%89%b9%e6%80%a7%e5%92%8c%e5%8a%9f%e8%83%bd">#</a>
+</h2>
+<p>MCP 服务器启动器允许服务器向客户端公开工具、资源和提示。它会自动将注册为 Spring Bean 的自定义功能处理程序根据服务器类型转换为同步/异步规范：</p>
+<h2 id="工具">
+  工具
+  <a class="anchor" href="#%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<p>允许服务器公开可通过语言模型调用的工具。MCP 服务器启动启动器提供：</p>
+<ul>
+<li>变更通知支持</li>
+<li>Spring AI Tools 根据服务器类型自动转换为同步/异步规范</li>
+<li>通过 Spring beans 自动指定工具：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> ToolCallbackProvider <span style="color:#a6e22e">myTools</span>(...) {
+</span></span><span style="display:flex;"><span>    List<span style="color:#f92672">&lt;</span>ToolCallback<span style="color:#f92672">&gt;</span> tools <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> ToolCallbackProvider.<span style="color:#a6e22e">from</span>(tools);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>或者使用低级 API：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> List<span style="color:#f92672">&lt;</span>McpServerFeatures.<span style="color:#a6e22e">SyncToolSpecification</span><span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">myTools</span>(...) {
+</span></span><span style="display:flex;"><span>    List<span style="color:#f92672">&lt;</span>McpServerFeatures.<span style="color:#a6e22e">SyncToolSpecification</span><span style="color:#f92672">&gt;</span> tools <span style="color:#f92672">=</span> ...
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> tools;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>自动配置将自动检测并注册所有工具回调：* 单个 <code>ToolCallback</code> beans * <code>ToolCallback</code> beans 列表 * <code>ToolCallback</code>Provider beans</p>
+<p>工具按名称进行重复数据删除，并使用每个工具名称的第一次出现。</p>
+<h2 id="工具上下文支持">
+  工具上下文支持
+  <a class="anchor" href="#%e5%b7%a5%e5%85%b7%e4%b8%8a%e4%b8%8b%e6%96%87%e6%94%af%e6%8c%81">#</a>
+</h2>
+<p>支持 [
+  <a href="../tools.html#_tool_context">ToolContext</a>](../tools.html#_tool_context) ，允许将上下文信息传递给工具调用。它包含一个 <code>McpSyncServerExchange</code> 实例，该实例的 <code>exchange</code> 键为 <code>McpToolUtils.getMcpExchange(toolContext)</code> ，可通过 <code>exchange</code>.loggingNotification(…​) 访问。请参阅此[
+  <a href="https://github.com/spring-projects/spring-ai-examples/blob/3fab8483b8deddc241b1e16b8b049616604b7767/model-context-protocol/sampling/mcp-weather-webmvc-server/src/main/java/org/springframework/ai/mcp/sample/server/WeatherService.java#L59-L126">示例，</a>](
+  <a href="https://github.com/spring-projects/spring-ai-examples/blob/3fab8483b8deddc241b1e16b8b049616604b7767/model-context-protocol/sampling/mcp-weather-webmvc-server/src/main/java/org/springframework/ai/mcp/sample/server/WeatherService.java#L59-L126">https://github.com/spring-projects/spring-ai-examples/blob/3fab8483b8deddc241b1e16b8b049616604b7767/model-context-protocol/sampling/mcp-weather-webmvc-server/src/main/java/org/springframework/ai/mcp/sample/server/WeatherService.java#L59-L126</a>) 其中演示了 <code>exchange</code>.loggingNotification(…​) 和 <code>exchange</code>.createMessage(…​) 。</p>
+<h2 id="资源管理">
+  资源管理
+  <a class="anchor" href="#%e8%b5%84%e6%ba%90%e7%ae%a1%e7%90%86">#</a>
+</h2>
+<p>为服务器向客户端公开资源提供标准化的方式。</p>
+<ul>
+<li>静态和动态资源规范</li>
+<li>可选变更通知</li>
+<li>支持资源模板</li>
+<li>同步/异步资源规范之间的自动转换</li>
+<li>通过 Spring bean 自动指定资源：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> List<span style="color:#f92672">&lt;</span>McpServerFeatures.<span style="color:#a6e22e">SyncResourceSpecification</span><span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">myResources</span>(...) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> systemInfoResource <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> McpSchema.<span style="color:#a6e22e">Resource</span>(...);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> resourceSpecification <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> McpServerFeatures.<span style="color:#a6e22e">SyncResourceSpecification</span>(systemInfoResource, (exchange, request) <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">var</span> systemInfo <span style="color:#f92672">=</span> Map.<span style="color:#a6e22e">of</span>(...);
+</span></span><span style="display:flex;"><span>            String jsonContent <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ObjectMapper().<span style="color:#a6e22e">writeValueAsString</span>(systemInfo);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> McpSchema.<span style="color:#a6e22e">ReadResourceResult</span>(
+</span></span><span style="display:flex;"><span>                    List.<span style="color:#a6e22e">of</span>(<span style="color:#66d9ef">new</span> McpSchema.<span style="color:#a6e22e">TextResourceContents</span>(request.<span style="color:#a6e22e">uri</span>(), <span style="color:#e6db74">&#34;application/json&#34;</span>, jsonContent)));
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">catch</span> (Exception e) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException(<span style="color:#e6db74">&#34;Failed to generate system info&#34;</span>, e);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> List.<span style="color:#a6e22e">of</span>(resourceSpecification);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="及时管理">
+  及时管理
+  <a class="anchor" href="#%e5%8f%8a%e6%97%b6%e7%ae%a1%e7%90%86">#</a>
+</h2>
+<p>为服务器提供向客户端公开提示模板的标准化方式。</p>
+<ul>
+<li>变更通知支持</li>
+<li>模板版本控制</li>
+<li>同步/异步提示规范之间的自动转换</li>
+<li>通过 Spring beans 自动提示规范：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> List<span style="color:#f92672">&lt;</span>McpServerFeatures.<span style="color:#a6e22e">SyncPromptSpecification</span><span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">myPrompts</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> McpSchema.<span style="color:#a6e22e">Prompt</span>(<span style="color:#e6db74">&#34;greeting&#34;</span>, <span style="color:#e6db74">&#34;A friendly greeting prompt&#34;</span>,
+</span></span><span style="display:flex;"><span>        List.<span style="color:#a6e22e">of</span>(<span style="color:#66d9ef">new</span> McpSchema.<span style="color:#a6e22e">PromptArgument</span>(<span style="color:#e6db74">&#34;name&#34;</span>, <span style="color:#e6db74">&#34;The name to greet&#34;</span>, <span style="color:#66d9ef">true</span>)));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> promptSpecification <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> McpServerFeatures.<span style="color:#a6e22e">SyncPromptSpecification</span>(prompt, (exchange, getPromptRequest) <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>        String nameArgument <span style="color:#f92672">=</span> (String) getPromptRequest.<span style="color:#a6e22e">arguments</span>().<span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#34;name&#34;</span>);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (nameArgument <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>) { nameArgument <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;friend&#34;</span>; }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">var</span> userMessage <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> PromptMessage(Role.<span style="color:#a6e22e">USER</span>, <span style="color:#66d9ef">new</span> TextContent(<span style="color:#e6db74">&#34;Hello &#34;</span> <span style="color:#f92672">+</span> nameArgument <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;! How can I assist you today?&#34;</span>));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> GetPromptResult(<span style="color:#e6db74">&#34;A personalized greeting message&#34;</span>, List.<span style="color:#a6e22e">of</span>(userMessage));
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> List.<span style="color:#a6e22e">of</span>(promptSpecification);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="完工管理">
+  完工管理
+  <a class="anchor" href="#%e5%ae%8c%e5%b7%a5%e7%ae%a1%e7%90%86">#</a>
+</h2>
+<p>为服务器提供一种向客户端公开完成功能的标准化方法。</p>
+<ul>
+<li>支持同步和异步完成规范</li>
+<li>通过 Spring beans 自动注册：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> List<span style="color:#f92672">&lt;</span>McpServerFeatures.<span style="color:#a6e22e">SyncCompletionSpecification</span><span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">myCompletions</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> completion <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> McpServerFeatures.<span style="color:#a6e22e">SyncCompletionSpecification</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;code-completion&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;Provides code completion suggestions&#34;</span>,
+</span></span><span style="display:flex;"><span>        (exchange, request) <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// Implementation that returns completion suggestions</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> McpSchema.<span style="color:#a6e22e">CompletionResult</span>(List.<span style="color:#a6e22e">of</span>(
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">new</span> McpSchema.<span style="color:#a6e22e">Completion</span>(<span style="color:#e6db74">&#34;suggestion1&#34;</span>, <span style="color:#e6db74">&#34;First suggestion&#34;</span>),
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">new</span> McpSchema.<span style="color:#a6e22e">Completion</span>(<span style="color:#e6db74">&#34;suggestion2&#34;</span>, <span style="color:#e6db74">&#34;Second suggestion&#34;</span>)
+</span></span><span style="display:flex;"><span>            ));
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    );
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> List.<span style="color:#a6e22e">of</span>(completion);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="根源改变消费者">
+  根源改变消费者
+  <a class="anchor" href="#%e6%a0%b9%e6%ba%90%e6%94%b9%e5%8f%98%e6%b6%88%e8%b4%b9%e8%80%85">#</a>
+</h2>
+<p>当根发生改变时，支持 <code>listChanged</code> 的​​客户端会发送 Root Change 通知。</p>
+<ul>
+<li>支持监控根更改</li>
+<li>自动转换为反应式应用程序的异步使用者</li>
+<li>通过 Spring beans 进行可选注册</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> BiConsumer<span style="color:#f92672">&lt;</span>McpSyncServerExchange, List<span style="color:#f92672">&lt;</span>McpSchema.<span style="color:#a6e22e">Root</span><span style="color:#f92672">&gt;&gt;</span> <span style="color:#a6e22e">rootsChangeHandler</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (exchange, roots) <span style="color:#f92672">-&gt;</span> {
+</span></span><span style="display:flex;"><span>        logger.<span style="color:#a6e22e">info</span>(<span style="color:#e6db74">&#34;Registering root resources: {}&#34;</span>, roots);
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="使用示例">
+  使用示例
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<h2 id="标准-stdio-服务器配置">
+  标准 STDIO 服务器配置
+  <a class="anchor" href="#%e6%a0%87%e5%87%86-stdio-%e6%9c%8d%e5%8a%a1%e5%99%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># Using spring-ai-starter-mcp-server</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">mcp</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">server</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">name</span>: <span style="color:#ae81ff">stdio-mcp-server</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">version</span>: <span style="color:#ae81ff">1.0.0</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">type</span>: <span style="color:#ae81ff">SYNC</span>
+</span></span></code></pre></div><h2 id="webmvc-服务器配置">
+  WebMVC 服务器配置
+  <a class="anchor" href="#webmvc-%e6%9c%8d%e5%8a%a1%e5%99%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># Using spring-ai-starter-mcp-server-webmvc</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">mcp</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">server</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">name</span>: <span style="color:#ae81ff">webmvc-mcp-server</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">version</span>: <span style="color:#ae81ff">1.0.0</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">type</span>: <span style="color:#ae81ff">SYNC</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">instructions</span>: <span style="color:#e6db74">&#34;This server provides weather information tools and resources&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">sse-message-endpoint</span>: <span style="color:#ae81ff">/mcp/messages</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">capabilities</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">tool</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">resource</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">prompt</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">completion</span>: <span style="color:#66d9ef">true</span>
+</span></span></code></pre></div><h2 id="webflux-服务器配置">
+  WebFlux 服务器配置
+  <a class="anchor" href="#webflux-%e6%9c%8d%e5%8a%a1%e5%99%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># Using spring-ai-starter-mcp-server-webflux</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">mcp</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">server</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">name</span>: <span style="color:#ae81ff">webflux-mcp-server</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">version</span>: <span style="color:#ae81ff">1.0.0</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">type</span>: <span style="color:#ae81ff">ASYNC </span> <span style="color:#75715e"># Recommended for reactive applications</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">instructions</span>: <span style="color:#e6db74">&#34;This reactive server provides weather information tools and resources&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">sse-message-endpoint</span>: <span style="color:#ae81ff">/mcp/messages</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">capabilities</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">tool</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">resource</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">prompt</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">completion</span>: <span style="color:#66d9ef">true</span>
+</span></span></code></pre></div><h2 id="使用-mcp-server-创建-spring-boot-应用程序">
+  使用 MCP Server 创建 Spring Boot 应用程序
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8-mcp-server-%e5%88%9b%e5%bb%ba-spring-boot-%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">WeatherService</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Tool</span>(description <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Get weather information by city name&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">getWeather</span>(String cityName) {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Implementation</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">@SpringBootApplication</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">McpServerApplication</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> Logger logger <span style="color:#f92672">=</span> LoggerFactory.<span style="color:#a6e22e">getLogger</span>(McpServerApplication.<span style="color:#a6e22e">class</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span>(String<span style="color:#f92672">[]</span> args) {
+</span></span><span style="display:flex;"><span>        SpringApplication.<span style="color:#a6e22e">run</span>(McpServerApplication.<span style="color:#a6e22e">class</span>, args);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">@Bean</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> ToolCallbackProvider <span style="color:#a6e22e">weatherTools</span>(WeatherService weatherService) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> MethodToolCallbackProvider.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">toolObjects</span>(weatherService).<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>自动配置会自动将工具回调注册为 MCP 工具。您可以有多个 bean 生成 ToolCallbacks。自动配置会将它们合并。</p>
+<h2 id="示例应用程序">
+  示例应用程序
+  <a class="anchor" href="#%e7%a4%ba%e4%be%8b%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f">#</a>
+</h2>
+<ul>
+<li>天气服务器（WebFlux） ——带有 WebFlux 传输的 Spring AI MCP 服务器启动器。</li>
+<li>天气服务器（STDIO） - 带有 STDIO 传输的 Spring AI MCP 服务器启动器。</li>
+<li>天气服务器手动配置 - Spring AI MCP 服务器启动器不使用自动配置，而是使用 Java SDK 手动配置服务器。</li>
+</ul>
+<h2 id="其他资源">
+  其他资源
+  <a class="anchor" href="#%e5%85%b6%e4%bb%96%e8%b5%84%e6%ba%90">#</a>
+</h2>
+<ul>
+<li>Spring AI 文档</li>
+<li>模型上下文协议规范</li>
+<li>Spring Boot 自动配置</li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#mcp-服务器启动器">MCP 服务器启动器</a>
+      <ul>
+        <li><a href="#开胃菜">开胃菜</a></li>
+        <li><a href="#标准-mcp-服务器">标准 MCP 服务器</a></li>
+        <li><a href="#webmvc-服务器传输">WebMVC 服务器传输</a></li>
+        <li><a href="#webflux-服务器传输">WebFlux 服务器传输</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#同步异步服务器类型">同步/异步服务器类型</a></li>
+        <li><a href="#服务器功能">服务器功能</a></li>
+        <li><a href="#交通选择">交通选择</a></li>
+        <li><a href="#特性和功能">特性和功能</a></li>
+        <li><a href="#工具">工具</a></li>
+        <li><a href="#工具上下文支持">工具上下文支持</a></li>
+        <li><a href="#资源管理">资源管理</a></li>
+        <li><a href="#及时管理">及时管理</a></li>
+        <li><a href="#完工管理">完工管理</a></li>
+        <li><a href="#根源改变消费者">根源改变消费者</a></li>
+        <li><a href="#使用示例">使用示例</a></li>
+        <li><a href="#标准-stdio-服务器配置">标准 STDIO 服务器配置</a></li>
+        <li><a href="#webmvc-服务器配置">WebMVC 服务器配置</a></li>
+        <li><a href="#webflux-服务器配置">WebFlux 服务器配置</a></li>
+        <li><a href="#使用-mcp-server-创建-spring-boot-应用程序">使用 MCP Server 创建 Spring Boot 应用程序</a></li>
+        <li><a href="#示例应用程序">示例应用程序</a></li>
+        <li><a href="#其他资源">其他资源</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>介绍 on Spring AI 1.0.0</title>
+    <link>https://studyllm.github.io/docs/%E4%BB%8B%E7%BB%8D/</link>
+    <description>Recent content in 介绍 on Spring AI 1.0.0</description>
+    <generator>Hugo</generator>
+    <language>zh-cn</language>
+    <atom:link href="https://studyllm.github.io/docs/%E4%BB%8B%E7%BB%8D/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>人工智能概念</title>
+      <link>https://studyllm.github.io/docs/%E4%BB%8B%E7%BB%8D/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://studyllm.github.io/docs/%E4%BB%8B%E7%BB%8D/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/</guid>
+      <description>&lt;h1 id=&#34;人工智能概念&#34;&gt;&#xA;  人工智能概念&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#%e4%ba%ba%e5%b7%a5%e6%99%ba%e8%83%bd%e6%a6%82%e5%bf%b5&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;本节介绍 Spring AI 使用的核心概念。建议您仔细阅读，以了解 Spring AI 实现背后的思想。&lt;/p&gt;&#xA;&lt;h2 id=&#34;模型&#34;&gt;&#xA;  模型&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#%e6%a8%a1%e5%9e%8b&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;人工智能模型是用于处理和生成信息的算法，通常模仿人类的认知功能。通过从大型数据集中学习模式和洞察，这些模型可以进行预测、文本、图像或其他输出，从而增强各行各业的各种应用。&lt;/p&gt;&#xA;&lt;p&gt;AI 模型种类繁多，每种模型都适用于特定的用例。虽然 ChatGPT 及其生成式 AI 功能通过文本输入和输出吸引了众多用户，但许多模型和公司也提供多样化的输入和输出。在 ChatGPT 出现之前，许多人对文本转图像生成模型（例如 Midjourney 和 Stable Diffusion）着迷。&lt;/p&gt;&#xA;&lt;p&gt;下表根据输入和输出类型对几种模型进行了分类：&lt;/p&gt;&#xA;&lt;p&gt;&#xA;  &lt;img src=&#34;../../images/spring-ai-concepts-model-types.jpg&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;&#xA;&lt;p&gt;Spring AI 目前支持将输入和输出处理为语言、图像和音频的模型。上表中的最后一行接受文本作为输入并输出数字，这通常被称为嵌入文本，代表 AI 模型中使用的内部数据结构。Spring AI 支持嵌入，以实现更高级的用例。&lt;/p&gt;&#xA;&lt;p&gt;GPT 等模型的独特之处在于其预训练特性，正如 GPT 中的“P”（聊天生成预训练 Transformer）所示。这项预训练功能将 AI 转变为通用的开发工具，无需丰富的机器学习或模型训练背景。&lt;/p&gt;&#xA;&lt;h2 id=&#34;提示&#34;&gt;&#xA;  提示&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#%e6%8f%90%e7%a4%ba&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;提示是基于语言的输入的基础，引导 AI 模型生成特定的输出。对于熟悉 ChatGPT 的人来说，提示可能看起来仅仅是在对话框中输入并发送到 API 的文本。然而，它包含的内容远不止于此。在许多 AI 模型中，提示的文本不仅仅是一个简单的字符串。&lt;/p&gt;&#xA;&lt;p&gt;ChatGPT 的 API 在一个提示中包含多个文本输入，每个文本输入都被分配一个角色。例如，系统角色用于指示模型如何操作并设置交互的上下文。此外，还有用户角色，通常是来自用户的输入。&lt;/p&gt;&#xA;&lt;p&gt;制作有效的提示既是一门艺术，也是一门科学。ChatGPT 是为人类对话而设计的。这与使用 SQL 之类的语言“提问”截然不同。人们必须像与人交谈一样与 AI 模型进行交流。&lt;/p&gt;&#xA;&lt;p&gt;这种交互方式如此重要，以至于“提示工程”一词已发展成为一门独立的学科。目前，有越来越多的技术可以提高提示的有效性。投入时间精心设计提示可以显著提升最终效果。&lt;/p&gt;&#xA;&lt;p&gt;分享提示已成为一种公共实践，学术界也正在积极开展这方面的研究。为了说明创建有效提示（例如，与 SQL 对比）是多么违反直觉， [&#xA;  &lt;a href=&#34;https://arxiv.org/abs/2205.11916&#34;&gt;最近的一篇研究论文&lt;/a&gt;](&#xA;  &lt;a href=&#34;https://arxiv.org/abs/2205.11916&#34;&gt;https://arxiv.org/abs/2205.11916&lt;/a&gt;)发现，最有效的提示之一以“深呼吸，一步一步来”这句话开头。这应该能让你明白语言为何如此重要。我们尚未完全了解如何最有效地利用这项技术的早期版本，例如 ChatGPT 3.5，更不用说正在开发的新版本了。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

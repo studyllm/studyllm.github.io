@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  OpenAI 聊天
+  #
+
+Spring AI 支持 ChatGPT 背后的公司 OpenAI 的各种 AI 语言模型，该公司通过创建业界领先的文本生成模型和嵌入，在激发人们对 AI 驱动的文本生成的兴趣方面发挥了重要作用。
+
+  先决条件
+  #
+
+您需要使用 OpenAI 创建一个 API 来访问 ChatGPT 模型。
+在 [
+  OpenAI 注册页面](
+  https://platform.openai.com/signup)创建一个帐户，并在 [
+  API 密钥页面](
+  https://platform.openai.com/account/api-keys)上生成令牌。
+Spring AI 项目定义了一个名为 spring.ai.openai.api-key 的配置属性，您应该将其设置为从 openai.com 获取的 API Key 的值。
+您可以在 application.properties 文件中设置此配置属性：
+spring.ai.openai.api-key=&lt;your-openai-api-key&gt;
+为了在处理 API 密钥等敏感信息时增强安全性，您可以使用 Spring 表达式语言 (SpEL) 引用自定义环境变量：
+# In application.yml
+spring:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+# In your environment or .env file
+export OPENAI_API_KEY=&lt;your-openai-api-key&gt;
+您还可以在应用程序代码中以编程方式设置此配置：
+// Retrieve API key from a secure source or environment variable
+String apiKey = System.getenv(&#34;OPENAI_API_KEY&#34;);
+
+  添加存储库和 BOM
+  #
+
+Spring AI 的构件已发布在 Maven Central 和 Spring Snapshot 仓库中。请参阅 [
+  “构件仓库”](../../getting-started.html#artifact-repositories) 部分，将这些仓库添加到您的构建系统中。">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/openai-%E8%81%8A%E5%A4%A9/">
+  <meta property="og:site_name" content="Spring AI 1.0.0">
+  <meta property="og:title" content="OpenAI 聊天">
+  <meta property="og:description" content="OpenAI 聊天 # Spring AI 支持 ChatGPT 背后的公司 OpenAI 的各种 AI 语言模型，该公司通过创建业界领先的文本生成模型和嵌入，在激发人们对 AI 驱动的文本生成的兴趣方面发挥了重要作用。
+先决条件 # 您需要使用 OpenAI 创建一个 API 来访问 ChatGPT 模型。
+在 [ OpenAI 注册页面]( https://platform.openai.com/signup)创建一个帐户，并在 [ API 密钥页面]( https://platform.openai.com/account/api-keys)上生成令牌。
+Spring AI 项目定义了一个名为 spring.ai.openai.api-key 的配置属性，您应该将其设置为从 openai.com 获取的 API Key 的值。
+您可以在 application.properties 文件中设置此配置属性：
+spring.ai.openai.api-key=&lt;your-openai-api-key&gt; 为了在处理 API 密钥等敏感信息时增强安全性，您可以使用 Spring 表达式语言 (SpEL) 引用自定义环境变量：
+# In application.yml spring: ai: openai: api-key: ${OPENAI_API_KEY} # In your environment or .env file export OPENAI_API_KEY=&lt;your-openai-api-key&gt; 您还可以在应用程序代码中以编程方式设置此配置：
+// Retrieve API key from a secure source or environment variable String apiKey = System.getenv(&#34;OPENAI_API_KEY&#34;); 添加存储库和 BOM # Spring AI 的构件已发布在 Maven Central 和 Spring Snapshot 仓库中。请参阅 [ “构件仓库”](../../getting-started.html#artifact-repositories) 部分，将这些仓库添加到您的构建系统中。">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="docs">
+<title>OpenAI 聊天 | Spring AI 1.0.0</title>
+<link rel="icon" href="../../../../../favicon.png" >
+<link rel="manifest" href="../../../../../manifest.json">
+<link rel="canonical" href="https://studyllm.github.io/docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/openai-%E8%81%8A%E5%A4%A9/">
+<link rel="stylesheet" href="../../../../../book.min.e9f68c3fff3d8236a489d16a9caf6de5e4d1a29c20eb4b5524e42cd30be4d319.css" integrity="sha256-6faMP/89gjakidFqnK9t5eTRopwg60tVJOQs0wvk0xk=" crossorigin="anonymous">
+  <script defer src="../../../../../fuse.min.js"></script>
+  <script defer src="../../../../../en.search.min.71e7e6c2939a8c322f56321bb68fc2082c0a37b8656d9a9617fd1c6ebfbb4f37.js" integrity="sha256-cefmwpOajDIvVjIbto/CCCwKN7hlbZqWF/0cbr&#43;7Tzc=" crossorigin="anonymous"></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="../../../../../"><span>Spring AI 1.0.0</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-ab79ee7c06b73ed1cac487be78704b1a" class="toggle"  />
+    <label for="section-ab79ee7c06b73ed1cac487be78704b1a" class="flex justify-between">
+      <a href="../../../../../docs/%E4%BB%8B%E7%BB%8D/" class="">介绍</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E4%BB%8B%E7%BB%8D/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E6%A6%82%E5%BF%B5/" class="">人工智能概念</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%85%A5%E9%97%A8/" class="">入门</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="toggle" checked />
+    <label for="section-3dfc9cb1c6958c0db8147e1932e4b22d" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/" class="">参考</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-861f1f33bc8d3da259fc08a7bd3778e9" class="toggle"  />
+    <label for="section-861f1f33bc8d3da259fc08a7bd3778e9" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/" class="">聊天客户端 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E5%AE%A2%E6%88%B7%E7%AB%AF-api/%E9%A1%BE%E9%97%AE-api/" class="">顾问 API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%8F%90%E7%A4%BA/" class="">提示</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA%E8%BD%AC%E6%8D%A2%E5%99%A8/" class="">结构化输出转换器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E5%A4%9A%E6%A8%A1%E6%80%81-api/" class="">多模态 API</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f78b15e57dfff314304a2bb1e9884f4a" class="toggle" checked />
+    <label for="section-f78b15e57dfff314304a2bb1e9884f4a" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/" class="">模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f01f599500243d0a36d315cf18df347c" class="toggle" checked />
+    <label for="section-f01f599500243d0a36d315cf18df347c" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/" class="">聊天模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B%E6%AF%94%E8%BE%83/" class="">聊天模型比较</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9-converse/" class="">亚马逊基岩 Converse</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E4%BA%BA%E7%B1%BB%E5%AD%A6-3-%E8%81%8A%E5%A4%A9/" class="">人类学 3 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/azure-openai-%E8%81%8A%E5%A4%A9/" class="">Azure OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/deepseek-%E8%81%8A%E5%A4%A9/" class="">DeepSeek 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/docker-%E6%A8%A1%E5%9E%8B%E8%BF%90%E8%A1%8C%E8%80%85%E8%81%8A%E5%A4%A9/" class="">Docker 模型运行者聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-810d79b9e4561cb82f174a0a980239af" class="toggle"  />
+    <label for="section-810d79b9e4561cb82f174a0a980239af" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/google-vertexai/vertexai-gemini-%E8%81%8A%E5%A4%A9/" class="">VertexAI Gemini 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/groq-%E8%81%8A%E5%A4%A9/" class="">Groq 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%8B%A5%E6%8A%B1%E8%84%B8%E8%81%8A%E5%A4%A9/" class="">拥抱脸聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/mistral-%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E8%81%8A%E5%A4%A9/" class="">Mistral 人工智能聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/moonshot-ai-%E8%81%8A%E5%A4%A9/" class="">Moonshot AI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/nvidia-%E8%81%8A%E5%A4%A9/" class="">NVIDIA 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E8%81%8A%E5%A4%A9/" class="">聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%9B%B0%E6%83%91%E8%81%8A%E5%A4%A9/" class="">困惑聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-99bf04ea1225435ee3d3aac878598d1b" class="toggle"  />
+    <label for="section-99bf04ea1225435ee3d3aac878598d1b" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/" class="">OCI 生成式 AI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/oci-%E7%94%9F%E6%88%90%E5%BC%8F-ai/oci-genai-%E5%8D%8F%E5%90%8C%E8%81%8A%E5%A4%A9/" class="">OCI GenAI 协同聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/openai-%E8%81%8A%E5%A4%A9/" class="active">OpenAI 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E8%81%8A%E5%A4%A9/" class="">千帆聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B-api/%E6%99%BA%E6%B5%A6-ai-%E8%81%8A%E5%A4%A9/" class="">智浦 AI 聊天</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-402a989be78a917606348d6ff6652ff7" class="toggle"  />
+    <label for="section-402a989be78a917606348d6ff6652ff7" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/" class="">嵌入模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-56d4fbd63aba9093164f2784fdd04677" class="toggle"  />
+    <label for="section-56d4fbd63aba9093164f2784fdd04677" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/" class="">亚马逊基岩</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E7%9B%B8%E5%B9%B2%E5%B5%8C%E5%85%A5/" class="">相干嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E4%BA%9A%E9%A9%AC%E9%80%8A%E5%9F%BA%E5%B2%A9/%E6%B3%B0%E5%9D%A6%E5%B5%8C%E5%85%A5/" class="">泰坦嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%B5%8C%E5%85%A5/" class="">Azure OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/mistral-ai-%E5%B5%8C%E5%85%A5/" class="">Mistral AI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/minimax-%E8%81%8A%E5%A4%A9/" class="">MiniMax 聊天</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/oracle-%E4%BA%91%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD-oci-genai-%E5%B5%8C%E5%85%A5/" class="">Oracle 云基础设施 (OCI) GenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/ollama-%E5%B5%8C%E5%85%A5/" class="">Ollama 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/transformersonnx%E5%B5%8C%E5%85%A5/" class="">Transformers（ONNX）嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/openai-%E5%B5%8C%E5%85%A5/" class="">OpenAI 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/postgresml-%E5%B5%8C%E5%85%A5/" class="">PostgresML 嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%B5%8C%E5%85%A5/" class="">千帆嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-6ef09998ce281d0b28a33f495c099c64" class="toggle"  />
+    <label for="section-6ef09998ce281d0b28a33f495c099c64" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/" class="">Google VertexAI</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E6%96%87%E6%9C%AC%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 文本嵌入</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/google-vertexai/google-vertexai-%E5%A4%9A%E6%A8%A1%E6%80%81%E5%B5%8C%E5%85%A5/" class="">Google VertexAI 多模态嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%B5%8C%E5%85%A5%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%B5%8C%E5%85%A5/" class="">ZhiPuAI 嵌入</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-76b7909527d5ee378c9b7db9a7915572" class="toggle"  />
+    <label for="section-76b7909527d5ee378c9b7db9a7915572" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/" class="">图像模型 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/azure-openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">Azure OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/openai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">OpenAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E7%A8%B3%E5%AE%9A%E6%80%A7-ai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">稳定性 AI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/zhipuai-%E5%9B%BE%E5%83%8F%E7%94%9F%E6%88%90/" class="">ZhiPuAI 图像生成</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E5%9B%BE%E5%83%8F%E6%A8%A1%E5%9E%8B-api/%E5%8D%83%E5%B8%86%E5%BD%B1%E5%83%8F/" class="">千帆影像</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="toggle"  />
+    <label for="section-5d0e4aa0b317a2520fab3d41a9b47b16" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/" class="">音频模型</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7819d6457dfee9d52c1df4ade06e9929" class="toggle"  />
+    <label for="section-7819d6457dfee9d52c1df4ade06e9929" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/" class="">转录 API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E8%BD%AC%E5%BD%95-api/azure-openai-%E8%BD%AC%E5%BD%95/" class="">Azure OpenAI 转录</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-4d35c258b8bf725a4f8fe541655ffeee" class="toggle"  />
+    <label for="section-4d35c258b8bf725a4f8fe541655ffeee" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/" class="">文本转语音 (TTS) API</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%9F%B3%E9%A2%91%E6%A8%A1%E5%9E%8B/%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts-api/openai-%E6%96%87%E6%9C%AC%E8%BD%AC%E8%AF%AD%E9%9F%B3-tts/" class="">OpenAI 文本转语音 (TTS)</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-f10d18dff0bfc099fff60511d3eb1388" class="toggle"  />
+    <label for="section-f10d18dff0bfc099fff60511d3eb1388" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/" class="">适度</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B/%E9%80%82%E5%BA%A6/%E9%80%82%E5%BA%A6/" class="">适度</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E8%81%8A%E5%A4%A9%E8%AE%B0%E5%BF%86/" class="">聊天记忆</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" class="">工具调用</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-137a5cc62c39eb40ab9f360dd7a4089e" class="toggle"  />
+    <label for="section-137a5cc62c39eb40ab9f360dd7a4089e" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/" class="">模型上下文协议（MCP）</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 客户端启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%AF%E5%8A%A8%E5%99%A8/" class="">MCP 服务器启动器</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AEmcp/mcp-%E5%AE%9E%E7%94%A8%E7%A8%8B%E5%BA%8F/" class="">MCP 实用程序</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-fe0a04b7ec0575e520d9c454f1ab8388" class="toggle"  />
+    <label for="section-fe0a04b7ec0575e520d9c454f1ab8388" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/" class="">检索增强生成</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/etl-%E7%AE%A1%E9%81%93/" class="">ETL 管道</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E8%AF%84%E4%BC%B0%E6%B5%8B%E8%AF%95/" class="">评估测试</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c22b15d029e06bc3f36d75f90efdc60f" class="toggle"  />
+    <label for="section-c22b15d029e06bc3f36d75f90efdc60f" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="">矢量数据库</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-ai-%E6%9C%8D%E5%8A%A1/" class="">Azure AI 服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/azure-cosmos-db/" class="">Azure Cosmos DB</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/apache-cassandra-%E7%9F%A2%E9%87%8F%E5%AD%98%E5%82%A8/" class="">Apache Cassandra 矢量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E8%89%B2%E5%BA%A6/" class="">色度</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/couchbase/" class="">Couchbase</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/elasticsearch/" class="">Elasticsearch</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/gemfire-%E7%9F%A2%E9%87%8F%E5%95%86%E5%BA%97/" class="">GemFire 矢量商店</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mariadb-%E5%90%91%E9%87%8F%E5%AD%98%E5%82%A8/" class="">MariaDB 向量存储</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/milvus/" class="">Milvus</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/mongodb-atlas/" class="">MongoDB Atlas</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/neo4j/" class="">Neo4j</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%BC%80%E6%94%BE%E6%90%9C%E7%B4%A2/" class="">开放搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/oracle-database-23ai---ai-%E5%90%91%E9%87%8F%E6%90%9C%E7%B4%A2/" class="">Oracle Database 23ai - AI 向量搜索</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/pg-%E8%BD%BD%E4%BD%93/" class="">PG 载体</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%9D%BE%E6%9E%9C/" class="">松果</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%8D%A1%E5%BE%B7%E5%85%B0%E7%89%B9/" class="">卡德兰特</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" class="">Redis</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/sap-hana-%E4%BA%91/" class="">SAP HANA 云</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/typesense/" class="">Typesense</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E7%9F%A2%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%A8%81%E7%BB%B4%E7%89%B9/" class="">威维特</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7/" class="">可观察性</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E5%BC%80%E5%8F%91%E6%97%B6%E6%9C%8D%E5%8A%A1/" class="">开发时服务</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-13f6ed8395cc1d209c839158e47f69af" class="toggle"  />
+    <label for="section-13f6ed8395cc1d209c839158e47f69af" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/" class="">测试</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8F%82%E8%80%83/%E6%B5%8B%E8%AF%95/%E6%B5%8B%E8%AF%95%E5%AE%B9%E5%99%A8/" class="">测试容器</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-eb04feb0bc33d1a0586638a4be3d86d6" class="toggle"  />
+    <label for="section-eb04feb0bc33d1a0586638a4be3d86d6" class="flex justify-between">
+      <a href="../../../../../docs/%E6%8C%87%E5%8D%97/" class="">指南</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E6%8C%87%E5%8D%97/%E6%8F%90%E7%A4%BA%E5%B7%A5%E7%A8%8B%E6%A8%A1%E5%BC%8F/" class="">提示工程模式</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E6%8C%87%E5%8D%97/%E6%9E%84%E5%BB%BA%E6%9C%89%E6%95%88%E4%BB%A3%E7%90%86/" class="">构建有效代理</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E6%8C%87%E5%8D%97/%E4%BA%91%E7%BB%91%E5%AE%9A/" class="">云绑定</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-21dbdbec9c50b4c816faee9156087e37" class="toggle"  />
+    <label for="section-21dbdbec9c50b4c816faee9156087e37" class="flex justify-between">
+      <a href="../../../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/" class="">升级说明</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="../../../../../docs/%E5%8D%87%E7%BA%A7%E8%AF%B4%E6%98%8E/%E4%BB%8E-functioncallback-%E8%BF%81%E7%A7%BB%E5%88%B0-toolcallback-api/" class="">从 FunctionCallback 迁移到 ToolCallback API</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+  
+<ul>
+  
+  <li>
+    <a href="https://github.com"  target="_blank" rel="noopener">
+        Github
+      </a>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="../../../../../svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>OpenAI 聊天</h3>
+
+  <label for="toc-control">
+    
+    <img src="../../../../../svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#openai-聊天">OpenAI 聊天</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#添加存储库和-bom">添加存储库和 BOM</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#聊天属性">聊天属性</a></li>
+        <li><a href="#重试属性">重试属性</a></li>
+        <li><a href="#连接属性">连接属性</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#运行时选项">运行时选项</a></li>
+        <li><a href="#函数调用">函数调用</a></li>
+        <li><a href="#多式联运">多式联运</a></li>
+        <li><a href="#想象">想象</a></li>
+        <li><a href="#声音的">声音的</a></li>
+        <li><a href="#输出音频">输出音频</a></li>
+        <li><a href="#结构化输出">结构化输出</a></li>
+        <li><a href="#配置">配置</a></li>
+        <li><a href="#使用聊天选项生成器">使用聊天选项生成器</a></li>
+        <li><a href="#与-beanoutputconverter-实用程序集成">与 BeanOutputConverter 实用程序集成</a></li>
+        <li><a href="#通过应用程序属性进行配置">通过应用程序属性进行配置</a></li>
+        <li><a href="#样品控制器">样品控制器</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#低级-openaiapi-客户端">低级 OpenAiApi 客户端</a></li>
+        <li><a href="#低级-api-示例">低级 API 示例</a></li>
+        <li><a href="#api-密钥管理">API 密钥管理</a></li>
+        <li><a href="#默认配置">默认配置</a></li>
+        <li><a href="#自定义-api-密钥配置">自定义 API 密钥配置</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="openai-聊天">
+  OpenAI 聊天
+  <a class="anchor" href="#openai-%e8%81%8a%e5%a4%a9">#</a>
+</h1>
+<p>Spring AI 支持 ChatGPT 背后的公司 OpenAI 的各种 AI 语言模型，该公司通过创建业界领先的文本生成模型和嵌入，在激发人们对 AI 驱动的文本生成的兴趣方面发挥了重要作用。</p>
+<h2 id="先决条件">
+  先决条件
+  <a class="anchor" href="#%e5%85%88%e5%86%b3%e6%9d%a1%e4%bb%b6">#</a>
+</h2>
+<p>您需要使用 OpenAI 创建一个 API 来访问 ChatGPT 模型。</p>
+<p>在 [
+  <a href="https://platform.openai.com/signup">OpenAI 注册页面</a>](
+  <a href="https://platform.openai.com/signup">https://platform.openai.com/signup</a>)创建一个帐户，并在 [
+  <a href="https://platform.openai.com/account/api-keys">API 密钥页面</a>](
+  <a href="https://platform.openai.com/account/api-keys">https://platform.openai.com/account/api-keys</a>)上生成令牌。</p>
+<p>Spring AI 项目定义了一个名为 <code>spring.ai.openai.api-key</code> 的配置属性，您应该将其设置为从 openai.com 获取的 <code>API Key</code> 的值。</p>
+<p>您可以在 <code>application.properties</code> 文件中设置此配置属性：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.api-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;your-openai-api-key&gt;</span>
+</span></span></code></pre></div><p>为了在处理 API 密钥等敏感信息时增强安全性，您可以使用 Spring 表达式语言 (SpEL) 引用自定义环境变量：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># In application.yml</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spring</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ai</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">openai</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">api-key</span>: <span style="color:#ae81ff">${OPENAI_API_KEY}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># In your environment or .env file</span>
+</span></span><span style="display:flex;"><span>export OPENAI_API_KEY<span style="color:#f92672">=</span>&lt;your-openai-api-key&gt;
+</span></span></code></pre></div><p>您还可以在应用程序代码中以编程方式设置此配置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#75715e">// Retrieve API key from a secure source or environment variable</span>
+</span></span><span style="display:flex;"><span>String apiKey <span style="color:#f92672">=</span> System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>);
+</span></span></code></pre></div><h2 id="添加存储库和-bom">
+  添加存储库和 BOM
+  <a class="anchor" href="#%e6%b7%bb%e5%8a%a0%e5%ad%98%e5%82%a8%e5%ba%93%e5%92%8c-bom">#</a>
+</h2>
+<p>Spring AI 的构件已发布在 Maven Central 和 Spring Snapshot 仓库中。请参阅 [
+  <a href="../../getting-started.html#artifact-repositories">“构件仓库”</a>](../../getting-started.html#artifact-repositories) 部分，将这些仓库添加到您的构建系统中。</p>
+<p>为了帮助管理依赖项，Spring AI 提供了 BOM（物料清单），以确保在整个项目中使用一致版本的 Spring AI。请参阅[
+  <a href="../../getting-started.html#dependency-management">依赖项管理</a>](../../getting-started.html#dependency-management)部分，将 Spring AI BOM 添加到您的构建系统中。</p>
+<h2 id="自动配置">
+  自动配置
+  <a class="anchor" href="#%e8%87%aa%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>Spring AI 为 OpenAI Chat Client 提供了 Spring Boot 自动配置功能。要启用此功能，请将以下依赖项添加到项目的 Maven <code>pom.xml</code> 或 Gradle <code>build.gradle</code> 构建文件中：</p>
+<h2 id="聊天属性">
+  聊天属性
+  <a class="anchor" href="#%e8%81%8a%e5%a4%a9%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<h2 id="重试属性">
+  重试属性
+  <a class="anchor" href="#%e9%87%8d%e8%af%95%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>前缀 <code>spring.ai.retry</code> 用作属性前缀，可让您配置 OpenAI 聊天模型的重试机制。</p>
+<h2 id="连接属性">
+  连接属性
+  <a class="anchor" href="#%e8%bf%9e%e6%8e%a5%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>前缀 <code>spring.ai.openai</code> 用作允许您连接到 OpenAI 的属性前缀。</p>
+<h2 id="配置属性">
+  配置属性
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae%e5%b1%9e%e6%80%a7">#</a>
+</h2>
+<p>前缀 <code>spring.ai.openai.chat</code> 是允许您为 OpenAI 配置聊天模型实现的属性前缀。</p>
+<h2 id="运行时选项">
+  运行时选项
+  <a class="anchor" href="#%e8%bf%90%e8%a1%8c%e6%97%b6%e9%80%89%e9%a1%b9">#</a>
+</h2>
+<p>[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiChatOptions.java">OpenAiChatOptions.java</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/[OpenAiChatOptions.java]%28https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiChatOptions.java%29">https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/[OpenAiChatOptions.java](https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/OpenAiChatOptions.java)</a>) 类提供模型配置，例如要使用的模型、温度、频率惩罚等。</p>
+<p>启动时，可以使用 <code>OpenAiChatModel(api, options)</code> 构造函数或 <code>spring.ai.openai.chat.options.*</code> 属性配置默认选项。</p>
+<p>在运行时，您可以通过向 <code>Prompt</code> 调用添加新的特定于请求的选项来覆盖默认选项。例如，要覆盖特定请求的默认模型和温度：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ChatResponse response <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Prompt(
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;Generate the names of 5 famous pirates.&#34;</span>,
+</span></span><span style="display:flex;"><span>        OpenAiChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;gpt-4o&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">4</span>)
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">build</span>()
+</span></span><span style="display:flex;"><span>    ));
+</span></span></code></pre></div><h2 id="函数调用">
+  函数调用
+  <a class="anchor" href="#%e5%87%bd%e6%95%b0%e8%b0%83%e7%94%a8">#</a>
+</h2>
+<p>您可以使用 <code>OpenAiChatModel</code> 注册自定义 Java 函数，并让 OpenAI 模型智能地选择输出包含参数的 JSON 对象，以调用一个或多个已注册的函数。这是一种将 LLM 功能与外部工具和 API 连接起来的强大技术。了解更多关于[
+  <a href="../tools.html">工具调用的</a>](../tools.html)信息。</p>
+<h2 id="多式联运">
+  多式联运
+  <a class="anchor" href="#%e5%a4%9a%e5%bc%8f%e8%81%94%e8%bf%90">#</a>
+</h2>
+<p>多模态是指模型能够同时理解和处理来自各种来源的信息，包括文本、图像、音频和其他数据格式。OpenAI 支持文本、视觉和音频输入模态。</p>
+<h2 id="想象">
+  想象
+  <a class="anchor" href="#%e6%83%b3%e8%b1%a1">#</a>
+</h2>
+<p>提供[
+  <a href="https://platform.openai.com/docs/guides/vision">视觉</a>](
+  <a href="https://platform.openai.com/docs/guides/vision">https://platform.openai.com/docs/guides/vision</a>)多模态支持的 OpenAI 模型包括 <code>gpt-4</code> 、 <code>gpt-4</code>o 和 <code>gpt-4</code>o-mini 。有关更多信息，请参阅[
+  <a href="https://platform.openai.com/docs/guides/vision">视觉</a>](
+  <a href="https://platform.openai.com/docs/guides/vision">https://platform.openai.com/docs/guides/vision</a>)指南。</p>
+<p>OpenAI [用户[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">消息</a>](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java) API](
+  <a href="https://platform.openai.com/docs/api-reference/chat/create#chat-create-messages">https://platform.openai.com/docs/api-reference/chat/create#chat-create-messages</a>) 可以将一系列 base64 编码的图像或图像 URL 添加到[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">消息</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java</a>)中。Spring AI 的[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">消息</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java</a>)接口通过引入[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/Media.java">媒体</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/Media.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/Media.java</a>)类型来促进多模态 AI 模型的发展。此类型包含[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">消息</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java</a>)中[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/Media.java">媒体</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/Media.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/Media.java</a>)附件的数据和详细信息，并利用 Spring 的 <code>org.springframework.util.MimeType</code> 和 <code>org.springframework.core.io.Resource</code> 来存储原始[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/Media.java">媒体</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/Media.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/model/Media.java</a>)数据。</p>
+<p>下面是摘录自 [
+  <a href="https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/OpenAiChatModelIT.java#L293">OpenAiChatModelIT.java</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/[OpenAiChatModelIT.java]%28https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/OpenAiChatModelIT.java#L293%29#L293">https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/[OpenAiChatModelIT.java](https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/OpenAiChatModelIT.java#L293)#L293</a>) 的代码示例，展示了如何使用 <code>gpt-4o</code> 模型将用户文本与图像融合。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> imageResource <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ClassPathResource(<span style="color:#e6db74">&#34;/multimodal.test.png&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> userMessage <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> UserMessage(<span style="color:#e6db74">&#34;Explain what do you see on this picture?&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> Media(MimeTypeUtils.<span style="color:#a6e22e">IMAGE_PNG</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">imageResource</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatResponse response <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(<span style="color:#66d9ef">new</span> Prompt(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">userMessage</span>,
+</span></span><span style="display:flex;"><span>        OpenAiChatOptions.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">model</span>(OpenAiApi.<span style="color:#a6e22e">ChatModel</span>.<span style="color:#a6e22e">GPT_4_O</span>.<span style="color:#a6e22e">getValue</span>()).<span style="color:#a6e22e">build</span>()));
+</span></span></code></pre></div><p>或者使用 <code>gpt-4o</code> 模型等效的图像 URL：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> userMessage <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> UserMessage(<span style="color:#e6db74">&#34;Explain what do you see on this picture?&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> Media(MimeTypeUtils.<span style="color:#a6e22e">IMAGE_PNG</span>,
+</span></span><span style="display:flex;"><span>                URI.<span style="color:#a6e22e">create</span>(<span style="color:#e6db74">&#34;https://docs.spring.io/spring-ai/reference/_images/multimodal.test.png&#34;</span>)));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatResponse response <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(<span style="color:#66d9ef">new</span> Prompt(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">userMessage</span>,
+</span></span><span style="display:flex;"><span>        OpenAiChatOptions.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">model</span>(OpenAiApi.<span style="color:#a6e22e">ChatModel</span>.<span style="color:#a6e22e">GPT_4_O</span>.<span style="color:#a6e22e">getValue</span>()).<span style="color:#a6e22e">build</span>()));
+</span></span></code></pre></div><p>该示例展示了一个将 <code>multimodal.test.png</code> 图像作为输入的模型：</p>
+<p>
+  <img src="../../../../../images/multimodal.test.png" alt="" /></p>
+<p>以及文本消息“解释一下你在图片上看到了什么？”，并生成如下的回应：</p>
+<h2 id="声音的">
+  声音的
+  <a class="anchor" href="#%e5%a3%b0%e9%9f%b3%e7%9a%84">#</a>
+</h2>
+<p>提供输入[
+  <a href="https://platform.openai.com/docs/guides/audio">音频</a>](
+  <a href="https://platform.openai.com/docs/guides/audio">https://platform.openai.com/docs/guides/audio</a>)多模态支持的 OpenAI 模型包括 <code>gpt-4o-audio-preview</code> 。有关更多信息，请参阅[
+  <a href="https://platform.openai.com/docs/guides/audio">音频</a>](
+  <a href="https://platform.openai.com/docs/guides/audio">https://platform.openai.com/docs/guides/audio</a>)指南。</p>
+<p>OpenAI [
+  <a href="https://platform.openai.com/docs/api-reference/chat/create#chat-create-messages">用户消息 API</a>](
+  <a href="https://platform.openai.com/docs/api-reference/chat/create#chat-create-messages">https://platform.openai.com/docs/api-reference/chat/create#chat-create-messages</a>) 可以将一系列 base64 编码的音频文件添加到消息中。Spring AI 的 [
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">Message</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/[Message]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java%29.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/[Message](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java).java</a>) 接口通过引入 [
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-client-chat/src/main/java/org/springframework/ai/chat/messages/Media.java">Media</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-client-chat/src/main/java/org/springframework/ai/chat/messages/[Media]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-client-chat/src/main/java/org/springframework/ai/chat/messages/Media.java%29.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-client-chat/src/main/java/org/springframework/ai/chat/messages/[Media](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-client-chat/src/main/java/org/springframework/ai/chat/messages/Media.java).java</a>) 类型来促进多模态 AI 模型的发展。该类型包含消息中媒体附件的数据和详细信息，并利用 Spring 的 <code>org.springframework.util.MimeType</code> 和 <code>org.springframework.core.io.Resource</code> 来存储原始媒体数据。目前，OpenAI 仅支持以下媒体类型： <code>audio/mp3</code> 和 <code>audio/wav</code> 。</p>
+<p>下面是从 [
+  <a href="https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/OpenAiChatModelIT.java#L442">OpenAiChatModelIT.java</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/[OpenAiChatModelIT.java]%28https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/OpenAiChatModelIT.java#L442%29#L442">https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/[OpenAiChatModelIT.java](https://github.com/spring-projects/spring-ai/blob/c9a3e66f90187ce7eae7eb78c462ec622685de6c/models/spring-ai-openai/src/test/java/org/springframework/ai/openai/chat/OpenAiChatModelIT.java#L442)#L442</a>) 中摘录的代码示例，说明了如何使用 <code>gpt-4o-audio-preview</code> 模型将用户文本与音频文件融合。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> audioResource <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ClassPathResource(<span style="color:#e6db74">&#34;speech1.mp3&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> userMessage <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> UserMessage(<span style="color:#e6db74">&#34;What is this recording about?&#34;</span>,
+</span></span><span style="display:flex;"><span>        List.<span style="color:#a6e22e">of</span>(<span style="color:#66d9ef">new</span> Media(MimeTypeUtils.<span style="color:#a6e22e">parseMimeType</span>(<span style="color:#e6db74">&#34;audio/mp3&#34;</span>), audioResource)));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatResponse response <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(<span style="color:#66d9ef">new</span> Prompt(List.<span style="color:#a6e22e">of</span>(userMessage),
+</span></span><span style="display:flex;"><span>        OpenAiChatOptions.<span style="color:#a6e22e">builder</span>().<span style="color:#a6e22e">model</span>(OpenAiApi.<span style="color:#a6e22e">ChatModel</span>.<span style="color:#a6e22e">GPT_4_O_AUDIO_PREVIEW</span>).<span style="color:#a6e22e">build</span>()));
+</span></span></code></pre></div><h2 id="输出音频">
+  输出音频
+  <a class="anchor" href="#%e8%be%93%e5%87%ba%e9%9f%b3%e9%a2%91">#</a>
+</h2>
+<p>提供输入[
+  <a href="https://platform.openai.com/docs/guides/audio">音频</a>](
+  <a href="https://platform.openai.com/docs/guides/audio">https://platform.openai.com/docs/guides/audio</a>)多模态支持的 OpenAI 模型包括 <code>gpt-4o-audio-preview</code> 。有关更多信息，请参阅[
+  <a href="https://platform.openai.com/docs/guides/audio">音频</a>](
+  <a href="https://platform.openai.com/docs/guides/audio">https://platform.openai.com/docs/guides/audio</a>)指南。</p>
+<p>OpenAI [Assystant [
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">Message</a>](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">Message</a>.java) API](
+  <a href="https://platform.openai.com/docs/api-reference/chat/create#chat-create-messages">https://platform.openai.com/docs/api-reference/chat/create#chat-create-messages</a>) 可以在消息中包含一系列 base64 编码的音频文件。Spring AI 的 [
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java">Message</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/[Message]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java%29.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/[Message](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Message.java).java</a>) 接口通过引入 [
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Media.java">Media</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/[Media]%28https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Media.java%29.java">https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/[Media](https://github.com/spring-projects/spring-ai/blob/main/spring-ai-model/src/main/java/org/springframework/ai/chat/messages/Media.java).java</a>) 类型来促进多模态 AI 模型的发展。该类型包含消息中媒体附件的数据和详细信息，并利用 Spring 的 <code>org.springframework.util.MimeType</code> 和 <code>org.springframework.core.io.Resource</code> 来存储原始媒体数据。目前，OpenAI 仅支持以下音频类型： <code>audio/mp3</code> 和 <code>audio/wav</code> 。</p>
+<p>下面是一个代码示例，使用 <code>gpt-4o-audio-preview</code> 模型演示了用户文本以及音频字节数组的响应：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> userMessage <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> UserMessage(<span style="color:#e6db74">&#34;Tell me joke about Spring Framework&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatResponse response <span style="color:#f92672">=</span> chatModel.<span style="color:#a6e22e">call</span>(<span style="color:#66d9ef">new</span> Prompt(List.<span style="color:#a6e22e">of</span>(userMessage),
+</span></span><span style="display:flex;"><span>        OpenAiChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">model</span>(OpenAiApi.<span style="color:#a6e22e">ChatModel</span>.<span style="color:#a6e22e">GPT_4_O_AUDIO_PREVIEW</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">outputModalities</span>(List.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;text&#34;</span>, <span style="color:#e6db74">&#34;audio&#34;</span>))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">outputAudio</span>(<span style="color:#66d9ef">new</span> AudioParameters(Voice.<span style="color:#a6e22e">ALLOY</span>, AudioResponseFormat.<span style="color:#a6e22e">WAV</span>))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>()));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>String text <span style="color:#f92672">=</span> response.<span style="color:#a6e22e">getResult</span>().<span style="color:#a6e22e">getOutput</span>().<span style="color:#a6e22e">getContent</span>(); <span style="color:#75715e">// audio transcript</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">byte</span><span style="color:#f92672">[]</span> waveAudio <span style="color:#f92672">=</span> response.<span style="color:#a6e22e">getResult</span>().<span style="color:#a6e22e">getOutput</span>().<span style="color:#a6e22e">getMedia</span>().<span style="color:#a6e22e">get</span>(0).<span style="color:#a6e22e">getDataAsByteArray</span>(); <span style="color:#75715e">// audio data</span>
+</span></span></code></pre></div><p>您必须在 <code>OpenAiChatOptions</code> 中指定 <code>audio</code> 模式才能生成音频输出。<code>AudioParameters</code> <code>AudioParameters</code> 提供了音频输出所需的语音和音频格式。</p>
+<h2 id="结构化输出">
+  结构化输出
+  <a class="anchor" href="#%e7%bb%93%e6%9e%84%e5%8c%96%e8%be%93%e5%87%ba">#</a>
+</h2>
+<p>OpenAI 提供自定义[
+  <a href="https://platform.openai.com/docs/guides/structured-outputs">结构化输出</a>](
+  <a href="https://platform.openai.com/docs/guides/structured-outputs">https://platform.openai.com/docs/guides/structured-outputs</a>) API，确保您的模型生成严格符合您提供的 <code>JSON Schema</code> 响应。除了现有的与 Spring AI 模型无关的[
+  <a href="https://platform.openai.com/docs/guides/structured-outputs">结构化输出</a>](
+  <a href="https://platform.openai.com/docs/guides/structured-outputs">https://platform.openai.com/docs/guides/structured-outputs</a>)转换器之外，这些 API 还提供了增强的控制力和精度。</p>
+<h2 id="配置">
+  配置
+  <a class="anchor" href="#%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>Spring AI 允许您使用 <code>OpenAiChatOptions</code> 构建器以编程方式或通过应用程序属性配置响应格式。</p>
+<h2 id="使用聊天选项生成器">
+  使用聊天选项生成器
+  <a class="anchor" href="#%e4%bd%bf%e7%94%a8%e8%81%8a%e5%a4%a9%e9%80%89%e9%a1%b9%e7%94%9f%e6%88%90%e5%99%a8">#</a>
+</h2>
+<p>您可以使用 <code>OpenAiChatOptions</code> 构建器以编程方式设置响应格式，如下所示：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>String jsonSchema <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&#34;&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;type&#34;: &#34;object&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;properties&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;steps&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;type&#34;: &#34;array&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    &#34;items&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        &#34;type&#34;: &#34;object&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        &#34;properties&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                            &#34;explanation&#34;: { &#34;type&#34;: &#34;string&#34; },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                            &#34;output&#34;: { &#34;type&#34;: &#34;string&#34; }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        &#34;required&#34;: [&#34;explanation&#34;, &#34;output&#34;],
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                        &#34;additionalProperties&#34;: false
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                    }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">                &#34;final_answer&#34;: { &#34;type&#34;: &#34;string&#34; }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;required&#34;: [&#34;steps&#34;, &#34;final_answer&#34;],
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            &#34;additionalProperties&#34;: false
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;&#34;&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(<span style="color:#e6db74">&#34;how can I solve 8x + 7 = -23&#34;</span>,
+</span></span><span style="display:flex;"><span>        OpenAiChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">model</span>(ChatModel.<span style="color:#a6e22e">GPT_4_O_MINI</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">responseFormat</span>(<span style="color:#66d9ef">new</span> ResponseFormat(ResponseFormat.<span style="color:#a6e22e">Type</span>.<span style="color:#a6e22e">JSON_SCHEMA</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">jsonSchema</span>))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatResponse response <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">openAiChatModel</span>.<span style="color:#a6e22e">call</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">prompt</span>);
+</span></span></code></pre></div><h2 id="与-beanoutputconverter-实用程序集成">
+  与 BeanOutputConverter 实用程序集成
+  <a class="anchor" href="#%e4%b8%8e-beanoutputconverter-%e5%ae%9e%e7%94%a8%e7%a8%8b%e5%ba%8f%e9%9b%86%e6%88%90">#</a>
+</h2>
+<p>您可以利用现有的 [
+  <a href="../structured-output-converter.html#_bean_output_converter">BeanOutputConverter</a>](../structured-output-converter.html#_bean_output_converter) 实用程序从域对象自动生成 JSON 模式，然后将结构化响应转换为特定于域的实例：</p>
+<h2 id="通过应用程序属性进行配置">
+  通过应用程序属性进行配置
+  <a class="anchor" href="#%e9%80%9a%e8%bf%87%e5%ba%94%e7%94%a8%e7%a8%8b%e5%ba%8f%e5%b1%9e%e6%80%a7%e8%bf%9b%e8%a1%8c%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>或者，当使用 OpenAI 自动配置时，您可以通过以下应用程序属性配置所需的响应格式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-application.properties" data-lang="application.properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.api-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">YOUR_API_KEY</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.chat.options.model</span><span style="color:#f92672">=</span><span style="color:#e6db74">gpt-4o-mini</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.chat.options.response-format.type</span><span style="color:#f92672">=</span><span style="color:#e6db74">JSON_SCHEMA</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.chat.options.response-format.name</span><span style="color:#f92672">=</span><span style="color:#e6db74">MySchemaName</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.chat.options.response-format.schema</span><span style="color:#f92672">=</span><span style="color:#e6db74">{&#34;type&#34;:&#34;object&#34;,&#34;properties&#34;:{&#34;steps&#34;:{&#34;type&#34;:&#34;array&#34;,&#34;items&#34;:{&#34;type&#34;:&#34;object&#34;,&#34;properties&#34;:{&#34;explanation&#34;:{&#34;type&#34;:&#34;string&#34;},&#34;output&#34;:{&#34;type&#34;:&#34;string&#34;}},&#34;required&#34;:[&#34;explanation&#34;,&#34;output&#34;],&#34;additionalProperties&#34;:false}},&#34;final_answer&#34;:{&#34;type&#34;:&#34;string&#34;}},&#34;required&#34;:[&#34;steps&#34;,&#34;final_answer&#34;],&#34;additionalProperties&#34;:false}</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.chat.options.response-format.strict</span><span style="color:#f92672">=</span><span style="color:#e6db74">true</span>
+</span></span></code></pre></div><h2 id="样品控制器">
+  样品控制器
+  <a class="anchor" href="#%e6%a0%b7%e5%93%81%e6%8e%a7%e5%88%b6%e5%99%a8">#</a>
+</h2>
+<p>[
+  <a href="https://start.spring.io/">创建</a>](
+  <a href="https://start.spring.io/">https://start.spring.io/</a>)一个新的 Spring Boot 项目并将 <code>spring-ai-starter-model-openai</code> 添加到您的 pom（或 gradle）依赖项中。</p>
+<p>在 <code>src/main/resources</code> 目录下添加 <code>application.properties</code> 文件，用于启用和配置 OpenAi 聊天模型：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-application.properties" data-lang="application.properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.api-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">YOUR_API_KEY</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.chat.options.model</span><span style="color:#f92672">=</span><span style="color:#e6db74">gpt-4o</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.chat.options.temperature</span><span style="color:#f92672">=</span><span style="color:#e6db74">0.7</span>
+</span></span></code></pre></div><p>这将创建一个 <code>OpenAiChatModel</code> 实现，您可以将其注入到您的类中。这是一个使用聊天模型进行文本生成的简单 <code>@RestController</code> 类的示例。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@RestController</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">ChatController</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> OpenAiChatModel chatModel;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Autowired</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">ChatController</span>(OpenAiChatModel chatModel) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatModel</span> <span style="color:#f92672">=</span> chatModel;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@GetMapping</span>(<span style="color:#e6db74">&#34;/ai/generate&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> Map<span style="color:#f92672">&lt;</span>String,String<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">generate</span>(<span style="color:#a6e22e">@RequestParam</span>(value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;message&#34;</span>, defaultValue <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Tell me a joke&#34;</span>) String message) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> Map.<span style="color:#a6e22e">of</span>(<span style="color:#e6db74">&#34;generation&#34;</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatModel</span>.<span style="color:#a6e22e">call</span>(message));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@GetMapping</span>(<span style="color:#e6db74">&#34;/ai/generateStream&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">public</span> Flux<span style="color:#f92672">&lt;</span>ChatResponse<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">generateStream</span>(<span style="color:#a6e22e">@RequestParam</span>(value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;message&#34;</span>, defaultValue <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Tell me a joke&#34;</span>) String message) {
+</span></span><span style="display:flex;"><span>        Prompt prompt <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Prompt(<span style="color:#66d9ef">new</span> UserMessage(message));
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatModel</span>.<span style="color:#a6e22e">stream</span>(prompt);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="手动配置">
+  手动配置
+  <a class="anchor" href="#%e6%89%8b%e5%8a%a8%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>OpenAi<code>ChatModel</code> 实现了 <code>ChatModel</code> 和 Streaming<code>ChatModel</code> ，并使用 [
+  <a href="../../../../../#low-level-api">Low-level OpenAiApi Client</a>](#low-level-api) 连接到 OpenAI 服务。</p>
+<p>将 <code>spring-ai-openai</code> 依赖项添加到项目的 Maven <code>pom.xml</code> 文件中：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#f92672">&lt;dependency&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;groupId&gt;</span>org.springframework.ai<span style="color:#f92672">&lt;/groupId&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&lt;artifactId&gt;</span>spring-ai-openai<span style="color:#f92672">&lt;/artifactId&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/dependency&gt;</span>
+</span></span></code></pre></div><p>或者到你的 Gradle <code>build.gradle</code> 构建文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-groovy" data-lang="groovy"><span style="display:flex;"><span>dependencies <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>    implementation <span style="color:#e6db74">&#39;org.springframework.ai:spring-ai-openai&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">}</span>
+</span></span></code></pre></div><p>接下来，创建一个 <code>OpenAiChatModel</code> 并将其用于文本生成：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">var</span> openAiApi <span style="color:#f92672">=</span> OpenAiApi.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">apiKey</span>(System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> openAiChatOptions <span style="color:#f92672">=</span> OpenAiChatOptions.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">model</span>(<span style="color:#e6db74">&#34;gpt-3.5-turbo&#34;</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">temperature</span>(0.<span style="color:#a6e22e">4</span>)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">maxTokens</span>(200)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> chatModel <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> OpenAiChatModel(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">openAiApi</span>, <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">openAiChatOptions</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatResponse response <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatModel</span>.<span style="color:#a6e22e">call</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Prompt(<span style="color:#e6db74">&#34;Generate the names of 5 famous pirates.&#34;</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Or with streaming responses</span>
+</span></span><span style="display:flex;"><span>Flux<span style="color:#f92672">&lt;</span>ChatResponse<span style="color:#f92672">&gt;</span> response <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatModel</span>.<span style="color:#a6e22e">stream</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> Prompt(<span style="color:#e6db74">&#34;Generate the names of 5 famous pirates.&#34;</span>));
+</span></span></code></pre></div><p><code>OpenAiChatOptions</code> 提供聊天请求的配置信息。<code>OpenAiApi.Builder</code> 和 <code>OpenAiChatOptions</code>.Builder <code>OpenAiApi.Builder</code> 是 API 客户端和聊天配置的流畅选项构建器。</p>
+<h2 id="低级-openaiapi-客户端">
+  低级 OpenAiApi 客户端
+  <a class="anchor" href="#%e4%bd%8e%e7%ba%a7-openaiapi-%e5%ae%a2%e6%88%b7%e7%ab%af">#</a>
+</h2>
+<p>[
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/OpenAiApi.java">OpenAiApi</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/[OpenAiApi]%28https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/OpenAiApi.java%29.java">https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/[OpenAiApi](https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/OpenAiApi.java).java</a>) 为 [
+  <a href="https://platform.openai.com/docs/api-reference/chat">OpenAI Chat API</a>](
+  <a href="https://platform.openai.com/docs/api-reference/chat">https://platform.openai.com/docs/api-reference/chat</a>) [
+  <a href="https://platform.openai.com/docs/api-reference/chat">OpenAI Chat API</a>](
+  <a href="https://platform.openai.com/docs/api-reference/chat">https://platform.openai.com/docs/api-reference/chat</a>) 提供了轻量级 Java 客户端。</p>
+<p>以下类图说明了 <code>OpenAiApi</code> 聊天接口和构建块：</p>
+<p>
+  <img src="../../../../../images/openai-chat-api.jpg" alt="" /></p>
+<p>下面是一个简单的代码片段，展示了如何以编程方式使用 API：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>OpenAiApi openAiApi <span style="color:#f92672">=</span> OpenAiApi.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">apiKey</span>(System.<span style="color:#a6e22e">getenv</span>(<span style="color:#e6db74">&#34;OPENAI_API_KEY&#34;</span>))
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ChatCompletionMessage chatCompletionMessage <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> ChatCompletionMessage(<span style="color:#e6db74">&#34;Hello world&#34;</span>, Role.<span style="color:#a6e22e">USER</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Sync request</span>
+</span></span><span style="display:flex;"><span>ResponseEntity<span style="color:#f92672">&lt;</span>ChatCompletion<span style="color:#f92672">&gt;</span> response <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">openAiApi</span>.<span style="color:#a6e22e">chatCompletionEntity</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> ChatCompletionRequest(List.<span style="color:#a6e22e">of</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatCompletionMessage</span>), <span style="color:#e6db74">&#34;gpt-3.5-turbo&#34;</span>, 0.<span style="color:#a6e22e">8</span>, <span style="color:#66d9ef">false</span>));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Streaming request</span>
+</span></span><span style="display:flex;"><span>Flux<span style="color:#f92672">&lt;</span>ChatCompletionChunk<span style="color:#f92672">&gt;</span> streamResponse <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">openAiApi</span>.<span style="color:#a6e22e">chatCompletionStream</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> ChatCompletionRequest(List.<span style="color:#a6e22e">of</span>(<span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">chatCompletionMessage</span>), <span style="color:#e6db74">&#34;gpt-3.5-turbo&#34;</span>, 0.<span style="color:#a6e22e">8</span>, <span style="color:#66d9ef">true</span>));
+</span></span></code></pre></div><p>请关注 [
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/OpenAiApi.java">OpenAiApi.java</a>](
+  <a href="https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/[OpenAiApi.java]%28https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/OpenAiApi.java%29">https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/[OpenAiApi.java](https://github.com/spring-projects/spring-ai/blob/main/models/spring-ai-openai/src/main/java/org/springframework/ai/openai/api/OpenAiApi.java)</a>) 的 JavaDoc 以获取更多信息。</p>
+<h2 id="低级-api-示例">
+  低级 API 示例
+  <a class="anchor" href="#%e4%bd%8e%e7%ba%a7-api-%e7%a4%ba%e4%be%8b">#</a>
+</h2>
+<ul>
+<li>OpenAiApiIT.java 测试提供了一些如何使用轻量级库的一般示例。</li>
+<li>OpenAiApiToolFunctionCallIT.java 测试展示了如何使用低级 API 调用工具函数。基于 OpenAI 函数调用教程。</li>
+</ul>
+<h2 id="api-密钥管理">
+  API 密钥管理
+  <a class="anchor" href="#api-%e5%af%86%e9%92%a5%e7%ae%a1%e7%90%86">#</a>
+</h2>
+<p>Spring AI 通过 <code>ApiKey</code> 接口及其实现提供灵活的 API 密钥管理。默认实现 Simple<code>ApiKey</code> 适用于大多数用例，但您也可以为更复杂的场景创建自定义实现。</p>
+<h2 id="默认配置">
+  默认配置
+  <a class="anchor" href="#%e9%bb%98%e8%ae%a4%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>默认情况下，Spring Boot 自动配置将使用 <code>spring.ai.openai.api-key</code> 属性创建 API 密钥 bean：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">spring.ai.openai.api-key</span><span style="color:#f92672">=</span><span style="color:#e6db74">your-api-key-here</span>
+</span></span></code></pre></div><h2 id="自定义-api-密钥配置">
+  自定义 API 密钥配置
+  <a class="anchor" href="#%e8%87%aa%e5%ae%9a%e4%b9%89-api-%e5%af%86%e9%92%a5%e9%85%8d%e7%bd%ae">#</a>
+</h2>
+<p>您可以使用构建器模式通过您自己的 <code>ApiKey</code> 实现创建 <code>OpenAiApi</code> 的自定义实例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>ApiKey customApiKey <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ApiKey() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">getValue</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Custom logic to retrieve API key</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;your-api-key-here&#34;</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>OpenAiApi openAiApi <span style="color:#f92672">=</span> OpenAiApi.<span style="color:#a6e22e">builder</span>()
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">apiKey</span>(customApiKey)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">build</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Create a chat client with the custom OpenAiApi instance</span>
+</span></span><span style="display:flex;"><span>OpenAiChatClient chatClient <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> OpenAiChatClient(openAiApi);
+</span></span></code></pre></div><p>当您需要执行以下操作时，这很有用：</p>
+<ul>
+<li>从安全密钥库中检索 API 密钥</li>
+<li>动态轮换 API 密钥</li>
+<li>实现自定义 API 密钥选择逻辑</li>
+</ul>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#openai-聊天">OpenAI 聊天</a>
+      <ul>
+        <li><a href="#先决条件">先决条件</a></li>
+        <li><a href="#添加存储库和-bom">添加存储库和 BOM</a></li>
+        <li><a href="#自动配置">自动配置</a></li>
+        <li><a href="#聊天属性">聊天属性</a></li>
+        <li><a href="#重试属性">重试属性</a></li>
+        <li><a href="#连接属性">连接属性</a></li>
+        <li><a href="#配置属性">配置属性</a></li>
+        <li><a href="#运行时选项">运行时选项</a></li>
+        <li><a href="#函数调用">函数调用</a></li>
+        <li><a href="#多式联运">多式联运</a></li>
+        <li><a href="#想象">想象</a></li>
+        <li><a href="#声音的">声音的</a></li>
+        <li><a href="#输出音频">输出音频</a></li>
+        <li><a href="#结构化输出">结构化输出</a></li>
+        <li><a href="#配置">配置</a></li>
+        <li><a href="#使用聊天选项生成器">使用聊天选项生成器</a></li>
+        <li><a href="#与-beanoutputconverter-实用程序集成">与 BeanOutputConverter 实用程序集成</a></li>
+        <li><a href="#通过应用程序属性进行配置">通过应用程序属性进行配置</a></li>
+        <li><a href="#样品控制器">样品控制器</a></li>
+        <li><a href="#手动配置">手动配置</a></li>
+        <li><a href="#低级-openaiapi-客户端">低级 OpenAiApi 客户端</a></li>
+        <li><a href="#低级-api-示例">低级 API 示例</a></li>
+        <li><a href="#api-密钥管理">API 密钥管理</a></li>
+        <li><a href="#默认配置">默认配置</a></li>
+        <li><a href="#自定义-api-密钥配置">自定义 API 密钥配置</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
